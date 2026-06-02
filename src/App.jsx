@@ -21,36 +21,42 @@ import ProductListPage from "./pages/products/ProductListPage";
 import AddProductPage from "./pages/products/AddProductPage";
 import EditProductPage from "./pages/products/EditProductPage";
 import ProductDetailsPage from "./pages/products/ProductDetailsPage";
+import { EmployeeProvider } from "./context/EmployeeContext";
+import EmployeesPage from "./pages/employees/EmployeesPage";
 
 import "./index.css";
 
 function App() {
   return (
-    <ProductProvider>
-      <SalesProvider>
-        <CartProvider>
-          <Router>
-            <div className="app-container">
-              <Routes>
-                <Route path="/" element={<Navigate to="/dashboard" />} />
+    <EmployeeProvider>
+      <ProductProvider>
+        <SalesProvider>
+          <CartProvider>
+            <Router>
+              <div className="app-container">
+                <Routes>
+                  <Route path="/" element={<Navigate to="/dashboard" />} />
 
-                <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
 
-                <Route path="/pos" element={<POSPage />} />
-                <Route path="/checkout" element={<CheckoutPage />} />
-                <Route path="/receipt" element={<ReceiptPage />} />
-                <Route path="/history" element={<SalesHistoryPage />} />
+                  <Route path="/pos" element={<POSPage />} />
+                  <Route path="/checkout" element={<CheckoutPage />} />
+                  <Route path="/receipt" element={<ReceiptPage />} />
+                  <Route path="/history" element={<SalesHistoryPage />} />
 
-                <Route path="/products" element={<ProductListPage />} />
-                <Route path="/products/add" element={<AddProductPage />} />
-                <Route path="/products/edit/:id" element={<EditProductPage />} />
-                <Route path="/products/:id" element={<ProductDetailsPage />} />
-              </Routes>
-            </div>
-          </Router>
-        </CartProvider>
-      </SalesProvider>
-    </ProductProvider>
+                  <Route path="/products" element={<ProductListPage />} />
+                  <Route path="/products/add" element={<AddProductPage />} />
+                  <Route path="/products/edit/:id" element={<EditProductPage />} />
+                  <Route path="/products/:id" element={<ProductDetailsPage />} />
+
+                  <Route path="/employees" element={<EmployeesPage />} />
+                </Routes>
+              </div>
+            </Router>
+          </CartProvider>
+        </SalesProvider>
+      </ProductProvider>
+    </EmployeeProvider>
   );
 }
 
