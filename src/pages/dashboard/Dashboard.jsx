@@ -7,6 +7,7 @@ import TopProducts from '../../components/dashboard/TopProducts';
 import LiveFeed from '../../components/dashboard/LiveFeed';
 import { useAuth } from '../../context/AuthContext';
 import { socketService } from '../../services/socketService';
+import EmployeesPage from '../employees/EmployeesPage';
 
 // Demo data generator
 const generateDemoData = () => ({
@@ -425,7 +426,7 @@ const Dashboard = ({ viewRole }) => {
       case 'branch-mgmt':
         return <ModuleDetail title="Branch Management" icon="🏢" page={1} description="Manage branch records and configurations. Link branches with employees and inventory. Store branch-level settings. Generate branch performance statistics. Handle branch-related business logic." features={['Branch Information Display', 'Performance Metrics', 'Branch Creation & Updates', 'Branch-specific Inventory & Sales', 'Branch Search Functionality']} />;
       case 'employee-mgmt':
-        return <ModuleDetail title="Employee Management" icon="👔" page={1} description="Store employee records and roles. Manage attendance and shift schedules. Generate employee performance metrics. Support employee CRUD operations. Maintain employment history." features={['Employee Registration & Profiles', 'Schedules & Attendance', 'Performance Tracking', 'Role Assignments', 'Employee Reports']} />;
+        return <EmployeesPage />;
       case 'customer-mgmt':
         return <ModuleDetail title="Customer Management" icon="👤" page={2} description="Manage customer data and transactions. Track loyalty rewards and points. Store customer purchase histories. Generate customer insights. Handle customer-related CRUD operations." features={['Customer Profiles', 'Purchase History', 'Loyalty Points', 'Customer Search & Filtering', 'Customer Analytics']} />;
       case 'supplier-mgmt':
