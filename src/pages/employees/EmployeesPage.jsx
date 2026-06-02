@@ -206,7 +206,10 @@ export default function EmployeesPage() {
       <div className="mx-auto max-w-7xl">
         
         {/* Module Banner */}
-        <div className="mb-6 flex flex-col justify-between gap-4 rounded-[2rem] bg-white p-6 shadow-sm border border-slate-100 md:flex-row md:items-center">
+        <div 
+          className="mb-6 flex flex-col justify-between gap-4 bg-white p-6 shadow-sm border border-slate-200 md:flex-row md:items-center"
+          style={{ borderRadius: "24px" }}
+        >
           <div>
             <h1 className="text-2xl font-extrabold text-slate-800">
               👔 Staff & Employee Management
