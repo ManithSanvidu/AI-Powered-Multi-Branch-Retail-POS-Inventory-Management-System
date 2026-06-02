@@ -206,7 +206,7 @@ export default function EmployeesPage() {
       <div className="mx-auto max-w-7xl">
         
         {/* Module Banner */}
-        <div className="mb-6 flex flex-col justify-between gap-4 rounded-3xl bg-white p-6 shadow-sm border border-slate-100 md:flex-row md:items-center">
+        <div className="mb-6 flex flex-col justify-between gap-4 rounded-[2rem] bg-white p-6 shadow-sm border border-slate-100 md:flex-row md:items-center">
           <div>
             <h1 className="text-2xl font-extrabold text-slate-800">
               👔 Staff & Employee Management
@@ -218,7 +218,7 @@ export default function EmployeesPage() {
 
           <button
             onClick={handleOpenRegister}
-            className="rounded-xl bg-blue-600 px-5 py-3 text-center text-xs font-bold text-white shadow-md shadow-blue-100 transition-all hover:bg-blue-700 hover:shadow-lg"
+            className="rounded-full bg-blue-600 px-6 py-3.5 text-center text-xs font-bold text-white shadow-md shadow-blue-100 transition-all hover:bg-blue-700 hover:shadow-lg"
           >
             + Register Staff Member
           </button>
@@ -236,7 +236,7 @@ export default function EmployeesPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`rounded-xl px-4 py-2.5 text-xs font-bold transition-all ${activeTab === tab.id ? "bg-blue-600 text-white shadow-md shadow-blue-50" : "bg-white text-slate-500 border border-slate-100 hover:bg-slate-50"}`}
+              className={`rounded-full px-5 py-2.5 text-xs font-bold transition-all ${activeTab === tab.id ? "bg-blue-600 text-white shadow-md shadow-blue-55" : "bg-white text-slate-500 border border-slate-100 hover:bg-slate-50"}`}
             >
               {tab.label}
             </button>
