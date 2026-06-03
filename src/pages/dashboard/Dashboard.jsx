@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import { socketService } from '../../services/socketService';
 import SuppliersPage from '../suppliers/SuppliersPage';
 import EmployeesPage from '../employees/EmployeesPage';
+import ReturnsPage from '../returns/ReturnsPage';
 
 // Demo data generator
 const generateDemoData = () => ({
@@ -77,7 +78,7 @@ const _getDateRange = (preset) => {
   return { startDate: start, endDate: end };
 };
 
-const Dashboard = ({ viewRole }) => {
+const Dashboard = ({ viewRole, returnState, setReturnState }) => {
   const { user, token } = useAuth();
   const role = viewRole || user?.role || 'admin';
 
@@ -443,7 +444,7 @@ const Dashboard = ({ viewRole }) => {
       case 'pos-sales':
         return <ModuleDetail title="POS Sales & Billing" icon="🛒" page={3} description="Handle sales transactions. Process payments securely. Update inventory automatically. Store transaction records. Generate sales summaries." features={['Cashier POS Screens', 'Barcode Scanning', 'Shopping Cart Management', 'Digital Receipts', 'Multiple Payment Methods']} />;
       case 'returns-refund':
-        return <ModuleDetail title="Returns & Refund" icon="🔄" page={3} description="Process returns and refunds. Update inventory after returns. Record return history. Validate eligibility rules. Generate return reports." features={['Return Request Screens', 'Refund Status Display', 'Returned Items Management', 'Return Condition Validation', 'Return Receipts']} />;
+        return <ReturnsPage returnState={returnState} setReturnState={setReturnState} />;
       case 'stock-transfer':
         return <ModuleDetail title="Stock Transfer" icon="🚛" page={3} description="Manage inter-branch stock transfers. Validate stock availability. Update inventories automatically. Record transfer logs. Generate transfer analytics." features={['Transfer Request Forms', 'Transfer Progress Tracking', 'Branch Stock Availability', 'Transfer History', 'Transfer Reports']} />;
       case 'promotion':
