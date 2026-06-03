@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 // Contexts
 import { AuthProvider } from "./context/AuthContext";
+import ErrorBoundary from "./components/common/ErrorBoundary";
 import { CartProvider } from './context/CartContext';
 import { EmployeeProvider } from './context/EmployeeContext';
 import { ProductProvider } from './context/ProductContext';
@@ -82,6 +83,7 @@ function App() {
             <CartProvider>
               <BranchProvider>
                 <BrowserRouter>
+                  <ErrorBoundary>
                   <div className="app-container">
                     <Routes>
                       {/* Public Auth Routes */}
@@ -96,10 +98,28 @@ function App() {
                       path="/dashboard"
                       element={
                         <ProtectedRoute roles={["admin", "manager", "cashier"]}>
-                          <Dashboard
-                            returnState={returnState}
-                            setReturnState={setReturnState}
-                          />
+                          <Suspense
+                            fallback={
+                              <div
+                                style={{
+                                  minHeight: '100vh',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  background: 'linear-gradient(180deg, #4facfe 0%, #00f2fe 100%)',
+                                  fontWeight: 600,
+                                  color: '#0f172a',
+                                }}
+                              >
+                                Loading dashboard…
+                              </div>
+                            }
+                          >
+                            <Dashboard
+                              returnState={returnState}
+                              setReturnState={setReturnState}
+                            />
+                          </Suspense>
                         </ProtectedRoute>
                       }
                     />
@@ -147,6 +167,7 @@ function App() {
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
                   </Routes>
                 </div>
+                  </ErrorBoundary>
                </BrowserRouter>
               </BranchProvider>
             </CartProvider>

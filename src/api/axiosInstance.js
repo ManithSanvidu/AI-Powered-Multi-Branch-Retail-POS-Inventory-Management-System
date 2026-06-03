@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5001/api",
 });
 
 api.interceptors.request.use((config) => {
@@ -16,8 +16,17 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.clear();
-      window.location.href = "/login";
+      const path = window.location.pathname;
+      const isAuthPage =
+        path.startsWith("/login") ||
+        path.startsWith("/register") ||
+        path.startsWith("/forgot-password") ||
+        path.startsWith("/reset-password");
+      if (!isAuthPage) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(error);
   }
