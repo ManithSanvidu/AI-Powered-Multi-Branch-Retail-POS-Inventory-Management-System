@@ -115,7 +115,7 @@ function App() {
               <div className="app-container">
                 <Routes>
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/dashboard" element={<Dashboard returnState={returnState} setReturnState={setReturnState} />} />
                   <Route path="/pos" element={<POSPage />} />
                   <Route path="/checkout" element={<CheckoutPage />} />
                   <Route path="/receipt" element={<ReceiptPage />} />
@@ -193,3 +193,4 @@ function App() {
 }
 
 export default App;
+
