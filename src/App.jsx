@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 // Contexts
@@ -19,32 +19,41 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import Profile from "./pages/auth/Profile";
 
-// POS Pages
-import Dashboard from './pages/dashboard/Dashboard';
-import EmployeesPage from './pages/employees/EmployeesPage';
-import CheckoutPage from './pages/pos/CheckoutPage';
-import POSPage from './pages/pos/POSPage';
-import ReceiptPage from './pages/pos/ReceiptPage';
-import SalesHistoryPage from './pages/pos/SalesHistoryPage';
-import AddProductPage from './pages/products/AddProductPage';
-import EditProductPage from './pages/products/EditProductPage';
-import ProductDetailsPage from './pages/products/ProductDetailsPage';
-import ProductListPage from './pages/products/ProductListPage';
-import ReturnsPage from './pages/returns/ReturnsPage';
-import PurchaseOrdersPage from './pages/purchase-orders/PurchaseOrdersPage';
+// POS / Dashboard Pages
+import Dashboard from "./pages/dashboard/Dashboard";
+import EmployeesPage from "./pages/employees/EmployeesPage";
+import CheckoutPage from "./pages/pos/CheckoutPage";
+import POSPage from "./pages/pos/POSPage";
+import ReceiptPage from "./pages/pos/ReceiptPage";
+import SalesHistoryPage from "./pages/pos/SalesHistoryPage";
+
+// Product Pages
+import ProductListPage from "./pages/products/ProductListPage";
+import AddProductPage from "./pages/products/AddProductPage";
+import EditProductPage from "./pages/products/EditProductPage";
+import ProductDetailsPage from "./pages/products/ProductDetailsPage";
+import CategoryManagementPage from "./pages/products/CategoryManagementPage";
+
+// Branch Pages
 import BranchListPage from "./pages/branches/BranchListPage";
-import { getInvoices, getReturns } from './services/returnsApi';
 
-import './App.css';
+// Other Pages
+import ReturnsPage from "./pages/returns/ReturnsPage";
+import PurchaseOrdersPage from "./pages/purchase-orders/PurchaseOrdersPage";
 
-// Placeholder for roles
+// Services
+import { getInvoices, getReturns } from "./services/returnsApi";
+
+import "./App.css";
+
+// Placeholder pages
 const AdminPanel = () => <h1>🔐 Admin Panel</h1>;
 const Unauthorized = () => <h1>⛔ Unauthorized Access</h1>;
 
 function App() {
   const [returnState, setReturnState] = useState({
     invoices: [],
-    returns: []
+    returns: [],
   });
 
   useEffect(() => {
@@ -52,14 +61,16 @@ function App() {
       try {
         const invoicesRes = await getInvoices();
         const returnsRes = await getReturns();
+
         setReturnState({
           invoices: invoicesRes.data || [],
-          returns: returnsRes.data || []
+          returns: returnsRes.data || [],
         });
       } catch (error) {
         console.error("Error fetching returns/invoices from backend:", error);
       }
     };
+
     fetchReturnsData();
   }, []);
 
@@ -80,40 +91,59 @@ function App() {
                     <Route path="/reset-password/:token" element={<ResetPassword />} />
                     <Route path="/unauthorized" element={<Unauthorized />} />
 
-                    {/* Private Routes (Protected) */}
-                    <Route path="/dashboard" element={
-                      <ProtectedRoute roles={["admin", "manager", "cashier"]}>
-                        <Dashboard returnState={returnState} setReturnState={setReturnState} />
-                      </ProtectedRoute>
-                    } />
+                    {/* Protected Dashboard Route */}
+                    <Route
+                      path="/dashboard"
+                      element={
+                        <ProtectedRoute roles={["admin", "manager", "cashier"]}>
+                          <Dashboard
+                            returnState={returnState}
+                            setReturnState={setReturnState}
+                          />
+                        </ProtectedRoute>
+                      }
+                    />
 
-                    <Route path="/profile" element={
-                      <ProtectedRoute>
-                        <Profile />
-                      </ProtectedRoute>
-                    } />
+                    {/* Protected Profile Route */}
+                    <Route
+                      path="/profile"
+                      element={
+                        <ProtectedRoute>
+                          <Profile />
+                        </ProtectedRoute>
+                      }
+                    />
 
-                    <Route path="/admin" element={
-                      <ProtectedRoute roles={["admin"]}>
-                        <AdminPanel />
-                      </ProtectedRoute>
-                    } />
+                    {/* Protected Admin Route */}
+                    <Route
+                      path="/admin"
+                      element={
+                        <ProtectedRoute roles={["admin"]}>
+                          <AdminPanel />
+                        </ProtectedRoute>
+                      }
+                    />
 
-                    {/* POS & Inventory Routes */}
+                    {/* POS Routes */}
                     <Route path="/pos" element={<POSPage />} />
                     <Route path="/checkout" element={<CheckoutPage />} />
                     <Route path="/receipt" element={<ReceiptPage />} />
                     <Route path="/history" element={<SalesHistoryPage />} />
+
+                    {/* Product Routes */}
                     <Route path="/products" element={<ProductListPage />} />
                     <Route path="/products/add" element={<AddProductPage />} />
                     <Route path="/products/edit/:id" element={<EditProductPage />} />
+                    <Route path="/products/categories" element={<CategoryManagementPage />} />
                     <Route path="/products/:id" element={<ProductDetailsPage />} />
+
+                    {/* Other Routes */}
                     <Route path="/employees" element={<EmployeesPage />} />
                     <Route path="/returns" element={<ReturnsPage />} />
                     <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
                     <Route path="/branches" element={<BranchListPage />} />
 
-                    {/* Default redirect */}
+                    {/* Default Redirect */}
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
                   </Routes>
                 </div>
@@ -128,4 +158,3 @@ function App() {
 }
 
 export default App;
-
