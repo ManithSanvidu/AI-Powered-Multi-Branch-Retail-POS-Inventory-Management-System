@@ -12,6 +12,7 @@ import {
   FiPrinter
 } from 'react-icons/fi';
 import ReceiptModal from '../../components/ReceiptModal';
+import { createReturn, updateReturnStatus, getInvoices, getReturns } from '../../services/returnsApi';
 
 const ReturnsPage = ({ returnState, setReturnState }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -86,110 +87,104 @@ const ReturnsPage = ({ returnState, setReturnState }) => {
     return getDaysSincePurchase(invoiceDate) <= 30;
   };
 
-  // Create Return request
-  const handleCreateReturn = () => {
-    const itemsToReturn = [];
-    let refundSubtotal = 0;
+    // Create Return request
+    const handleCreateReturn = () => {
+      const itemsToReturn = [];
+      let refundSubtotal = 0;
 
-    activeInvoice.items.forEach(item => {
-      const qty = returnItems[item.id] || 0;
-      if (qty > 0) {
-        itemsToReturn.push({
-          id: item.id,
-          name: item.name,
-          qty: qty,
-          price: item.price
-        });
-        refundSubtotal += qty * item.price;
+      activeInvoice.items.forEach(item => {
+        const qty = returnItems[item.id] || 0;
+        if (qty > 0) {
+          itemsToReturn.push({
+            id: item.id,
+            name: item.name,
+            qty: qty,
+            price: item.price
+          });
+          refundSubtotal += qty * item.price;
+        }
+      });
+
+      if (itemsToReturn.length === 0) {
+        alert('Please select at least one item to return.');
+        return;
       }
-    });
 
-    if (itemsToReturn.length === 0) {
-      alert('Please select at least one item to return.');
-      return;
-    }
+      // Apply proportional discount
+      // Calculate total original subtotal of invoice
+      const totalOriginalSubtotal = activeInvoice.items.reduce((sum, item) => sum + (item.qty * item.price), 0);
+      const discountProportion = activeInvoice.discountAmount / totalOriginalSubtotal;
+      const proportionalDiscountRefund = refundSubtotal * discountProportion;
 
-    // Apply proportional discount
-    // Calculate total original subtotal of invoice
-    const totalOriginalSubtotal = activeInvoice.items.reduce((sum, item) => sum + (item.qty * item.price), 0);
-    const discountProportion = activeInvoice.discountAmount / totalOriginalSubtotal;
-    const proportionalDiscountRefund = refundSubtotal * discountProportion;
+      // Apply taxes
+      const taxRefund = (refundSubtotal - proportionalDiscountRefund) * activeInvoice.taxRate;
+      const finalRefundAmount = refundSubtotal - proportionalDiscountRefund + taxRefund;
 
-    // Apply taxes
-    const taxRefund = (refundSubtotal - proportionalDiscountRefund) * activeInvoice.taxRate;
-    const finalRefundAmount = refundSubtotal - proportionalDiscountRefund + taxRefund;
+      const newReturn = {
+        invoiceId: activeInvoice.id,
+        customer: activeInvoice.customer,
+        branch: activeInvoice.branch,
+        date: '2026-06-02',
+        amount: parseFloat(finalRefundAmount.toFixed(2)),
+        status: isReturnWindowValid(activeInvoice.date) ? 'Refunded' : 'Pending Approval',
+        reason: returnReason,
+        condition: returnCondition,
+        items: itemsToReturn
+      };
 
-    const newReturnId = `RET-2026-00${returnState.returns.length + 1}`;
-    const newReturn = {
-      id: newReturnId,
-      invoiceId: activeInvoice.id,
-      customer: activeInvoice.customer,
-      branch: activeInvoice.branch,
-      date: '2026-06-02',
-      amount: parseFloat(finalRefundAmount.toFixed(2)),
-      status: isReturnWindowValid(activeInvoice.date) ? 'Refunded' : 'Pending Approval',
-      reason: returnReason,
-      condition: returnCondition,
-      items: itemsToReturn
+      // Call API to create return request on backend
+      createReturn(newReturn)
+        .then((res) => {
+          // Re-fetch all data from backend to ensure state is perfectly synchronized
+          return Promise.all([getInvoices(), getReturns()]);
+        })
+        .then(([invoicesRes, returnsRes]) => {
+          setReturnState({
+            invoices: invoicesRes.data || [],
+            returns: returnsRes.data || []
+          });
+
+          // Trigger modal receipt display with returned data
+          const createdReturn = returnsRes.data.find(ret => ret.invoiceId === newReturn.invoiceId);
+          setReceiptData(createdReturn || newReturn);
+          setIsReceiptOpen(true);
+
+          // Reset lookup form
+          setActiveInvoice(null);
+          setSearchInvoiceId('');
+          setReturnItems({});
+
+          alert(`Return Request created successfully.`);
+          setActiveTab('history');
+        })
+        .catch((err) => {
+          console.error("Error creating return:", err);
+          alert(`Failed to create return: ${err.response?.data?.message || err.message}`);
+        });
     };
 
-    // Update quantities in invoices mock database
-    const updatedInvoices = returnState.invoices.map(inv => {
-      if (inv.id === activeInvoice.id) {
-        return {
-          ...inv,
-          items: inv.items.map(item => {
-            const returned = returnItems[item.id] || 0;
-            return {
-              ...item,
-              returnedQty: item.returnedQty + returned
-            };
-          })
-        };
-      }
-      return inv;
-    });
-
-    // Update state
-    setReturnState({
-      invoices: updatedInvoices,
-      returns: [newReturn, ...returnState.returns]
-    });
-
-    // Trigger modal receipt display
-    setReceiptData(newReturn);
-    setIsReceiptOpen(true);
-
-    // Reset lookup form
-    setActiveInvoice(null);
-    setSearchInvoiceId('');
-    setReturnItems({});
-    
-    // Switch to history or show success
-    alert(`Return Request ${newReturnId} created. Status: ${newReturn.status}`);
-    setActiveTab('history');
-  };
-
   const handleStatusChange = (returnId, newStatus) => {
-    const updatedReturns = returnState.returns.map(ret => {
-      if (ret.id === returnId) {
-        return { ...ret, status: newStatus };
-      }
-      return ret;
-    });
+    updateReturnStatus(returnId, newStatus)
+      .then(() => {
+        return getReturns();
+      })
+      .then((returnsRes) => {
+        setReturnState(prevState => ({
+          ...prevState,
+          returns: returnsRes.data || []
+        }));
 
-    setReturnState({
-      ...returnState,
-      returns: updatedReturns
-    });
-
-    // Update details view
-    if (selectedReturnForDetails && selectedReturnForDetails.id === returnId) {
-      setSelectedReturnForDetails({
-        ...selectedReturnForDetails,
-        status: newStatus
+        // Update details view
+        if (selectedReturnForDetails && selectedReturnForDetails.id === returnId) {
+          setSelectedReturnForDetails({
+            ...selectedReturnForDetails,
+            status: newStatus
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("Error updating return status:", err);
       });
-    }
   };
 
   // Filter returns
@@ -924,3 +919,4 @@ const ReturnsPage = ({ returnState, setReturnState }) => {
 };
 
 export default ReturnsPage;
+
