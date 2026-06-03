@@ -19,7 +19,9 @@ class SocketService {
         try {
           const { event, data } = JSON.parse(e.data);
           this._emit(event, data);
-        } catch {}
+        } catch (error) {
+          console.warn('Ignored malformed WebSocket message:', error.message);
+        }
       };
       this.socket.onclose = () => {
         this.connected = false;
