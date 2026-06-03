@@ -699,6 +699,14 @@ export default function EmployeesPage() {
       <style>{`
         /* Scoped styles for Employee Management Module */
         .emp-module-panel {
+          /* Local override variables to enforce black/dark text contrast on light glass background */
+          --text-primary: #0f172a !important;
+          --text-secondary: #475569 !important;
+          --text-muted: #64748b !important;
+          --border-color: rgba(0, 0, 0, 0.12) !important;
+          --bg-secondary: rgba(255, 255, 255, 0.85) !important;
+          --bg-tertiary: rgba(0, 0, 0, 0.05) !important;
+
           animation: fadeIn 0.4s ease-out;
           font-family: var(--font-sans);
           color: var(--text-primary);
@@ -721,14 +729,14 @@ export default function EmployeesPage() {
           width: 100%;
         }
 
-        /* Glassmorphism generic style */
+        /* Glassmorphism generic style - Brightened and refined */
         .emp-glass-card {
-          background: rgba(255, 255, 255, 0.65);
-          backdrop-filter: blur(16px);
-          border: 1px solid rgba(255, 255, 255, 0.4);
+          background: rgba(255, 255, 255, 0.85);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.65);
           border-radius: 20px;
           padding: 24px;
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
           transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
@@ -738,11 +746,11 @@ export default function EmployeesPage() {
           justify-content: space-between;
           align-items: center;
           padding: 24px;
-          background: rgba(255, 255, 255, 0.65);
-          backdrop-filter: blur(16px);
-          border: 1px solid rgba(255, 255, 255, 0.45);
+          background: rgba(255, 255, 255, 0.85);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.65);
           border-radius: 20px;
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
           flex-wrap: wrap;
           gap: 16px;
         }
@@ -795,10 +803,10 @@ export default function EmployeesPage() {
           gap: 8px;
           overflow-x: auto;
           padding: 6px;
-          background: rgba(255, 255, 255, 0.4);
-          backdrop-filter: blur(10px);
+          background: rgba(255, 255, 255, 0.7);
+          backdrop-filter: blur(16px);
           border-radius: 14px;
-          border: 1px solid rgba(255, 255, 255, 0.25);
+          border: 1px solid rgba(255, 255, 255, 0.5);
           scrollbar-width: none;
           width: fit-content;
           max-width: 100%;
@@ -822,7 +830,7 @@ export default function EmployeesPage() {
           white-space: nowrap;
         }
         .emp-tab-button:hover {
-          background: rgba(255, 255, 255, 0.6);
+          background: rgba(255, 255, 255, 0.8);
           color: var(--text-primary);
         }
         .emp-tab-button.active {
@@ -836,12 +844,12 @@ export default function EmployeesPage() {
           display: grid;
           grid-template-columns: 2fr 1fr 1fr;
           gap: 16px;
-          background: rgba(255, 255, 255, 0.65);
-          backdrop-filter: blur(16px);
-          border: 1px solid rgba(255, 255, 255, 0.45);
+          background: rgba(255, 255, 255, 0.85);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.65);
           border-radius: 20px;
           padding: 20px;
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
         }
         @media (max-width: 768px) {
           .emp-filters-card {
@@ -865,7 +873,7 @@ export default function EmployeesPage() {
           padding: 10px 14px;
           border-radius: 10px;
           border: 1.5px solid rgba(0, 0, 0, 0.08);
-          background: rgba(255, 255, 255, 0.7);
+          background: rgba(255, 255, 255, 0.85);
           font-size: 0.82rem;
           font-weight: 600;
           color: var(--text-primary);
@@ -886,12 +894,12 @@ export default function EmployeesPage() {
           gap: 20px;
         }
         .emp-card {
-          background: rgba(255, 255, 255, 0.65);
-          backdrop-filter: blur(16px);
-          border: 1px solid rgba(255, 255, 255, 0.45);
+          background: rgba(255, 255, 255, 0.85);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.65);
           border-radius: 20px;
           padding: 20px;
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           display: flex;
           flex-direction: column;
@@ -951,10 +959,10 @@ export default function EmployeesPage() {
           width: fit-content;
           letter-spacing: 0.05em;
         }
-        .emp-role-tag.admin { background: rgba(126, 34, 206, 0.1); color: #7e22ce; border: 1px solid rgba(126, 34, 206, 0.25); }
-        .emp-role-tag.manager { background: rgba(5, 150, 105, 0.1); color: #059669; border: 1px solid rgba(5, 150, 105, 0.25); }
-        .emp-role-tag.cashier { background: rgba(37, 99, 235, 0.1); color: #2563eb; border: 1px solid rgba(37, 99, 235, 0.25); }
-        .emp-role-tag.inventory { background: rgba(217, 119, 6, 0.1); color: #d97706; border: 1px solid rgba(217, 119, 6, 0.25); }
+        .emp-role-tag.admin { background: rgba(126, 34, 206, 0.15); color: #7e22ce; border: 1px solid rgba(126, 34, 206, 0.3); }
+        .emp-role-tag.manager { background: rgba(5, 150, 105, 0.15); color: #059669; border: 1px solid rgba(5, 150, 105, 0.3); }
+        .emp-role-tag.cashier { background: rgba(37, 99, 235, 0.15); color: #2563eb; border: 1px solid rgba(37, 99, 235, 0.3); }
+        .emp-role-tag.inventory { background: rgba(217, 119, 6, 0.15); color: #d97706; border: 1px solid rgba(217, 119, 6, 0.3); }
 
         .emp-card-name {
           font-size: 0.95rem;
@@ -1028,35 +1036,35 @@ export default function EmployeesPage() {
 
         /* Scoped override for all white blocks (Scheduler, simulator, logs table etc.) to convert them to glassmorphic panels */
         .emp-module-panel .bg-white {
-          background: rgba(255, 255, 255, 0.65) !important;
-          backdrop-filter: blur(16px);
-          border: 1px solid rgba(255, 255, 255, 0.45) !important;
+          background: rgba(255, 255, 255, 0.85) !important;
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.65) !important;
           border-radius: 20px !important;
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04) !important;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08) !important;
         }
         .emp-module-panel .border-slate-100 {
-          border-color: rgba(255, 255, 255, 0.25) !important;
+          border-color: rgba(0, 0, 0, 0.05) !important;
         }
         .emp-module-panel .divide-slate-100 > * + * {
-          border-color: rgba(255, 255, 255, 0.2) !important;
+          border-color: rgba(0, 0, 0, 0.04) !important;
         }
         .emp-module-panel .bg-slate-50 {
-          background: rgba(255, 255, 255, 0.45) !important;
+          background: rgba(255, 255, 255, 0.55) !important;
         }
         .emp-module-panel .bg-slate-50/50 {
-          background: rgba(255, 255, 255, 0.25) !important;
+          background: rgba(255, 255, 255, 0.35) !important;
         }
         .emp-module-panel table th {
-          background: rgba(255, 255, 255, 0.5) !important;
+          background: rgba(255, 255, 255, 0.6) !important;
           color: var(--text-primary) !important;
           font-weight: 750 !important;
-          border-color: rgba(255, 255, 255, 0.2) !important;
+          border-color: rgba(0, 0, 0, 0.05) !important;
         }
         .emp-module-panel table td {
-          border-color: rgba(255, 255, 255, 0.15) !important;
+          border-color: rgba(0, 0, 0, 0.04) !important;
         }
         .emp-module-panel table tr:hover {
-          background: rgba(255, 255, 255, 0.3) !important;
+          background: rgba(255, 255, 255, 0.4) !important;
         }
       `}</style>
 
