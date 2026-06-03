@@ -7,6 +7,7 @@ import TopProducts from '../../components/dashboard/TopProducts';
 import LiveFeed from '../../components/dashboard/LiveFeed';
 import { useAuth } from '../../context/AuthContext';
 import { socketService } from '../../services/socketService';
+import SuppliersPage from '../suppliers/SuppliersPage';
 import EmployeesPage from '../employees/EmployeesPage';
 
 // Demo data generator
@@ -64,7 +65,7 @@ const MODULE_NAV_ITEMS = [
   { id: 'audit-logs', label: 'Audit Logs & Security', icon: '🛡️', page: 4 },
 ];
 
-const getDateRange = (preset) => {
+const _getDateRange = (preset) => {
   const now = new Date();
   const end = now.toISOString().split('T')[0];
   let start;
@@ -84,7 +85,7 @@ const Dashboard = ({ viewRole }) => {
   const [loading, setLoading] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState('all');
   const [datePreset, setDatePreset] = useState('month');
-  const [dateRange, setDateRange] = useState(getDateRange('month'));
+  const [dateRange, setDateRange] = useState(_getDateRange('month'));
   const [wsConnected, setWsConnected] = useState(false);
   const [liveTransaction, setLiveTransaction] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(new Date());
@@ -252,7 +253,7 @@ const Dashboard = ({ viewRole }) => {
       if (data.liveTransaction) setLiveTransaction(data.liveTransaction);
     });
     return () => socketService.disconnect();
-  }, []);
+  }, [token]);
 
   // Fetch data
   const fetchData = useCallback(async () => {
@@ -264,13 +265,13 @@ const Dashboard = ({ viewRole }) => {
     } finally {
       setLoading(false);
     }
-  }, [selectedBranch, dateRange]);
+  }, []);
 
-  useEffect(() => { fetchData(); }, [selectedBranch, datePreset]);
+  useEffect(() => { fetchData(); }, [selectedBranch, datePreset, fetchData]);
 
   const handlePreset = (preset) => {
     setDatePreset(preset);
-    if (preset !== 'custom') setDateRange(getDateRange(preset));
+    if (preset !== 'custom') setDateRange(_getDateRange(preset));
   };
 
   const selectedBranchData = BRANCHES.find(b => b.id === selectedBranch);
@@ -385,21 +386,21 @@ const Dashboard = ({ viewRole }) => {
               <div className="filter-group ml-auto"><div className="connection-status"><span className={`status-dot ${wsConnected ? 'connected' : 'disconnected'}`}></span><span className="status-text">{wsConnected ? 'Live Connection' : 'Reconnecting...'}</span></div></div>
             </div>
 
-            <section className="dash-section"><KPICards data={dashboardData} loading={loading} role={role} /></section>
+            <div className="dash-section"><KPICards data={dashboardData} loading={loading} role={role} /></div>
 
-            <section className="dash-section chart-section">
+            <div className="dash-section chart-section">
               <div className="section-header"><div className="section-title-wrapper"><span className="section-icon">📊</span><h2 className="section-title">Sales Analytics</h2><span className="section-badge">Real-time</span></div>
                 <div className="chart-controls"><button className="chart-control">Daily</button><button className="chart-control active">Weekly</button><button className="chart-control">Monthly</button></div>
               </div>
               <div className="chart-container"><SalesChart data={dashboardData} /></div>
-            </section>
+            </div>
 
-            <section className="dash-section">
+            <div className="dash-section">
               <div className="section-header"><div className="section-title-wrapper"><span className="section-icon">🏪</span><h2 className="section-title">Branch Performance</h2></div><button className="view-all-btn">View All Branches →</button></div>
               <BranchPerformance data={dashboardData} />
-            </section>
+            </div>
 
-            <section className="dash-section">
+            <div className="dash-section">
               <div className="section-header"><div className="section-title-wrapper"><span className="section-icon">📦</span><h2 className="section-title">Inventory Status</h2></div>
                 <div className="inventory-badge"><span className="badge-icon">⚠️</span><span>{dashboardData.low_stock_alerts?.count || 0} Low Stock Alerts</span></div>
               </div>
@@ -408,14 +409,14 @@ const Dashboard = ({ viewRole }) => {
                   <div className="quick-stat-card"><div className="stat-icon">🚚</div><div className="stat-info"><span className="stat-value">3</span><span className="stat-label">Pending Orders</span></div></div>
                 </div>
               </div>
-            </section>
+            </div>
 
-            <section className="dash-section">
+            <div className="dash-section">
               <div className="tp-live-grid">
                 <div className="top-products-wrapper"><div className="section-header"><div className="section-title-wrapper"><span className="section-icon">⭐</span><h2 className="section-title">Top Performing Products</h2></div></div><TopProducts data={dashboardData} /></div>
                 <div className="live-feed-wrapper"><div className="section-header"><div className="section-title-wrapper"><span className="section-icon">🔴</span><h2 className="section-title">Live Activity</h2>{wsConnected && <span className="live-badge">LIVE</span>}</div></div><LiveFeed wsConnected={wsConnected} liveTransaction={liveTransaction} /></div>
               </div>
-            </section>
+            </div>
           </>
         );
 
@@ -430,7 +431,7 @@ const Dashboard = ({ viewRole }) => {
       case 'customer-mgmt':
         return <ModuleDetail title="Customer Management" icon="👤" page={2} description="Manage customer data and transactions. Track loyalty rewards and points. Store customer purchase histories. Generate customer insights. Handle customer-related CRUD operations." features={['Customer Profiles', 'Purchase History', 'Loyalty Points', 'Customer Search & Filtering', 'Customer Analytics']} />;
       case 'supplier-mgmt':
-        return <ModuleDetail title="Supplier Management" icon="🚚" page={2} description="Manage supplier records. Store procurement and supply data. Generate supplier performance reports. Support supplier CRUD operations. Maintain supplier contracts and details." features={['Supplier Information', 'Transaction History', 'Supplier Registration & Updates', 'Performance Views', 'Supplier Filtering']} />;
+        return <SuppliersPage />;
       case 'product-mgmt':
         return <ModuleDetail title="Product Management" icon="📦" page={2} description="Store product and category information. Manage pricing structures. Handle product CRUD operations. Validate product data. Support barcode integration." features={['Product Catalog', 'Category & Brand Management', 'Product Image Uploads', 'Search & Filtering', 'Pricing & Stock Details', 'Barcode Integration']} />;
       case 'inventory-mgmt':
@@ -438,7 +439,30 @@ const Dashboard = ({ viewRole }) => {
       case 'warehouse-mgmt':
         return <ModuleDetail title="Warehouse Management" icon="🏭" page={2} description="Track warehouse inventory. Manage storage allocations. Record warehouse transactions. Handle warehouse transfers. Generate warehouse statistics." features={['Storage Location Visualization', 'Stock Allocations', 'Warehouse Transfers', 'Capacity Monitoring', 'Warehouse Reports']} />;
       case 'purchase-order':
-        return <ModuleDetail title="Purchase Order Management" icon="📋" page={2} description="Process purchase orders. Manage approval workflows. Update inventory upon receipt. Store procurement records. Generate purchasing analytics." features={['Purchase Order Forms', 'Order Status Tracking', 'Supplier-linked Purchases', 'Approval Management', 'Purchase Reports']} />;
+        return (
+          <>
+            <ModuleDetail title="Purchase Order Management" icon="PO" page={2} description="Process purchase orders. Manage approval workflows. Update inventory upon receipt. Store procurement records. Generate purchasing analytics." features={['Purchase Order Forms', 'Order Status Tracking', 'Supplier-linked Purchases', 'Approval Management', 'Purchase Reports']} />
+            <div style={{ marginTop: '-8px', marginBottom: '24px' }}>
+              <a
+                href="/purchase-orders"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '12px 20px',
+                  borderRadius: '14px',
+                  background: '#2563eb',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  boxShadow: '0 8px 20px rgba(37, 99, 235, 0.25)',
+                }}
+              >
+                Open Purchase Order Workspace
+              </a>
+            </div>
+          </>
+        );
       case 'pos-sales':
         return <ModuleDetail title="POS Sales & Billing" icon="🛒" page={3} description="Handle sales transactions. Process payments securely. Update inventory automatically. Store transaction records. Generate sales summaries." features={['Cashier POS Screens', 'Barcode Scanning', 'Shopping Cart Management', 'Digital Receipts', 'Multiple Payment Methods']} />;
       case 'returns-refund':

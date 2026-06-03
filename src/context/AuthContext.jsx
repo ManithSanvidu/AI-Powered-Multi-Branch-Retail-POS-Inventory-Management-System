@@ -1,33 +1,47 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import api from "../api/axiosInstance"; 
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState({
-    id: 1,
-    name: 'Amal Perera',
-    role: 'admin', // admin | manager | cashier
-    email: 'amal@retailpos.lk',
-    branch: 'Head Office - Colombo',
-    avatar: null,
-  });
-  const [token, setToken] = useState(localStorage.getItem('authToken') || 'demo-token');
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = (userData, authToken) => {
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    const token = localStorage.getItem("token");
+
+    if (storedUser && token) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error("Error parsing user data", error);
+        logout();
+      }
+    }
+    setLoading(false);
+  }, []);
+
+  const login = (userData, token) => {
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
-    setToken(authToken);
-    localStorage.setItem('authToken', authToken);
   };
 
   const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     setUser(null);
-    setToken(null);
-    localStorage.removeItem('authToken');
+  };
+
+  // Role check helper
+  const hasRole = (...roles) => {
+    return user && roles.includes(user.role);
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
-      {children}
+    <AuthContext.Provider value={{ user, login, logout, hasRole, loading }}>
+      {!loading && children}
     </AuthContext.Provider>
   );
 };
