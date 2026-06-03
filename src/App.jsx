@@ -4,6 +4,7 @@ import {
   Navigate,
   Route,
   Routes,
+  useNavigate,
 } from 'react-router-dom';
 import { FiAlertCircle, FiRefreshCw } from 'react-icons/fi';
 
@@ -11,6 +12,7 @@ import { CartProvider } from './context/CartContext';
 import { EmployeeProvider } from './context/EmployeeContext';
 import { ProductProvider } from './context/ProductContext';
 import { SalesProvider } from './context/SalesContext';
+import { InventoryProvider } from './context/InventoryContext';
 
 import Dashboard from './pages/dashboard/Dashboard';
 import EmployeesPage from './pages/employees/EmployeesPage';
@@ -24,6 +26,8 @@ import ProductDetailsPage from './pages/products/ProductDetailsPage';
 import ProductListPage from './pages/products/ProductListPage';
 import ReturnsPage from './pages/returns/ReturnsPage';
 import PurchaseOrdersPage from './pages/purchase-orders/PurchaseOrdersPage';
+import InventoryDashboard from './pages/inventory/InventoryDashboard';
+import MainLayout from './layouts/MainLayout';
 
 import './App.css';
 
@@ -100,6 +104,20 @@ const initialReturns = [
     ]
   }
 ];
+
+const InventoryRouteWrapper = () => {
+  const navigate = useNavigate();
+  return (
+    <InventoryProvider>
+      <MainLayout
+        activeRoute="inventory"
+        onNavigate={(route) => navigate(`/${route}`)}
+      >
+        <InventoryDashboard />
+      </MainLayout>
+    </InventoryProvider>
+  );
+};
 
 function App() {
   const [returnState, setReturnState] = useState({
@@ -184,6 +202,7 @@ function App() {
                     } 
                   />
                   <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
+                  <Route path="/inventory" element={<InventoryRouteWrapper />} />
                 </Routes>
               </div>
             </Router>
