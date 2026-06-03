@@ -3,10 +3,11 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 // Contexts
 import { AuthProvider } from "./context/AuthContext";
-import { CartProvider } from "./context/CartContext";
-import { EmployeeProvider } from "./context/EmployeeContext";
-import { ProductProvider } from "./context/ProductContext";
-import { SalesProvider } from "./context/SalesContext";
+import { CartProvider } from './context/CartContext';
+import { EmployeeProvider } from './context/EmployeeContext';
+import { ProductProvider } from './context/ProductContext';
+import { SalesProvider } from './context/SalesContext';
+import { BranchProvider } from "./context/BranchContext";
 
 // Routes
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -32,6 +33,9 @@ import AddProductPage from "./pages/products/AddProductPage";
 import EditProductPage from "./pages/products/EditProductPage";
 import ProductDetailsPage from "./pages/products/ProductDetailsPage";
 import CategoryManagementPage from "./pages/products/CategoryManagementPage";
+
+// Branch Pages
+import BranchListPage from "./pages/branches/BranchListPage";
 
 // Other Pages
 import ReturnsPage from "./pages/returns/ReturnsPage";
@@ -76,12 +80,13 @@ function App() {
         <ProductProvider>
           <SalesProvider>
             <CartProvider>
-              <BrowserRouter>
-                <div className="app-container">
-                  <Routes>
-                    {/* Public Auth Routes */}
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
+              <BranchProvider>
+                <BrowserRouter>
+                  <div className="app-container">
+                    <Routes>
+                      {/* Public Auth Routes */}
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/register" element={<Register />} />
                     <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/reset-password/:token" element={<ResetPassword />} />
                     <Route path="/unauthorized" element={<Unauthorized />} />
@@ -136,12 +141,14 @@ function App() {
                     <Route path="/employees" element={<EmployeesPage />} />
                     <Route path="/returns" element={<ReturnsPage />} />
                     <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
+                    <Route path="/branches" element={<BranchListPage />} />
 
                     {/* Default Redirect */}
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
                   </Routes>
                 </div>
-              </BrowserRouter>
+               </BrowserRouter>
+              </BranchProvider>
             </CartProvider>
           </SalesProvider>
         </ProductProvider>
