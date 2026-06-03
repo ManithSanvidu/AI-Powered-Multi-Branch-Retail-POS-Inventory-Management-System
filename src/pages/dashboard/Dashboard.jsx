@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import KPICards from '../../components/dashboard/KPICards';
 import SalesChart from '../../components/dashboard/SalesChart';
 import BranchPerformance from '../../components/dashboard/BranchPerformance';
@@ -7,9 +7,25 @@ import TopProducts from '../../components/dashboard/TopProducts';
 import LiveFeed from '../../components/dashboard/LiveFeed';
 import { useAuth } from '../../context/AuthContext';
 import { socketService } from '../../services/socketService';
-import SuppliersPage from '../suppliers/SuppliersPage';
-import EmployeesPage from '../employees/EmployeesPage';
-import ReturnsPage from '../returns/ReturnsPage';
+
+const SuppliersPage = lazy(() => import('../suppliers/SuppliersPage'));
+const EmployeesPage = lazy(() => import('../employees/EmployeesPage'));
+const ReturnsPage = lazy(() => import('../returns/ReturnsPage'));
+const StockTransferPage = lazy(() => import('../stock-transfer/StockTransferPage'));
+
+const ModuleLoading = () => (
+  <div
+    className="module-detail"
+    style={{
+      padding: 32,
+      textAlign: 'center',
+      color: '#475569',
+      fontWeight: 600,
+    }}
+  >
+    Loading module…
+  </div>
+);
 
 // Demo data generator
 const generateDemoData = () => ({
@@ -428,11 +444,19 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
       case 'branch-mgmt':
         return <ModuleDetail title="Branch Management" icon="🏢" page={1} description="Manage branch records and configurations. Link branches with employees and inventory. Store branch-level settings. Generate branch performance statistics. Handle branch-related business logic." features={['Branch Information Display', 'Performance Metrics', 'Branch Creation & Updates', 'Branch-specific Inventory & Sales', 'Branch Search Functionality']} />;
       case 'employee-mgmt':
-        return <EmployeesPage />;
+        return (
+          <Suspense fallback={<ModuleLoading />}>
+            <EmployeesPage />
+          </Suspense>
+        );
       case 'customer-mgmt':
         return <ModuleDetail title="Customer Management" icon="👤" page={2} description="Manage customer data and transactions. Track loyalty rewards and points. Store customer purchase histories. Generate customer insights. Handle customer-related CRUD operations." features={['Customer Profiles', 'Purchase History', 'Loyalty Points', 'Customer Search & Filtering', 'Customer Analytics']} />;
       case 'supplier-mgmt':
-        return <SuppliersPage />;
+        return (
+          <Suspense fallback={<ModuleLoading />}>
+            <SuppliersPage />
+          </Suspense>
+        );
       case 'product-mgmt':
         return <ModuleDetail title="Product Management" icon="📦" page={2} description="Store product and category information. Manage pricing structures. Handle product CRUD operations. Validate product data. Support barcode integration." features={['Product Catalog', 'Category & Brand Management', 'Product Image Uploads', 'Search & Filtering', 'Pricing & Stock Details', 'Barcode Integration']} />;
       case 'inventory-mgmt':
@@ -467,9 +491,17 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
       case 'pos-sales':
         return <ModuleDetail title="POS Sales & Billing" icon="🛒" page={3} description="Handle sales transactions. Process payments securely. Update inventory automatically. Store transaction records. Generate sales summaries." features={['Cashier POS Screens', 'Barcode Scanning', 'Shopping Cart Management', 'Digital Receipts', 'Multiple Payment Methods']} />;
       case 'returns-refund':
-        return <ReturnsPage returnState={returnState} setReturnState={setReturnState} />;
+        return (
+          <Suspense fallback={<ModuleLoading />}>
+            <ReturnsPage returnState={returnState} setReturnState={setReturnState} />
+          </Suspense>
+        );
       case 'stock-transfer':
-        return <ModuleDetail title="Stock Transfer" icon="🚛" page={3} description="Manage inter-branch stock transfers. Validate stock availability. Update inventories automatically. Record transfer logs. Generate transfer analytics." features={['Transfer Request Forms', 'Transfer Progress Tracking', 'Branch Stock Availability', 'Transfer History', 'Transfer Reports']} />;
+        return (
+          <Suspense fallback={<ModuleLoading />}>
+            <StockTransferPage />
+          </Suspense>
+        );
       case 'promotion':
         return <ModuleDetail title="Promotion & Discount Management" icon="🏷️" page={3} description="Apply pricing rules automatically. Manage promotional campaigns. Validate discount eligibility. Generate campaign reports. Maintain coupon records." features={['Promotion Campaigns', 'Discount Rule Configuration', 'Active Promotions Display', 'Coupon System Management', 'Campaign Performance Monitoring']} />;
       case 'ai-reorder':
@@ -516,12 +548,14 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
             </button>
           ))}
         </div>
-        {navExpanded && (
-          <div className="nav-footer">
-            <div className="nav-badge">Multi-Branch POS</div>
-            <div className="nav-module-count">{MODULE_NAV_ITEMS.length} Active Modules</div>
-          </div>
-        )}
+        <div className="nav-footer">
+          {navExpanded && (
+            <>
+              <div className="nav-badge">Multi-Branch POS</div>
+              <div className="nav-module-count">{MODULE_NAV_ITEMS.length} Active Modules</div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Dynamic Sky Background */}
@@ -670,10 +704,11 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
         .nav-icon { font-size: 20px; min-width: 28px; }
         .nav-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .nav-page { font-size: 10px; color: #64748b; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 10px; }
-        .nav-footer { padding: 16px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 11px; color: #64748b; text-align: center; }
+        .nav-footer { padding: 12px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 11px; color: #64748b; text-align: center; }
         .nav-badge { background: #3b82f6; color: white; padding: 4px 8px; border-radius: 20px; display: inline-block; margin-bottom: 8px; font-weight: 600; font-size: 10px; }
-        .nav-module-count { font-size: 10px; }
-        .floating-nav.collapsed .nav-label, .floating-nav.collapsed .nav-page, .floating-nav.collapsed .nav-title, .floating-nav.collapsed .nav-footer { display: none; }
+        .nav-module-count { font-size: 10px; margin-bottom: 8px; }
+        .floating-nav.collapsed .nav-label, .floating-nav.collapsed .nav-page, .floating-nav.collapsed .nav-title { display: none; }
+        .floating-nav.collapsed .nav-badge, .floating-nav.collapsed .nav-module-count { display: none; }
         .floating-nav.collapsed .nav-item { justify-content: center; padding: 12px; }
         .floating-nav.collapsed .nav-icon { font-size: 24px; min-width: auto; }
         
