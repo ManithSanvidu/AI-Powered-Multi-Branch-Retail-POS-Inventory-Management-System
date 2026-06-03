@@ -23,6 +23,7 @@ import EditProductPage from './pages/products/EditProductPage';
 import ProductDetailsPage from './pages/products/ProductDetailsPage';
 import ProductListPage from './pages/products/ProductListPage';
 import ReturnsPage from './pages/returns/ReturnsPage';
+import PurchaseOrdersPage from './pages/purchase-orders/PurchaseOrdersPage';
 
 import './App.css';
 
@@ -182,6 +183,7 @@ function App() {
                       </div>
                     } 
                   />
+                  <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
                 </Routes>
               </div>
             </Router>
