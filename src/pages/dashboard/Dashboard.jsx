@@ -7,6 +7,7 @@ import TopProducts from '../../components/dashboard/TopProducts';
 import LiveFeed from '../../components/dashboard/LiveFeed';
 import { useAuth } from '../../context/AuthContext';
 import { socketService } from '../../services/socketService';
+import SuppliersPage from '../suppliers/SuppliersPage';
 
 // Demo data generator
 const generateDemoData = () => ({
@@ -429,7 +430,7 @@ const Dashboard = ({ viewRole }) => {
       case 'customer-mgmt':
         return <ModuleDetail title="Customer Management" icon="👤" page={2} description="Manage customer data and transactions. Track loyalty rewards and points. Store customer purchase histories. Generate customer insights. Handle customer-related CRUD operations." features={['Customer Profiles', 'Purchase History', 'Loyalty Points', 'Customer Search & Filtering', 'Customer Analytics']} />;
       case 'supplier-mgmt':
-        return <ModuleDetail title="Supplier Management" icon="🚚" page={2} description="Manage supplier records. Store procurement and supply data. Generate supplier performance reports. Support supplier CRUD operations. Maintain supplier contracts and details." features={['Supplier Information', 'Transaction History', 'Supplier Registration & Updates', 'Performance Views', 'Supplier Filtering']} />;
+        return <SuppliersPage />;
       case 'product-mgmt':
         return <ModuleDetail title="Product Management" icon="📦" page={2} description="Store product and category information. Manage pricing structures. Handle product CRUD operations. Validate product data. Support barcode integration." features={['Product Catalog', 'Category & Brand Management', 'Product Image Uploads', 'Search & Filtering', 'Pricing & Stock Details', 'Barcode Integration']} />;
       case 'inventory-mgmt':
