@@ -7,6 +7,7 @@ import { CartProvider } from './context/CartContext';
 import { EmployeeProvider } from './context/EmployeeContext';
 import { ProductProvider } from './context/ProductContext';
 import { SalesProvider } from './context/SalesContext';
+import { BranchProvider } from "./context/BranchContext";
 
 // Routes
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -68,12 +69,13 @@ function App() {
         <ProductProvider>
           <SalesProvider>
             <CartProvider>
-              <BrowserRouter>
-                <div className="app-container">
-                  <Routes>
-                    {/* Public Auth Routes */}
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
+              <BranchProvider>
+                <BrowserRouter>
+                  <div className="app-container">
+                    <Routes>
+                      {/* Public Auth Routes */}
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/register" element={<Register />} />
                     <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/reset-password/:token" element={<ResetPassword />} />
                     <Route path="/unauthorized" element={<Unauthorized />} />
@@ -115,7 +117,8 @@ function App() {
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
                   </Routes>
                 </div>
-              </BrowserRouter>
+               </BrowserRouter>
+              </BranchProvider>
             </CartProvider>
           </SalesProvider>
         </ProductProvider>
