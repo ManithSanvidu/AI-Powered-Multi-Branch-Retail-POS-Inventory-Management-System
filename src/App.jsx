@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 // Contexts
@@ -32,6 +32,7 @@ import ProductListPage from './pages/products/ProductListPage';
 import ReturnsPage from './pages/returns/ReturnsPage';
 import PurchaseOrdersPage from './pages/purchase-orders/PurchaseOrdersPage';
 import BranchListPage from "./pages/branches/BranchListPage";
+import { getInvoices, getReturns } from './services/returnsApi';
 
 import './App.css';
 
@@ -40,6 +41,27 @@ const AdminPanel = () => <h1>🔐 Admin Panel</h1>;
 const Unauthorized = () => <h1>⛔ Unauthorized Access</h1>;
 
 function App() {
+  const [returnState, setReturnState] = useState({
+    invoices: [],
+    returns: []
+  });
+
+  useEffect(() => {
+    const fetchReturnsData = async () => {
+      try {
+        const invoicesRes = await getInvoices();
+        const returnsRes = await getReturns();
+        setReturnState({
+          invoices: invoicesRes.data || [],
+          returns: returnsRes.data || []
+        });
+      } catch (error) {
+        console.error("Error fetching returns/invoices from backend:", error);
+      }
+    };
+    fetchReturnsData();
+  }, []);
+
   return (
     <AuthProvider>
       <EmployeeProvider>
@@ -59,7 +81,7 @@ function App() {
                     {/* Private Routes (Protected) */}
                     <Route path="/dashboard" element={
                       <ProtectedRoute roles={["admin", "manager", "cashier"]}>
-                        <Dashboard />
+                        <Dashboard returnState={returnState} setReturnState={setReturnState} />
                       </ProtectedRoute>
                     } />
 
@@ -103,3 +125,4 @@ function App() {
 }
 
 export default App;
+
