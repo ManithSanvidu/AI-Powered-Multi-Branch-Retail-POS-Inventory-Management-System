@@ -1,50 +1,46 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { ArrowLeft, CheckCircle } from "lucide-react";
+import ReceiptPreview from "../../components/pos/ReceiptPreview";
 
 const ReceiptPage = () => {
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
+  const { state } = useLocation();
+  const sale      = state?.sale;
+
+  if (!sale) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-500 mb-4">No receipt data available.</p>
+          <button
+            onClick={() => navigate("/pos")}
+            className="bg-blue-600 text-white px-5 py-2 rounded-lg"
+          >
+            Back to POS
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center gap-4">
-      <div className="bg-white w-[400px] rounded-xl shadow-md p-6">
-        <h1 className="text-center text-2xl font-bold text-blue-600">
-          DIGITAL RECEIPT
-        </h1>
-
-        <hr className="my-4" />
-        <p>Invoice No : INV-001</p>
-        <p>Date : 2026-06-02</p>
-        <hr className="my-4" />
-
-        <div className="space-y-2">
-          <div className="flex justify-between">
-            <span>Rice x2</span>
-            <span>500</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Milk x1</span>
-            <span>800</span>
-          </div>
-        </div>
-
-        <hr className="my-4" />
-
-        <div className="flex justify-between text-xl font-bold text-blue-600">
-          <span>Total</span>
-          <span>1300</span>
-        </div>
-
-        <button className="w-full mt-6 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700">
-          Print Receipt
-        </button>
-
-        <button 
-          onClick={() => navigate("/")}
-          className="w-full mt-2 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition"
-        >
-          Back to POS
-        </button>
+    <div className="min-h-screen bg-slate-100 flex flex-col items-center py-10 px-4">
+      {/* Success banner */}
+      <div className="flex items-center gap-2 text-green-600 font-semibold mb-6 print:hidden">
+        <CheckCircle size={22} />
+        Sale Completed Successfully!
       </div>
+
+      {/* Receipt */}
+      <ReceiptPreview sale={sale} />
+
+      {/* Back button */}
+      <button
+        onClick={() => navigate("/pos")}
+        className="mt-5 flex items-center gap-2 bg-gray-200 text-gray-700 px-6 py-2.5 rounded-lg hover:bg-gray-300 font-medium print:hidden"
+      >
+        <ArrowLeft size={16} /> New Sale
+      </button>
     </div>
   );
 };
