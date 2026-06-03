@@ -31,6 +31,7 @@ import ProductDetailsPage from './pages/products/ProductDetailsPage';
 import ProductListPage from './pages/products/ProductListPage';
 import ReturnsPage from './pages/returns/ReturnsPage';
 import PurchaseOrdersPage from './pages/purchase-orders/PurchaseOrdersPage';
+import BranchListPage from "./pages/branches/BranchListPage";
 
 import './App.css';
 
@@ -86,6 +87,7 @@ function App() {
                     <Route path="/employees" element={<EmployeesPage />} />
                     <Route path="/returns" element={<ReturnsPage />} />
                     <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
+                    <Route path="/branches" element={<BranchListPage />} />
 
                     {/* Default redirect */}
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
