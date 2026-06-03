@@ -2,7 +2,11 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../../api/axiosInstance";
 
-const roles = ["cashier", "manager", "admin"];
+const roles = [
+  { label: "Cashier",     value: "cashier"  },
+  { label: "Manager",     value: "manager"  },
+  { label: "Admin",       value: "admin"    },
+];
 
 const Register = () => {
   const [form, setForm]       = useState({ name:"", email:"", password:"", role:"cashier" });
@@ -78,19 +82,19 @@ const Register = () => {
               Role
             </label>
             <select
-              name="role"
-              value={form.role}
-              onChange={handleChange}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg 
-                         text-sm focus:outline-none focus:ring-2 
-                         focus:ring-emerald-400 focus:border-transparent 
-                         transition bg-white"
+            name="role"
+            value={form.role}
+            onChange={handleChange}
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg 
+                        text-sm focus:outline-none focus:ring-2 
+                        focus:ring-emerald-400 focus:border-transparent 
+                        transition bg-white"
             >
-              {roles.map((r) => (
-                <option key={r} value={r}>
-                  {r.charAt(0).toUpperCase() + r.slice(1)}
+            {roles.map((r) => (
+                <option key={r.value} value={r.value}>
+                {r.label}
                 </option>
-              ))}
+            ))}
             </select>
           </div>
 
