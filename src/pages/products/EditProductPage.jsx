@@ -4,6 +4,8 @@ import {
   getProductById,
   updateProduct,
 } from "../../services/productManagementApi";
+import { getAllCategories } from "../../services/categoryManagementApi";
+import { getAllSuppliers } from "../../services/supplierManagementApi";
 
 function EditProductPage() {
   const { id } = useParams();
@@ -12,6 +14,8 @@ function EditProductPage() {
   const [formData, setFormData] = useState({
     name: "",
     barcode: "",
+    category: "",
+    supplier: "",
     brand: "",
     description: "",
     price: "",
@@ -19,6 +23,9 @@ function EditProductPage() {
     reorderLevel: "",
     unit: "",
   });
+
+  const [categories, setCategories] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
 
   const [currentImage, setCurrentImage] = useState("");
   const [newImage, setNewImage] = useState(null);
@@ -28,16 +35,24 @@ function EditProductPage() {
   const [updating, setUpdating] = useState(false);
   const [message, setMessage] = useState("");
 
-  const fetchProduct = async () => {
+  const fetchProductAndDropdownData = async () => {
     try {
       setLoading(true);
 
-      const response = await getProductById(id);
-      const product = response.data.product;
+      const productResponse = await getProductById(id);
+      const categoryResponse = await getAllCategories();
+      const supplierResponse = await getAllSuppliers();
+
+      const product = productResponse.data.product;
+
+      setCategories(categoryResponse.data.categories || []);
+      setSuppliers(supplierResponse.data.data || []);
 
       setFormData({
         name: product.name || "",
         barcode: product.barcode || "",
+        category: product.category?._id || product.category || "",
+        supplier: product.supplier?._id || product.supplier || "",
         brand: product.brand || "",
         description: product.description || "",
         price: product.price || "",
@@ -48,14 +63,14 @@ function EditProductPage() {
 
       setCurrentImage(product.image || "");
     } catch (error) {
-      setMessage("Failed to load product details");
+      setMessage("Failed to load product, categories, or suppliers");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchProduct();
+    fetchProductAndDropdownData();
   }, [id]);
 
   const handleInputChange = (e) => {
@@ -99,6 +114,14 @@ function EditProductPage() {
       productFormData.append("reorderLevel", formData.reorderLevel);
       productFormData.append("unit", formData.unit);
 
+      if (formData.category) {
+        productFormData.append("category", formData.category);
+      }
+
+      if (formData.supplier) {
+        productFormData.append("supplier", formData.supplier);
+      }
+
       if (newImage) {
         productFormData.append("image", newImage);
       }
@@ -133,7 +156,7 @@ function EditProductPage() {
         <div className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
           <h1 className="text-2xl font-bold text-slate-900">Edit Product</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Update product details, barcode, price, and product image.
+            Update product details, category, supplier, barcode, price, and image.
           </p>
         </div>
 
@@ -177,6 +200,46 @@ function EditProductPage() {
                   onChange={handleInputChange}
                   className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  Category
+                </label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                >
+                  <option value="">Select category</option>
+                  {categories.map((category) => (
+                    <option key={category._id} value={category._id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  Supplier
+                </label>
+                <select
+                  name="supplier"
+                  value={formData.supplier}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                >
+                  <option value="">Select supplier</option>
+                  {suppliers
+                    .filter((supplier) => supplier.status === "Active")
+                    .map((supplier) => (
+                      <option key={supplier._id} value={supplier._id}>
+                        {supplier.companyName}
+                      </option>
+                    ))}
+                </select>
               </div>
 
               <div>
