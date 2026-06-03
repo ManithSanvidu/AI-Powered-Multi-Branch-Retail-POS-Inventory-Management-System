@@ -62,7 +62,8 @@ function ProductDetailsPage() {
               Product Details
             </h1>
             <p className="mt-1 text-sm text-slate-500">
-              View complete product information, pricing, barcode, and status.
+              View complete product information, category, supplier, pricing,
+              barcode, and status.
             </p>
           </div>
 
@@ -158,6 +159,24 @@ function ProductDetailsPage() {
 
               <div className="rounded-xl border border-slate-200 bg-white p-4">
                 <p className="text-xs font-semibold uppercase text-slate-500">
+                  Category
+                </p>
+                <p className="mt-1 text-base font-semibold text-slate-900">
+                  {product.category?.name || "N/A"}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-white p-4">
+                <p className="text-xs font-semibold uppercase text-slate-500">
+                  Supplier
+                </p>
+                <p className="mt-1 text-base font-semibold text-slate-900">
+                  {product.supplier?.companyName || "N/A"}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-white p-4">
+                <p className="text-xs font-semibold uppercase text-slate-500">
                   Unit
                 </p>
                 <p className="mt-1 text-base font-semibold text-slate-900">
@@ -173,6 +192,50 @@ function ProductDetailsPage() {
                   {product.reorderLevel || 0}
                 </p>
               </div>
+            </div>
+
+            <div className="mt-6 rounded-xl border border-blue-100 bg-blue-50 p-4">
+              <p className="text-xs font-semibold uppercase text-blue-700">
+                Supplier Information
+              </p>
+
+              {product.supplier ? (
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  <p className="text-sm text-slate-700">
+                    <span className="font-semibold">Company:</span>{" "}
+                    {product.supplier.companyName || "N/A"}
+                  </p>
+
+                  <p className="text-sm text-slate-700">
+                    <span className="font-semibold">Contact Person:</span>{" "}
+                    {product.supplier.contactPerson || "N/A"}
+                  </p>
+
+                  <p className="text-sm text-slate-700">
+                    <span className="font-semibold">Phone:</span>{" "}
+                    {product.supplier.phone || "N/A"}
+                  </p>
+
+                  <p className="text-sm text-slate-700">
+                    <span className="font-semibold">Email:</span>{" "}
+                    {product.supplier.email || "N/A"}
+                  </p>
+
+                  <p className="text-sm text-slate-700">
+                    <span className="font-semibold">Status:</span>{" "}
+                    {product.supplier.status || "N/A"}
+                  </p>
+
+                  <p className="text-sm text-slate-700">
+                    <span className="font-semibold">Rating:</span>{" "}
+                    {product.supplier.rating || "N/A"}
+                  </p>
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-slate-500">
+                  No supplier assigned to this product.
+                </p>
+              )}
             </div>
 
             <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
