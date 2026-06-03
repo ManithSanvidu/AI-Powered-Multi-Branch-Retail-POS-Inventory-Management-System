@@ -439,30 +439,7 @@ const Dashboard = ({ viewRole }) => {
       case 'warehouse-mgmt':
         return <ModuleDetail title="Warehouse Management" icon="🏭" page={2} description="Track warehouse inventory. Manage storage allocations. Record warehouse transactions. Handle warehouse transfers. Generate warehouse statistics." features={['Storage Location Visualization', 'Stock Allocations', 'Warehouse Transfers', 'Capacity Monitoring', 'Warehouse Reports']} />;
       case 'purchase-order':
-        return (
-          <>
-            <ModuleDetail title="Purchase Order Management" icon="PO" page={2} description="Process purchase orders. Manage approval workflows. Update inventory upon receipt. Store procurement records. Generate purchasing analytics." features={['Purchase Order Forms', 'Order Status Tracking', 'Supplier-linked Purchases', 'Approval Management', 'Purchase Reports']} />
-            <div style={{ marginTop: '-8px', marginBottom: '24px' }}>
-              <a
-                href="/purchase-orders"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '12px 20px',
-                  borderRadius: '14px',
-                  background: '#2563eb',
-                  color: '#ffffff',
-                  fontWeight: 700,
-                  textDecoration: 'none',
-                  boxShadow: '0 8px 20px rgba(37, 99, 235, 0.25)',
-                }}
-              >
-                Open Purchase Order Workspace
-              </a>
-            </div>
-          </>
-        );
+        return <PurchaseOrderModulePreview />;
       case 'pos-sales':
         return <ModuleDetail title="POS Sales & Billing" icon="🛒" page={3} description="Handle sales transactions. Process payments securely. Update inventory automatically. Store transaction records. Generate sales summaries." features={['Cashier POS Screens', 'Barcode Scanning', 'Shopping Cart Management', 'Digital Receipts', 'Multiple Payment Methods']} />;
       case 'returns-refund':
@@ -895,6 +872,202 @@ const AIDemandForecastModule = () => (
         <div key={idx} className="feature-card"><span className="feature-icon">✓</span><span className="feature-text">{feature}</span></div>
       ))}
     </div>
+  </div>
+);
+
+const PurchaseOrderModulePreview = () => (
+  <div className="po-preview-module">
+    <div className="po-preview-hero">
+      <div className="po-preview-title">
+        <div className="po-preview-icon">PO</div>
+        <div>
+          <span className="module-page">Page 2 of PDF Document</span>
+          <h1>Purchase Order Management</h1>
+          <p>
+            A complete procurement command center for approvals, supplier-linked
+            purchases, smart reordering, receiving, and purchase reporting.
+          </p>
+        </div>
+      </div>
+      <a className="po-preview-cta" href="/purchase-orders">Open Workspace</a>
+    </div>
+
+    <div className="po-preview-kpis">
+      <div><strong>$59.7K</strong><span>Open PO value</span></div>
+      <div><strong>3</strong><span>Pending approvals</span></div>
+      <div><strong>96%</strong><span>Top supplier score</span></div>
+      <div><strong>4</strong><span>Receiving tasks</span></div>
+    </div>
+
+    <div className="po-preview-grid">
+      <div className="po-preview-card">
+        <h3>Most Wanted Features</h3>
+        {[
+          'Advanced PO creation with priority and expected delivery dates',
+          'Search, status filters, and CSV export',
+          'Manager approval and rejection actions',
+          'Goods receiving workflow that updates order status',
+          'AI reorder suggestions from low-stock signals',
+          'Supplier scorecards and procurement analytics',
+        ].map((feature) => (
+          <div className="po-preview-feature" key={feature}>
+            <span>✓</span>
+            <p>{feature}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="po-preview-card po-preview-flow">
+        <h3>Workflow</h3>
+        {['Draft PO', 'Manager review', 'Supplier dispatch', 'Goods received'].map((step, index) => (
+          <div className="po-preview-step" key={step}>
+            <span>{index + 1}</span>
+            <p>{step}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <style>{`
+      .po-preview-module {
+        background: rgba(255,255,255,0.96);
+        border-radius: 28px;
+        padding: 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 18px 60px rgba(15,23,42,0.12);
+      }
+      .po-preview-hero {
+        display: flex;
+        justify-content: space-between;
+        gap: 24px;
+        align-items: center;
+        padding: 28px;
+        border-radius: 24px;
+        color: #fff;
+        background: linear-gradient(135deg, #0f172a, #1d4ed8 52%, #0f766e);
+      }
+      .po-preview-title {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+      .po-preview-icon {
+        display: grid;
+        place-items: center;
+        width: 92px;
+        height: 92px;
+        border-radius: 24px;
+        background: rgba(255,255,255,0.18);
+        font-size: 34px;
+        font-weight: 900;
+      }
+      .po-preview-title h1 {
+        margin: 8px 0;
+        font-size: clamp(28px, 4vw, 44px);
+        color: #fff;
+      }
+      .po-preview-title p {
+        max-width: 760px;
+        color: rgba(255,255,255,0.82);
+        line-height: 1.55;
+      }
+      .po-preview-cta {
+        flex: 0 0 auto;
+        padding: 13px 20px;
+        border-radius: 14px;
+        color: #0f172a;
+        background: #fff;
+        font-weight: 800;
+        text-decoration: none;
+        box-shadow: 0 12px 28px rgba(0,0,0,0.18);
+      }
+      .po-preview-kpis {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        margin: 18px 0;
+      }
+      .po-preview-kpis div,
+      .po-preview-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 8px 24px rgba(15,23,42,0.06);
+      }
+      .po-preview-kpis div {
+        padding: 18px;
+      }
+      .po-preview-kpis strong {
+        display: block;
+        color: #0f172a;
+        font-size: 28px;
+        font-weight: 900;
+      }
+      .po-preview-kpis span {
+        color: #64748b;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .po-preview-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 360px;
+        gap: 18px;
+      }
+      .po-preview-card {
+        padding: 22px;
+      }
+      .po-preview-card h3 {
+        margin: 0 0 16px;
+        color: #0f172a;
+      }
+      .po-preview-feature,
+      .po-preview-step {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid #eef2f7;
+      }
+      .po-preview-feature:last-child,
+      .po-preview-step:last-child {
+        border-bottom: 0;
+      }
+      .po-preview-feature span,
+      .po-preview-step span {
+        display: grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 999px;
+        color: #fff;
+        background: #0f766e;
+        font-weight: 900;
+      }
+      .po-preview-feature p,
+      .po-preview-step p {
+        margin: 0;
+        color: #334155;
+        font-weight: 700;
+      }
+      .po-preview-flow .po-preview-step span {
+        background: #2563eb;
+      }
+      @media (max-width: 900px) {
+        .po-preview-hero,
+        .po-preview-title {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+        .po-preview-kpis,
+        .po-preview-grid {
+          grid-template-columns: 1fr;
+        }
+        .po-preview-cta {
+          width: 100%;
+          text-align: center;
+        }
+      }
+    `}</style>
   </div>
 );
 
