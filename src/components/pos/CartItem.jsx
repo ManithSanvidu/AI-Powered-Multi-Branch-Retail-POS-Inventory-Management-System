@@ -1,46 +1,97 @@
-const CartItem = ({
-  item,
-  increaseQty,
-  decreaseQty,
-  removeItem,
-}) => {
+// const CartItem = ({
+//   item,
+//   increaseQty,
+//   decreaseQty,
+//   removeItem,
+// }) => {
+//   return (
+//     <div className="border-b pb-3">
+//       <div className="flex justify-between">
+//         <h4 className="font-medium">
+//           {item.name}
+//         </h4>
+
+//         <button
+//           onClick={() => removeItem(item._id)}
+//           className="text-red-500"
+//         >
+//           ✕
+//         </button>
+//       </div>
+
+//       <div className="flex items-center justify-between mt-2">
+//         <div className="flex gap-2">
+//           <button
+//             onClick={() => decreaseQty(item._id)}
+//             className="px-2 bg-gray-200 rounded"
+//           >
+//             -
+//           </button>
+
+//           <span>{item.qty}</span>
+
+//           <button
+//             onClick={() => increaseQty(item._id)}
+//             className="px-2 bg-gray-200 rounded"
+//           >
+//             +
+//           </button>
+//         </div>
+
+//         <span className="font-semibold">
+//           Rs. {item.price * item.qty}
+//         </span>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default CartItem;
+import { Plus, Minus, Trash2 } from "lucide-react";
+
+
+const CartItem = ({ item, increaseQty, decreaseQty, removeItem }) => {
+  const price = item.price ?? item.sellingPrice ?? 0;
+  const lineTotal = price * item.qty;
+
   return (
-    <div className="border-b pb-3">
-      <div className="flex justify-between">
-        <h4 className="font-medium">
-          {item.name}
-        </h4>
+    <div className="flex items-start gap-2 border rounded-lg p-2 bg-white hover:border-blue-200 transition">
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-semibold truncate text-gray-800">{item.name}</p>
+        <p className="text-[10px] text-gray-400">
+          Rs.{price.toLocaleString()} each
+        </p>
 
-        <button
-          onClick={() => removeItem(item._id)}
-          className="text-red-500"
-        >
-          ✕
-        </button>
-      </div>
-
-      <div className="flex items-center justify-between mt-2">
-        <div className="flex gap-2">
+        {/* Qty controls */}
+        <div className="flex items-center gap-1.5 mt-1.5">
           <button
             onClick={() => decreaseQty(item._id)}
-            className="px-2 bg-gray-200 rounded"
+            className="w-5 h-5 rounded-full border flex items-center justify-center hover:bg-gray-100 active:bg-gray-200"
           >
-            -
+            <Minus size={9} />
           </button>
-
-          <span>{item.qty}</span>
-
+          <span className="text-xs font-bold w-5 text-center">{item.qty}</span>
           <button
             onClick={() => increaseQty(item._id)}
-            className="px-2 bg-gray-200 rounded"
+            className="w-5 h-5 rounded-full border flex items-center justify-center hover:bg-gray-100 active:bg-gray-200"
           >
-            +
+            <Plus size={9} />
           </button>
         </div>
+      </div>
 
-        <span className="font-semibold">
-          Rs. {item.price * item.qty}
-        </span>
+      {/* Line total + remove */}
+      <div className="text-right shrink-0">
+        <p className="text-sm font-bold text-blue-600">
+          Rs.{lineTotal.toLocaleString()}
+        </p>
+        <button
+          onClick={() => removeItem(item._id)}
+          className="text-red-400 hover:text-red-600 mt-1"
+          title="Remove item"
+        >
+          <Trash2 size={12} />
+        </button>
       </div>
     </div>
   );

@@ -1,32 +1,33 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState } from 'react';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState({
-    id: 1,
-    name: 'Amal Perera',
-    role: 'admin', // admin | manager | cashier
-    email: 'amal@retailpos.lk',
-    branch: 'Head Office - Colombo',
-    avatar: null,
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('pos_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
   });
-  const [token, setToken] = useState(localStorage.getItem('authToken') || 'demo-token');
+
+  const [token, setToken] = useState(() => localStorage.getItem('pos_token') || null);
 
   const login = (userData, authToken) => {
     setUser(userData);
     setToken(authToken);
-    localStorage.setItem('authToken', authToken);
+    localStorage.setItem('pos_token', authToken);
+    localStorage.setItem('pos_user', JSON.stringify(userData));
   };
 
   const logout = () => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem('authToken');
+    localStorage.removeItem('pos_token');
+    localStorage.removeItem('pos_user');
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={{ user, token, login, logout, isLoggedIn: !!token }}>
       {children}
     </AuthContext.Provider>
   );
