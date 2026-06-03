@@ -199,7 +199,55 @@ const ReturnsPage = ({ returnState, setReturnState }) => {
   });
 
   return (
-    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', textAlign: 'left' }}>
+    <div className="glass-card returns-theme-override" style={{
+      padding: '32px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '24px',
+      textAlign: 'left',
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      backdropFilter: 'blur(10px)',
+      borderRadius: '24px',
+      border: '1px solid #e2e8f0',
+      marginBottom: '24px'
+    }}>
+      <style>{`
+        .returns-theme-override {
+          --text-primary: #1e293b !important;
+          --text-secondary: #475569 !important;
+          --text-muted: #64748b !important;
+          --bg-primary: #f8fafc !important;
+          --bg-secondary: #ffffff !important;
+          --bg-tertiary: #f1f5f9 !important;
+          --border-color: #e2e8f0 !important;
+          --accent-color: #3b82f6 !important;
+          --accent-hover: #2563eb !important;
+          --accent-light: rgba(59, 130, 246, 0.1) !important;
+          --success-light: rgba(16, 185, 129, 0.1) !important;
+          --warning-light: rgba(245, 158, 11, 0.1) !important;
+          --danger-light: rgba(239, 68, 68, 0.1) !important;
+        }
+        /* Explicitly color headings and bold text dark slate */
+        .returns-theme-override h1:not([style*="color"]),
+        .returns-theme-override h2:not([style*="color"]),
+        .returns-theme-override h3:not([style*="color"]),
+        .returns-theme-override h4:not([style*="color"]),
+        .returns-theme-override h5:not([style*="color"]),
+        .returns-theme-override h6:not([style*="color"]),
+        .returns-theme-override strong:not([style*="color"]),
+        .returns-theme-override b:not([style*="color"]) {
+          color: #1e293b !important;
+        }
+        /* Explicitly color general text elements slate grey */
+        .returns-theme-override span:not([style*="color"]),
+        .returns-theme-override p:not([style*="color"]),
+        .returns-theme-override label:not([style*="color"]),
+        .returns-theme-override td:not([style*="color"]),
+        .returns-theme-override th:not([style*="color"]),
+        .returns-theme-override a:not([style*="color"]) {
+          color: #475569 !important;
+        }
+      `}</style>
       
       {/* Header Info */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
