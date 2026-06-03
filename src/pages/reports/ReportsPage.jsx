@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { FileDown, FileSpreadsheet, BarChart2, RefreshCw } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { FileDown, FileSpreadsheet, BarChart2, RefreshCw, Database, AlertCircle } from 'lucide-react';
 
 import ReportSummaryCards from '../../components/reports/ReportSummaryCards';
 import ReportFilter from '../../components/reports/ReportFilter';
@@ -9,20 +9,139 @@ import BranchPerformanceChart from '../../components/reports/BranchPerformanceCh
 import ScheduledReports from '../../components/reports/ScheduledReports';
 import ReportHistory from '../../components/reports/ReportHistory';
 
+import {
+  fetchReportSummary,
+  fetchSalesReport,
+  fetchInventoryReport,
+  fetchBranchPerformance,
+  fetchReportHistory,
+  fetchScheduledReports,
+  exportPDF,
+  exportExcel,
+} from '../../services/reportService';
+
 function ReportsPage() {
   const [filters, setFilters] = useState({});
-  const [lastRefreshed] = useState(() =>
+  const [lastRefreshed, setLastRefreshed] = useState(() =>
     new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
   );
 
-  const handleExportPDF = () => {
-    // Placeholder — wire to reportService.exportPDF() when backend is ready
-    alert('PDF export will be available after backend integration.');
+  const [summary, setSummary] = useState(null);
+  const [sales, setSales] = useState([]);
+  const [inventory, setInventory] = useState(null);
+  const [branchPerf, setBranchPerf] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [scheduled, setScheduled] = useState([]);
+  
+  const [loading, setLoading] = useState(true);
+  const [source, setSource] = useState('fallback');
+  const [error, setError] = useState(null);
+
+  const loadData = async (filterObj = filters) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [sumRes, salesRes, invRes, branchRes, histRes, schedRes] = await Promise.all([
+        fetchReportSummary(),
+        fetchSalesReport(filterObj),
+        fetchInventoryReport(),
+        fetchBranchPerformance(filterObj),
+        fetchReportHistory(),
+        fetchScheduledReports(),
+      ]);
+
+      if (sumRes.data) setSummary(sumRes.data);
+      if (salesRes.data) setSales(salesRes.data);
+      if (invRes.data) setInventory(invRes.data);
+      if (branchRes.data) setBranchPerf(branchRes.data);
+      if (histRes.data) setHistory(histRes.data);
+      if (schedRes.data) setScheduled(schedRes.data);
+
+      // Determine cumulative source
+      const sources = [
+        sumRes.source,
+        salesRes.source,
+        invRes.source,
+        branchRes.source,
+        histRes.source,
+        schedRes.source,
+      ];
+      if (sources.includes('api')) {
+        setSource('api');
+      } else if (sources.includes('api-sample')) {
+        setSource('api-sample');
+      } else {
+        setSource('fallback');
+      }
+
+      setLastRefreshed(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
+    } catch (err) {
+      console.error('Error fetching reports data:', err);
+      setError(err.message || 'Failed to load reports data from server');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleExportExcel = () => {
-    // Placeholder — wire to reportService.exportExcel() when backend is ready
-    alert('Excel export will be available after backend integration.');
+  useEffect(() => {
+    loadData(filters);
+  }, [filters]);
+
+  const handleExportPDF = async () => {
+    try {
+      const res = await exportPDF({
+        reportType: filters.type,
+        branch: filters.branch,
+        fromDate: filters.fromDate,
+        toDate: filters.toDate,
+      });
+      if (!res.success) {
+        alert(`PDF export failed: ${res.error || 'Server rejected the request.'}`);
+      }
+    } catch (err) {
+      alert(`PDF export failed: ${err.message}`);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      const res = await exportExcel({
+        reportType: filters.type,
+        branch: filters.branch,
+        fromDate: filters.fromDate,
+        toDate: filters.toDate,
+      });
+      if (!res.success) {
+        alert(`Excel export failed: ${res.error || 'Server rejected the request.'}`);
+      }
+    } catch (err) {
+      alert(`Excel export failed: ${err.message}`);
+    }
+  };
+
+  const getSourceBadge = () => {
+    if (source === 'api') {
+      return (
+        <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+          <Database size={12} />
+          Live MongoDB
+        </span>
+      );
+    }
+    if (source === 'api-sample') {
+      return (
+        <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
+          <Database size={12} />
+          API (Sample Data)
+        </span>
+      );
+    }
+    return (
+      <span className="flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-semibold text-rose-700">
+        <AlertCircle size={12} />
+        Offline Fallback
+      </span>
+    );
   };
 
   return (
@@ -37,13 +156,14 @@ function ReportsPage() {
                 <BarChart2 size={20} className="text-white" />
               </div>
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-xl font-bold text-slate-900">
                     Reports &amp; Analytics
                   </h1>
                   <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
                     Reporting Module
                   </span>
+                  {getSourceBadge()}
                 </div>
                 <p className="text-xs text-slate-500">
                   AI-Powered Multi-Branch Retail POS · Last refreshed {lastRefreshed}
@@ -54,10 +174,11 @@ function ReportsPage() {
             {/* Action buttons */}
             <div className="flex flex-wrap items-center gap-2">
               <button
-                onClick={() => window.location.reload()}
-                className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-800 active:scale-95"
+                onClick={() => loadData(filters)}
+                disabled={loading}
+                className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-800 active:scale-95 disabled:opacity-50"
               >
-                <RefreshCw size={14} />
+                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
                 Refresh
               </button>
               <button
@@ -81,50 +202,55 @@ function ReportsPage() {
 
       {/* ── Page Body ── */}
       <div className="mx-auto max-w-screen-2xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+        {error && (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-800 flex gap-3 items-start">
+            <span className="text-rose-500 font-bold">⚠️</span>
+            <div>
+              <p className="font-semibold">Backend Error</p>
+              <p className="text-xs text-rose-600 mt-0.5">{error}</p>
+            </div>
+          </div>
+        )}
 
         {/* 1 — KPI Summary Cards */}
-        <ReportSummaryCards />
+        <ReportSummaryCards data={summary} loading={loading} />
 
         {/* 2 — Filters */}
         <ReportFilter onFilterChange={setFilters} />
 
         {/* 3 — Charts row */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <SalesTrendChart />
-          <BranchPerformanceChart />
+          <SalesTrendChart salesData={sales} />
+          <BranchPerformanceChart branchData={branchPerf} />
         </div>
 
         {/* 4 — Report Preview Table */}
-        <ReportPreviewTable filters={filters} />
+        <ReportPreviewTable reports={sales} loading={loading} source={source} />
 
         {/* 5 — Scheduled + History row */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <ScheduledReports />
-          <ReportHistory />
+          <ScheduledReports scheduled={scheduled} />
+          <ReportHistory history={history} />
         </div>
 
-        {/* 6 — API Integration Notice */}
-        <div className="rounded-2xl border border-blue-200 bg-blue-50 px-5 py-4">
-          <div className="flex gap-3">
-            <span className="mt-0.5 text-blue-500">ℹ️</span>
-            <div>
-              <p className="text-sm font-semibold text-blue-800">
-                Backend API Integration Pending
-              </p>
-              <p className="mt-0.5 text-xs text-blue-600">
-                This page currently displays static sample data. Once{' '}
-                <code className="rounded bg-blue-100 px-1 font-mono">
-                  feature/tharsiga-reporting-backend
-                </code>{' '}
-                endpoints are merged into Dev, replace{' '}
-                <code className="rounded bg-blue-100 px-1 font-mono">
-                  src/services/reportService.js
-                </code>{' '}
-                placeholders with real API calls.
-              </p>
+        {/* 6 — API Integration Status info */}
+        {source !== 'api' && (
+          <div className="rounded-2xl border border-blue-200 bg-blue-50 px-5 py-4">
+            <div className="flex gap-3">
+              <span className="mt-0.5 text-blue-500">ℹ️</span>
+              <div>
+                <p className="text-sm font-semibold text-blue-800">
+                  {source === 'api-sample' ? 'Connected to Backend (Empty Database fallback)' : 'Offline / Static Fallback Active'}
+                </p>
+                <p className="mt-0.5 text-xs text-blue-600">
+                  {source === 'api-sample' 
+                    ? 'The backend is active but the MongoDB database is empty or disconnected. The page is rendering mock data generated by the backend API.'
+                    : 'The backend development server at http://localhost:5000 is unreachable. The frontend is rendering local static fallback mock data.'}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

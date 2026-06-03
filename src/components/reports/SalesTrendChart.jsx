@@ -9,21 +9,6 @@ import {
 } from 'recharts';
 import { TrendingUp } from 'lucide-react';
 
-const data = [
-  { month: 'Jan', sales: 1200000 },
-  { month: 'Feb', sales: 1450000 },
-  { month: 'Mar', sales: 1380000 },
-  { month: 'Apr', sales: 1620000 },
-  { month: 'May', sales: 1890000 },
-  { month: 'Jun', sales: 2150000 },
-  { month: 'Jul', sales: 1970000 },
-  { month: 'Aug', sales: 2240000 },
-  { month: 'Sep', sales: 2100000 },
-  { month: 'Oct', sales: 2380000 },
-  { month: 'Nov', sales: 2650000 },
-  { month: 'Dec', sales: 2400000 },
-];
-
 const formatLKR = (value) => {
   if (value >= 1000000) return `LKR ${(value / 1000000).toFixed(1)}M`;
   if (value >= 1000) return `LKR ${(value / 1000).toFixed(0)}K`;
@@ -42,7 +27,55 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-function SalesTrendChart() {
+const processSalesData = (salesArray) => {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const monthlyTotals = months.reduce((acc, m) => {
+    acc[m] = 0;
+    return acc;
+  }, {});
+
+  let hasRealDbData = false;
+
+  if (salesArray && salesArray.length > 0) {
+    salesArray.forEach((sale) => {
+      if (sale.createdAt) {
+        hasRealDbData = true;
+        const date = new Date(sale.createdAt);
+        const m = months[date.getMonth()];
+        const amount = sale.finalAmount || sale.totalAmount || 0;
+        monthlyTotals[m] += amount;
+      }
+    });
+  }
+
+  if (hasRealDbData) {
+    return months.map((m) => ({
+      month: m,
+      sales: monthlyTotals[m],
+    }));
+  }
+
+  // Fallback to static curve
+  return [
+    { month: 'Jan', sales: 1200000 },
+    { month: 'Feb', sales: 1450000 },
+    { month: 'Mar', sales: 1380000 },
+    { month: 'Apr', sales: 1620000 },
+    { month: 'May', sales: 1890000 },
+    { month: 'Jun', sales: 2150000 },
+    { month: 'Jul', sales: 1970000 },
+    { month: 'Aug', sales: 2240000 },
+    { month: 'Sep', sales: 2100000 },
+    { month: 'Oct', sales: 2380000 },
+    { month: 'Nov', sales: 2650000 },
+    { month: 'Dec', sales: 2400000 },
+  ];
+};
+
+function SalesTrendChart({ salesData }) {
+  const chartData = processSalesData(salesData);
+  const isReal = salesData && salesData.some((s) => s.createdAt);
+
   return (
     <section
       className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm"
@@ -53,7 +86,9 @@ function SalesTrendChart() {
           <TrendingUp size={16} className="text-blue-600" />
           <div>
             <h2 className="text-sm font-semibold text-slate-800">Sales Trend</h2>
-            <p className="text-xs text-slate-500">Monthly revenue — 2026 (sample data)</p>
+            <p className="text-xs text-slate-500">
+              Monthly revenue — 2026 {isReal ? '(Live Database)' : '(Sample Data)'}
+            </p>
           </div>
         </div>
         <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600 ring-1 ring-emerald-200">
@@ -62,7 +97,7 @@ function SalesTrendChart() {
       </div>
 
       <ResponsiveContainer width="100%" height={220}>
-        <AreaChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+        <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#2563eb" stopOpacity={0.15} />

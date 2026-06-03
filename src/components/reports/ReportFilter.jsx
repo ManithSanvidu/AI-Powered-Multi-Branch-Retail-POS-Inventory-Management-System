@@ -51,6 +51,10 @@ function ReportFilter({ onFilterChange }) {
     toDate ||
     search;
 
+  const handleApply = () => {
+    onFilterChange?.({ type, branch, status, fromDate, toDate, search });
+  };
+
   const selectClass =
     'w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 cursor-pointer';
 
@@ -179,7 +183,10 @@ function ReportFilter({ onFilterChange }) {
 
           {/* Apply button row */}
           <div className="mt-4 flex justify-end">
-            <button className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-95">
+            <button
+              onClick={handleApply}
+              className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-95 cursor-pointer"
+            >
               Apply Filters
             </button>
           </div>

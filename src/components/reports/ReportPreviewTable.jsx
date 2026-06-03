@@ -1,56 +1,5 @@
 import { useState } from 'react';
-import { Download, Eye, FileText, ChevronUp, ChevronDown } from 'lucide-react';
-
-const REPORT_DATA = [
-  {
-    id: 'RPT-001',
-    branch: 'Colombo',
-    type: 'Sales',
-    period: 'May 2026',
-    amount: 'LKR 850,000',
-    status: 'Completed',
-  },
-  {
-    id: 'RPT-002',
-    branch: 'Kandy',
-    type: 'Inventory',
-    period: 'May 2026',
-    amount: 'LKR 420,000',
-    status: 'Review',
-  },
-  {
-    id: 'RPT-003',
-    branch: 'Galle',
-    type: 'Sales',
-    period: 'May 2026',
-    amount: 'LKR 610,000',
-    status: 'Completed',
-  },
-  {
-    id: 'RPT-004',
-    branch: 'All Branches',
-    type: 'Business Summary',
-    period: 'Q2 2026',
-    amount: 'LKR 2,400,000',
-    status: 'Scheduled',
-  },
-  {
-    id: 'RPT-005',
-    branch: 'Jaffna',
-    type: 'Branch Performance',
-    period: 'May 2026',
-    amount: 'LKR 310,000',
-    status: 'Pending',
-  },
-  {
-    id: 'RPT-006',
-    branch: 'Negombo',
-    type: 'Customer',
-    period: 'May 2026',
-    amount: 'LKR 195,000',
-    status: 'Completed',
-  },
-];
+import { Download, Eye, FileText, ChevronUp, ChevronDown, Database, AlertCircle } from 'lucide-react';
 
 const STATUS_STYLES = {
   Completed: 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200',
@@ -66,7 +15,7 @@ const STATUS_DOT = {
   Pending: 'bg-slate-400',
 };
 
-function ReportPreviewTable() {
+function ReportPreviewTable({ reports, loading, source }) {
   const [sortField, setSortField] = useState('id');
   const [sortDir, setSortDir] = useState('asc');
 
@@ -80,7 +29,7 @@ function ReportPreviewTable() {
   };
 
   const SortIcon = ({ field }) => {
-    if (sortField !== field) return <ChevronUp size={12} className="text-slate-300" />;
+    if (sortField !== field) return <ChevronUp size={12} className="text-slate-300 animate-none" />;
     return sortDir === 'asc' ? (
       <ChevronUp size={12} className="text-blue-600" />
     ) : (
@@ -89,7 +38,84 @@ function ReportPreviewTable() {
   };
 
   const thClass =
-    'px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 cursor-pointer select-none hover:text-slate-700';
+    'px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 cursor-pointer select-none hover:text-slate-700 transition-colors';
+
+  if (loading && (!reports || reports.length === 0)) {
+    return (
+      <section
+        className="rounded-2xl border border-slate-200/80 bg-white shadow-sm"
+        aria-label="Loading Reports Table"
+      >
+        <div className="flex items-center gap-2 border-b border-slate-100 px-5 py-4">
+          <FileText size={16} className="text-blue-600" />
+          <div>
+            <div className="h-4 w-28 rounded bg-slate-100 animate-pulse" />
+            <div className="h-3 w-40 rounded bg-slate-50 animate-pulse mt-1" />
+          </div>
+        </div>
+        <div className="p-5 space-y-4 animate-pulse">
+          <div className="h-8 bg-slate-50 rounded-xl" />
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex justify-between items-center py-3 border-b border-slate-50">
+              <div className="h-4 w-24 bg-slate-100 rounded" />
+              <div className="h-4 w-20 bg-slate-100 rounded" />
+              <div className="h-4 w-16 bg-slate-100 rounded" />
+              <div className="h-4 w-24 bg-slate-200 rounded" />
+              <div className="h-4 w-16 bg-slate-100 rounded" />
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  // Unified mapping to handle both DB schemas and static fallback schemas
+  const mappedReports = (reports || []).map((r) => {
+    const rawAmount =
+      r.amount !== undefined
+        ? r.amount
+        : r.finalAmount !== undefined
+        ? r.finalAmount
+        : r.totalAmount !== undefined
+        ? r.totalAmount
+        : 0;
+
+    return {
+      id: r.invoiceNumber || r.id || r._id || '',
+      branch: r.branch?.name || r.branch || 'Unknown',
+      type: r.type || 'POS Sale',
+      period:
+        r.period ||
+        (r.createdAt
+          ? new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+          : 'Unknown'),
+      amountVal:
+        typeof rawAmount === 'number'
+          ? rawAmount
+          : parseFloat(String(rawAmount).replace(/[^0-9.-]+/g, '')) || 0,
+      amountStr:
+        typeof rawAmount === 'number' ? `LKR ${rawAmount.toLocaleString()}` : String(rawAmount),
+      status: r.status || 'Completed',
+      raw: r,
+    };
+  });
+
+  // Client-side sort
+  const sortedReports = [...mappedReports].sort((a, b) => {
+    let valA = a[sortField];
+    let valB = b[sortField];
+
+    if (sortField === 'amount') {
+      valA = a.amountVal;
+      valB = b.amountVal;
+    }
+
+    if (typeof valA === 'string') {
+      return sortDir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+    } else {
+      return sortDir === 'asc' ? valA - valB : valB - valA;
+    }
+  });
 
   return (
     <section
@@ -102,11 +128,17 @@ function ReportPreviewTable() {
           <FileText size={16} className="text-blue-600" />
           <div>
             <h2 className="text-sm font-semibold text-slate-800">Report Preview</h2>
-            <p className="text-xs text-slate-500">Static sample data — backend API pending</p>
+            <p className="text-xs text-slate-500">
+              {source === 'api'
+                ? 'Live sales records fetched from database'
+                : source === 'api-sample'
+                ? 'Sample records generated by backend'
+                : 'Offline fallback static data'}
+            </p>
           </div>
         </div>
         <span className="w-fit rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600 ring-1 ring-blue-200">
-          {REPORT_DATA.length} Reports
+          {sortedReports.length} Reports
         </span>
       </div>
 
@@ -141,61 +173,88 @@ function ReportPreviewTable() {
           </thead>
 
           <tbody className="divide-y divide-slate-100">
-            {REPORT_DATA.map((report, idx) => (
-              <tr
-                key={report.id}
-                className="group transition-colors hover:bg-slate-50/70"
-              >
-                <td className="px-4 py-3.5">
-                  <span className="font-mono text-xs font-semibold text-blue-600">
-                    {report.id}
-                  </span>
-                </td>
-                <td className="px-4 py-3.5 font-medium text-slate-700">
-                  {report.branch}
-                </td>
-                <td className="px-4 py-3.5 text-slate-600">{report.type}</td>
-                <td className="px-4 py-3.5 text-slate-600">{report.period}</td>
-                <td className="px-4 py-3.5 font-semibold text-slate-800">
-                  {report.amount}
-                </td>
-                <td className="px-4 py-3.5">
-                  <span
-                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[report.status]}`}
-                  >
-                    <span
-                      className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[report.status]}`}
-                    />
-                    {report.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3.5">
-                  <div className="flex items-center justify-end gap-2">
-                    <button
-                      title="View Report"
-                      className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm transition hover:border-blue-300 hover:text-blue-600"
-                    >
-                      <Eye size={13} />
-                      View
-                    </button>
-                    <button
-                      title="Export Report"
-                      className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-blue-700"
-                    >
-                      <Download size={13} />
-                      Export
-                    </button>
-                  </div>
+            {sortedReports.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-8 text-center text-slate-400 text-xs">
+                  No sales reports found matching current filters.
                 </td>
               </tr>
-            ))}
+            ) : (
+              sortedReports.map((report) => (
+                <tr
+                  key={report.id}
+                  className="group transition-colors hover:bg-slate-50/70"
+                >
+                  <td className="px-4 py-3.5">
+                    <span className="font-mono text-xs font-semibold text-blue-600">
+                      {report.id}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3.5 font-medium text-slate-700">
+                    {report.branch}
+                  </td>
+                  <td className="px-4 py-3.5 text-slate-600">{report.type}</td>
+                  <td className="px-4 py-3.5 text-slate-600">{report.period}</td>
+                  <td className="px-4 py-3.5 font-semibold text-slate-800">
+                    {report.amountStr}
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        STATUS_STYLES[report.status] ?? STATUS_STYLES.Completed
+                      }`}
+                    >
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${
+                          STATUS_DOT[report.status] ?? STATUS_DOT.Completed
+                        }`}
+                      />
+                      {report.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        title="View Report"
+                        onClick={() => alert(`Viewing details for report: ${report.id}`)}
+                        className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm transition hover:border-blue-300 hover:text-blue-600 active:scale-95"
+                      >
+                        <Eye size={13} />
+                        View
+                      </button>
+                      <button
+                        title="Export Report"
+                        onClick={() => alert(`Exporting report: ${report.id}`)}
+                        className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-blue-700 active:scale-95"
+                      >
+                        <Download size={13} />
+                        Export
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
 
       {/* Footer */}
-      <div className="border-t border-slate-100 px-5 py-3 text-xs text-slate-400">
-        Showing {REPORT_DATA.length} of {REPORT_DATA.length} reports · Static data (API integration pending)
+      <div className="border-t border-slate-100 px-5 py-3 text-xs text-slate-400 flex items-center justify-between">
+        <div>
+          Showing {sortedReports.length} of {sortedReports.length} reports
+        </div>
+        <div className="flex items-center gap-1">
+          {source === 'api' ? (
+            <span className="flex items-center gap-0.5 text-emerald-600 font-semibold">
+              <Database size={10} /> Live Data
+            </span>
+          ) : (
+            <span className="flex items-center gap-0.5 text-amber-500 font-semibold">
+              <AlertCircle size={10} /> Sample Fallback
+            </span>
+          )}
+        </div>
       </div>
     </section>
   );
