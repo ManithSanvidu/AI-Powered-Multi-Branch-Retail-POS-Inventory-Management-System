@@ -20,61 +20,49 @@ export const EmployeeCard = ({ employee, onViewDetails, onEdit }) => {
   };
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
-      {/* Background soft glow decoration on hover */}
-      <div className="absolute -right-16 -top-16 h-32 w-32 rounded-full bg-blue-50/50 transition-all duration-500 group-hover:scale-150" />
-      
-      <div className="relative flex items-start gap-4">
-        {/* Avatar */}
-        <div className="relative">
+    <div className="emp-card">
+      <div className="emp-card-header">
+        <div className="emp-card-avatar">
           <img
             src={photo || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop"}
             alt={`${firstName} ${lastName}`}
-            className="h-16 w-16 rounded-xl border border-slate-100 object-cover"
           />
-          <span className={`absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white ${status === "Active" ? "bg-green-500" : "bg-red-400"}`} />
+          <span className={`emp-status-dot ${status === "Active" ? "active" : "inactive"}`} />
         </div>
 
-        {/* Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2">
-            <span className={`rounded-md border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider ${roleColors[role] || "bg-slate-100 text-slate-700"}`}>
+        <div className="emp-card-info">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", flexWrap: "wrap", gap: "6px" }}>
+            <span className={`emp-role-tag ${role}`}>
               {role}
             </span>
-            <span className="text-xs text-slate-400 font-medium">
+            <span style={{ fontSize: "0.72rem", color: "var(--text-secondary)", fontWeight: 600 }}>
               📍 {branchNames[branch] || `Branch ${branch}`}
             </span>
           </div>
 
-          <h3 className="mt-2 text-base font-bold text-slate-800 truncate">
+          <h3 className="emp-card-name">
             {firstName} {lastName}
           </h3>
 
-          <p className="text-xs text-slate-500 mt-1 truncate">📞 {phone}</p>
-          <p className="text-xs text-slate-500 truncate">✉️ {email}</p>
+          <div className="emp-card-details">
+            <span className="emp-card-detail-item">📞 {phone}</span>
+            <span className="emp-card-detail-item" style={{ wordBreak: "break-all" }}>✉️ {email}</span>
+          </div>
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-between border-t border-slate-50 pt-4">
-        {/* Performance Score */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-amber-400 text-base">★</span>
-          <span className="text-xs font-bold text-slate-700">{performanceScore}</span>
-          <span className="text-[10px] text-slate-400">/ 5.0 Rating</span>
+      <div className="emp-card-footer">
+        <div className="emp-rating-badge">
+          <span style={{ color: "#fbbf24" }}>★</span>
+          <span style={{ fontSize: "0.75rem", fontWeight: 700 }}>{performanceScore}</span>
+          <span style={{ fontSize: "0.68rem", color: "var(--text-muted)", marginLeft: "2px" }}>/ 5.0 Rating</span>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => onEdit(employee)}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
-          >
+        <div className="emp-card-actions">
+          <button onClick={() => onEdit(employee)} className="emp-card-btn">
             Edit
           </button>
-          <button
-            onClick={() => onViewDetails(employee)}
-            className="rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700 shadow-sm shadow-blue-100"
-          >
+          <button onClick={() => onViewDetails(employee)} className="emp-card-btn primary">
             Profile
           </button>
         </div>
@@ -131,13 +119,13 @@ export const EmployeeDetailModal = ({ employee, onClose, onEdit }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
+      <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md transition-opacity" onClick={onClose} />
 
       {/* Modal Container */}
-      <div className="relative w-full max-w-4xl overflow-hidden rounded-3xl bg-white shadow-2xl transition-all flex flex-col max-h-[90vh]">
+      <div className="relative w-full max-w-4xl overflow-hidden rounded-3xl bg-white/90 border border-white/40 backdrop-blur-2xl shadow-2xl transition-all flex flex-col max-h-[90vh]">
         
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-black/5 bg-slate-50/50 px-6 py-4">
           <h2 className="text-lg font-bold text-slate-800">Employee Corporate Profile</h2>
           <button onClick={onClose} className="rounded-full p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition">
             ✕
@@ -165,11 +153,11 @@ export const EmployeeDetailModal = ({ employee, onClose, onEdit }) => {
               
               {/* Basic Quick Stats */}
               <div className="mt-6 w-full grid grid-cols-2 gap-3 border-t border-slate-100 pt-6">
-                <div className="rounded-2xl bg-slate-50 p-3">
+                <div className="rounded-2xl bg-slate-100/50 border border-black/5 p-3">
                   <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">Performance</span>
                   <span className="text-base font-extrabold text-slate-800">{performanceScore} ★</span>
                 </div>
-                <div className="rounded-2xl bg-slate-50 p-3">
+                <div className="rounded-2xl bg-slate-100/50 border border-black/5 p-3">
                   <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">Attendance</span>
                   <span className="text-base font-extrabold text-slate-800">{attendanceRate}%</span>
                 </div>
@@ -217,8 +205,8 @@ export const EmployeeDetailModal = ({ employee, onClose, onEdit }) => {
             <div className="flex flex-col gap-6">
               
               {/* Contract Information */}
-              <div className="rounded-2xl border border-slate-100 p-5">
-                <h4 className="text-sm font-extrabold text-slate-800 mb-4 border-b border-slate-50 pb-2">📋 Employment Details</h4>
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-5">
+                <h4 className="text-sm font-extrabold text-slate-800 mb-4 border-b border-slate-100/50 pb-2">📋 Employment Details</h4>
                 <div className="grid grid-cols-2 gap-y-3.5 gap-x-6 text-xs">
                   <div>
                     <span className="text-slate-400 block font-semibold">Email Address</span>
@@ -240,15 +228,15 @@ export const EmployeeDetailModal = ({ employee, onClose, onEdit }) => {
               </div>
 
               {/* Performance Radar Metrics */}
-              <div className="rounded-2xl border border-slate-100 p-5">
-                <h4 className="text-sm font-extrabold text-slate-800 mb-4 border-b border-slate-50 pb-2">📈 Performance Scorecard</h4>
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-5">
+                <h4 className="text-sm font-extrabold text-slate-800 mb-4 border-b border-slate-100/50 pb-2">📈 Performance Scorecard</h4>
                 <div className="space-y-3.5">
                   <div>
                     <div className="flex justify-between text-xs mb-1.5 font-bold">
                       <span className="text-slate-500">Punctuality & Reliability</span>
                       <span className="text-blue-600">{performanceInfo.punctuality}%</span>
                     </div>
-                    <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                    <div className="h-2 w-full rounded-full bg-black/5 overflow-hidden">
                       <div className="h-full rounded-full bg-blue-500" style={{ width: `${performanceInfo.punctuality}%` }} />
                     </div>
                   </div>
@@ -257,7 +245,7 @@ export const EmployeeDetailModal = ({ employee, onClose, onEdit }) => {
                       <span className="text-slate-500">Sales Targets / Productivity</span>
                       <span className="text-emerald-600">{performanceInfo.salesAchievement}%</span>
                     </div>
-                    <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                    <div className="h-2 w-full rounded-full bg-black/5 overflow-hidden">
                       <div className="h-full rounded-full bg-emerald-500" style={{ width: `${performanceInfo.salesAchievement}%` }} />
                     </div>
                   </div>
@@ -266,7 +254,7 @@ export const EmployeeDetailModal = ({ employee, onClose, onEdit }) => {
                       <span className="text-slate-500">Customer Satisfaction Rating</span>
                       <span className="text-amber-600">{performanceInfo.customerRating * 20}% ({performanceInfo.customerRating}/5.0)</span>
                     </div>
-                    <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                    <div className="h-2 w-full rounded-full bg-black/5 overflow-hidden">
                       <div className="h-full rounded-full bg-amber-500" style={{ width: `${performanceInfo.customerRating * 20}%` }} />
                     </div>
                   </div>
@@ -275,7 +263,7 @@ export const EmployeeDetailModal = ({ employee, onClose, onEdit }) => {
                       <span className="text-slate-500">Task Completion & Operations</span>
                       <span className="text-purple-600">{performanceInfo.taskCompletion}%</span>
                     </div>
-                    <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                    <div className="h-2 w-full rounded-full bg-black/5 overflow-hidden">
                       <div className="h-full rounded-full bg-purple-500" style={{ width: `${performanceInfo.taskCompletion}%` }} />
                     </div>
                   </div>
@@ -283,14 +271,14 @@ export const EmployeeDetailModal = ({ employee, onClose, onEdit }) => {
               </div>
 
               {/* Schedules & Shift History */}
-              <div className="rounded-2xl border border-slate-100 p-5">
-                <h4 className="text-sm font-extrabold text-slate-800 mb-3 border-b border-slate-50 pb-2">📅 Upcoming Schedules</h4>
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-5">
+                <h4 className="text-sm font-extrabold text-slate-800 mb-3 border-b border-slate-100/50 pb-2">📅 Upcoming Schedules</h4>
                 {employeeSchedules.length === 0 ? (
                   <p className="text-xs text-slate-400">No shifts scheduled for this employee.</p>
                 ) : (
                   <div className="max-h-32 overflow-y-auto space-y-2.5 pr-2">
                     {employeeSchedules.slice(0, 5).map((sch) => (
-                      <div key={sch._id} className="flex justify-between items-center text-xs p-2 bg-slate-50 rounded-xl">
+                      <div key={sch._id} className="flex justify-between items-center text-xs p-2 bg-white/40 border border-black/5 rounded-xl">
                         <span className="font-bold text-slate-600">{sch.date}</span>
                         <span className="rounded-full bg-blue-100 text-blue-800 font-extrabold px-3 py-0.5 text-[10px]">{sch.shift}</span>
                         <span className="text-slate-400 italic truncate max-w-[200px]">{sch.notes || "No notes"}</span>
