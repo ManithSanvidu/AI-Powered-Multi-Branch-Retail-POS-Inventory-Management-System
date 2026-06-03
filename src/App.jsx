@@ -23,6 +23,7 @@ import EditProductPage from './pages/products/EditProductPage';
 import ProductDetailsPage from './pages/products/ProductDetailsPage';
 import ProductListPage from './pages/products/ProductListPage';
 import ReturnsPage from './pages/returns/ReturnsPage';
+import { getInvoices, getReturns } from './services/returnsApi';
 
 import './App.css';
 
@@ -102,9 +103,25 @@ const initialReturns = [
 
 function App() {
   const [returnState, setReturnState] = useState({
-    invoices: initialInvoices,
-    returns: initialReturns
+    invoices: [],
+    returns: []
   });
+
+  React.useEffect(() => {
+    const fetchReturnsData = async () => {
+      try {
+        const invoicesRes = await getInvoices();
+        const returnsRes = await getReturns();
+        setReturnState({
+          invoices: invoicesRes.data || [],
+          returns: returnsRes.data || []
+        });
+      } catch (error) {
+        console.error("Error fetching returns/invoices from backend:", error);
+      }
+    };
+    fetchReturnsData();
+  }, []);
 
   return (
     <EmployeeProvider>
