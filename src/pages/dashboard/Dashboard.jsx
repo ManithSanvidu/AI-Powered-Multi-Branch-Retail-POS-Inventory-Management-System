@@ -32,8 +32,6 @@ const ModuleLoading = () => (
     Loading module…
   </div>
 );
-import SuppliersPage from '../suppliers/SuppliersPage';
-import EmployeesPage from '../employees/EmployeesPage';
 import { InventoryProvider } from '../../context/InventoryContext';
 import InventoryDashboard from '../inventory/InventoryDashboard';
 
