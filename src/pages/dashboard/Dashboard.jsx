@@ -28,6 +28,7 @@ const POSPage = lazy(() => import('../pos/POSPage'));
 const CheckoutPage = lazy(() => import('../pos/CheckoutPage'));
 const ReceiptPage = lazy(() => import('../pos/ReceiptPage'));
 const BranchListPage = lazy(() => import('../branches/BranchListPage'));
+const PromotionsPage = lazy(() => import('../promotions/PromotionsPage'));
 
 const ModuleLoading = () => (
   <div
@@ -718,7 +719,11 @@ case 'product-edit':
           </Suspense>
         );
       case 'promotion':
-        return <ModuleDetail title="Promotion & Discount Management" icon="🏷️" page={3} description="Apply pricing rules automatically. Manage promotional campaigns. Validate discount eligibility. Generate campaign reports. Maintain coupon records." features={['Promotion Campaigns', 'Discount Rule Configuration', 'Active Promotions Display', 'Coupon System Management', 'Campaign Performance Monitoring']} />;
+        return (
+          <Suspense fallback={<ModuleLoading />}>
+            <PromotionsPage />
+          </Suspense>
+        );
       case 'ai-reorder':
         return <AISmartReorderingModule />;
       case 'analytics':
