@@ -7,14 +7,22 @@ import InventoryStatus from '../../components/dashboard/InventoryStatus';
 import TopProducts from '../../components/dashboard/TopProducts';
 import LiveFeed from '../../components/dashboard/LiveFeed';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import { socketService } from '../../services/socketService';
 import { useNavigate } from 'react-router-dom';
+
 
 const SuppliersPage = lazy(() => import('../suppliers/SuppliersPage'));
 const EmployeesPage = lazy(() => import('../employees/EmployeesPage'));
 const ReturnsPage = lazy(() => import('../returns/ReturnsPage'));
 const StockTransferPage = lazy(() => import('../stock-transfer/StockTransferPage'));
 const PurchaseOrdersPage = lazy(() => import('../purchase-orders/PurchaseOrdersPage'));
+const CustomerListPage = lazy(() => import('../customers/CustomerListPage'));
+const ProductListPage = lazy(() => import('../products/ProductListPage'));
+const CategoryManagementPage = lazy(() => import('../products/CategoryManagementPage'));
+const AddProductPage = lazy(() => import('../products/AddProductPage'));
+const EditProductPage = lazy(() => import('../products/EditProductPage'));
+const ProductDetailsPage = lazy(() => import('../products/ProductDetailsPage'));
 
 const ModuleLoading = () => (
   <div
@@ -29,6 +37,8 @@ const ModuleLoading = () => (
     Loading module…
   </div>
 );
+import { InventoryProvider } from '../../context/InventoryContext';
+import InventoryDashboard from '../inventory/InventoryDashboard';
 
 // Demo data generator
 const generateDemoData = () => ({
@@ -44,6 +54,7 @@ const generateDemoData = () => ({
   top_products: null,
   sales: null,
 });
+
 
 const BRANCHES = [
   { id: 'all', name: 'All Branches', icon: '🏢', image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=100&h=100&fit=crop' },
@@ -100,7 +111,10 @@ const _getDateRange = (preset) => {
 };
 
 const Dashboard = ({ viewRole, returnState, setReturnState }) => {
+
+
   const { user, token, logout } = useAuth();
+  const { notifications = [], removeNotification, clearAll } = useNotification() || {};
   const navigate = useNavigate();
   const role = viewRole || user?.role || 'admin';
 
@@ -119,7 +133,8 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
   const [navExpanded, setNavExpanded] = useState(true);
   const [activeModule, setActiveModule] = useState('dashboard');
   const [visibleModule, setVisibleModule] = useState('dashboard');
-  
+  const [selectedProductId, setSelectedProductId] = useState(null);
+
   // Chatbot state
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([
@@ -154,70 +169,70 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
   // AI Chatbot response generator
   const generateAIResponse = (userMessage) => {
     const msg = userMessage.toLowerCase();
-    
+
     // Sales & Revenue queries
     if (msg.includes('revenue') || msg.includes('sales') || msg.includes('how much')) {
       return `📊 **Sales Performance Update**\n\n• Total Revenue: $48,250\n• Sales Count: 1,284 transactions\n• Growth: +12.4% vs last period\n• Average Transaction: $37.58\n• Unique Customers: 842\n\nWould you like to see branch-wise breakdown?`;
     }
-    
+
     // Profit queries
     if (msg.includes('profit') || msg.includes('margin')) {
       return `💰 **Profit Analysis**\n\n• Total Profit: $14,820\n• Profit Margin: 30.7%\n• Gross Profit: $32,430\n• Net Profit Margin: 24.2%\n\nProfit is healthy compared to industry average of 25-30%.`;
     }
-    
+
     // Inventory queries
     if (msg.includes('inventory') || msg.includes('stock')) {
       return `📦 **Inventory Status**\n\n• Total Products: 486\n• Total Stock Units: 32,610\n• Inventory Value: $124,600\n• Low Stock Alerts: 12 items\n• Stock Turnover Rate: 4.2x (Healthy)\n\n⚠️ Recommended to reorder: Rice (50 units left), Cooking Oil (23 units)`;
     }
-    
+
     // Low stock alerts
     if (msg.includes('low stock') || msg.includes('alert')) {
       return `⚠️ **Low Stock Alerts**\n\n12 products are running low:\n1. Premium Rice - 50 units left\n2. Coconut Oil - 23 units left\n3. Sugar - 35 units left\n4. Milk Powder - 42 units left\n5. Tea Bags - 67 units left\n\n🔔 AI Suggestion: Create purchase orders for these items today.`;
     }
-    
+
     // Branch performance
     if (msg.includes('branch') || msg.includes('location')) {
       return `🏢 **Branch Performance**\n\n• Colombo Head Office: $18,240 (Top performer)\n• Kandy City Branch: $12,560 (+8.2% growth)\n• Galle Fort Branch: $9,340\n• Negombo Branch: $8,110\n\n📈 Colombo leads with 38% of total revenue.`;
     }
-    
+
     // Product recommendations
     if (msg.includes('product') || msg.includes('recommend') || msg.includes('top product')) {
       return `⭐ **Top Performing Products**\n\n1. Premium Basmati Rice - $12,450\n2. Organic Coconut Oil - $8,920\n3. Ceylon Tea Gift Pack - $7,340\n4. Fresh Milk - $5,670\n5. Spice Assortment - $4,890\n\n🎯 AI Recommendation: Increase stock of organic products - demand up 23% this month.`;
     }
-    
+
     // Demand forecasting
     if (msg.includes('forecast') || msg.includes('prediction') || msg.includes('demand')) {
       return `🔮 **AI Demand Forecast**\n\nNext 30 days predictions:\n• Rice & Grains: ↑15% demand increase\n• Cooking Oils: ↑12% (holiday season)\n• Dairy Products: ↑8%\n• Spices: ↑20% (export demand)\n\n📊 Recommended stock levels: Increase inventory by 25% for essential items.`;
     }
-    
+
     // Reorder suggestions
     if (msg.includes('reorder') || msg.includes('purchase')) {
       return `🛒 **Smart Reorder Recommendations**\n\nAuto-generated purchase orders:\n• 500 units - Premium Rice (Current: 50)\n• 200 units - Coconut Oil (Current: 23)\n• 300 units - Sugar (Current: 35)\n• 150 units - Milk Powder (Current: 42)\n\n✅ AI Confidence: 94% - Ready to approve?`;
     }
-    
+
     // Business insights
     if (msg.includes('insight') || msg.includes('analysis') || msg.includes('trend')) {
       return `📈 **Business Insights**\n\n• Morning sales increased by 18% (8am-11am)\n• Weekend revenue is 2.3x higher than weekdays\n• Organic products category growing at 27% MoM\n• Customer retention rate: 68% (↑5%)\n\n💡 Tip: Launch morning breakfast combos to maximize morning traffic.`;
     }
-    
+
     // Help / greeting
     if (msg.includes('help') || msg.includes('what can you') || msg.includes('hi') || msg.includes('hello')) {
       return `🤖 **How I Can Help You**\n\nAsk me about:\n• 📊 Sales & Revenue stats\n• 💰 Profit margins and analysis\n• 📦 Inventory status and alerts\n• 🏢 Branch performance comparison\n• ⭐ Top products & recommendations\n• 🔮 Demand forecasting & predictions\n• 🛒 Smart reordering suggestions\n• 📈 Business insights & trends\n\nWhat would you like to know today?`;
     }
-    
+
     // Default response
     return `🤔 I understand you're asking about "${userMessage.substring(0, 50)}".\n\nI can help with:\n• Sales and revenue reports\n• Inventory management\n• Branch performance\n• Product recommendations\n• Demand forecasting\n\nCould you please rephrase your question? For example: "What's our total revenue?" or "Show me low stock alerts."`;
   };
 
   const sendMessage = () => {
     if (!chatInput.trim()) return;
-    
+
     // Add user message
     const userMsg = { id: Date.now(), type: 'user', text: chatInput };
     setChatMessages(prev => [...prev, userMsg]);
     setChatInput('');
     setIsTyping(true);
-    
+
     // Simulate AI thinking
     setTimeout(() => {
       const botResponse = generateAIResponse(chatInput);
@@ -232,9 +247,21 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
   };
 
   const showModule = (moduleId) => {
+  const productInnerModules = [
+    'product-categories',
+    'product-add',
+    'product-view',
+    'product-edit',
+  ];
+
+  if (productInnerModules.includes(moduleId)) {
+    setActiveModule('product-mgmt');
+  } else {
     setActiveModule(moduleId);
-    setVisibleModule(moduleId);
-  };
+  }
+
+  setVisibleModule(moduleId);
+};
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -246,19 +273,19 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
       const now = new Date();
       const hour = now.getHours();
       setCurrentTime(now);
-      
+
       if (hour < 12) setGreeting('Good Morning');
       else if (hour < 18) setGreeting('Good Afternoon');
       else setGreeting('Good Evening');
-      
+
       if (hour >= 5 && hour < 7) setSunPhase('sunrise');
       else if (hour >= 7 && hour < 12) setSunPhase('morning');
       else if (hour >= 12 && hour < 16) setSunPhase('afternoon');
       else if (hour >= 16 && hour < 18) setSunPhase('sunset');
       else setSunPhase('night');
-      
+
       setMoonVisible(hour >= 19 || hour < 5);
-      
+
       const cloudCount = Math.floor(Math.random() * 4) + 3;
       const newClouds = Array.from({ length: cloudCount }, (_, i) => ({
         id: i,
@@ -270,7 +297,7 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
       }));
       setClouds(newClouds);
     };
-    
+
     updateTimeBasedElements();
     const interval = setInterval(updateTimeBasedElements, 60000);
     return () => clearInterval(interval);
@@ -312,7 +339,7 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
   const formattedTime = currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   const getSkyGradient = () => {
-    switch(sunPhase) {
+    switch (sunPhase) {
       case 'sunrise': return 'linear-gradient(180deg, #ff7e5e 0%, #feb47b 40%, #ffd6a5 100%)';
       case 'morning': return 'linear-gradient(180deg, #4facfe 0%, #00f2fe 100%)';
       case 'afternoon': return 'linear-gradient(180deg, #3b8dff 0%, #86b6ff 50%, #b8d4ff 100%)';
@@ -324,7 +351,7 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
 
   // Render module content based on visibleModule
   const renderModuleContent = () => {
-    switch(visibleModule) {
+    switch (visibleModule) {
       case 'dashboard':
         return (
           <>
@@ -345,11 +372,11 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
                 <p className="dash-sub">Real-time insights & performance metrics</p>
                 <div className="time-indicator">
                   <span className="time-icon">⏰</span>
-                  <span>{sunPhase === 'sunrise' ? 'Beautiful sunrise over the city' : 
-                         sunPhase === 'morning' ? 'Bright morning sun warming up' :
-                         sunPhase === 'afternoon' ? 'High sun with scattered clouds' :
-                         sunPhase === 'sunset' ? 'Spectacular sunset colors' : 
-                         'Starlit night over Colombo'}</span>
+                  <span>{sunPhase === 'sunrise' ? 'Beautiful sunrise over the city' :
+                    sunPhase === 'morning' ? 'Bright morning sun warming up' :
+                      sunPhase === 'afternoon' ? 'High sun with scattered clouds' :
+                        sunPhase === 'sunset' ? 'Spectacular sunset colors' :
+                          'Starlit night over Colombo'}</span>
                 </div>
               </div>
               <div className="dash-header-right">
@@ -365,13 +392,30 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
                 <div className="notification-wrapper">
                   <button className="notification-btn" onClick={() => setShowNotifications(!showNotifications)}>
                     <span className="bell-icon">🔔</span>
-                    <span className="notification-dot"></span>
+                    {notifications.length > 0 && <span className="notification-dot" style={{ background: 'var(--danger)', right: '4px', top: '4px', width: '10px', height: '10px' }}></span>}
                   </button>
                   {showNotifications && (
-                    <div className="notification-dropdown">
-                      <div className="notification-header">Notifications</div>
-                      <div className="notification-item"><span className="notif-icon">🔄</span><span>Inventory updated</span><span className="notif-time">2 min ago</span></div>
-                      <div className="notification-item"><span className="notif-icon">💰</span><span>New sale recorded</span><span className="notif-time">15 min ago</span></div>
+                    <div className="notification-dropdown" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                      <div className="notification-header" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Notifications</span>
+                        {notifications.length > 0 && (
+                          <button onClick={clearAll} style={{ background: 'none', border: 'none', color: '#3b82f6', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold' }}>Clear</button>
+                        )}
+                      </div>
+                      {notifications.length === 0 ? (
+                        <div style={{ padding: '20px', textAlign: 'center', color: '#94a3b8', fontSize: '0.9rem' }}>No new notifications</div>
+                      ) : (
+                        notifications.map(n => (
+                          <div key={n.id} className={`notification-item notif-${n.type}`} style={{ alignItems: 'flex-start', gap: '10px', padding: '12px' }}>
+                            <span className="notif-icon" style={{ marginTop: '2px' }}>{n.type === 'warning' ? '⚠️' : n.type === 'success' ? '✅' : 'ℹ️'}</span>
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <span style={{ lineHeight: '1.4', whiteSpace: 'normal', wordBreak: 'break-word' }}>{n.msg}</span>
+                              <span className="notif-time">{n.time}</span>
+                            </div>
+                            <button onClick={(e) => { e.stopPropagation(); removeNotification(n.id); }} style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', fontSize: '1rem' }}>×</button>
+                          </div>
+                        ))
+                      )}
                     </div>
                   )}
                 </div>
@@ -487,8 +531,15 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
             <EmployeesPage />
           </Suspense>
         );
+      /* case 'customer-mgmt':
+        return <ModuleDetail title="Customer Management" icon="👤" page={2} description="Manage customer data and transactions. Track loyalty rewards and points. Store customer purchase histories. Generate customer insights. Handle customer-related CRUD operations." features={['Customer Profiles', 'Purchase History', 'Loyalty Points', 'Customer Search & Filtering', 'Customer Analytics']} />; */
+
       case 'customer-mgmt':
-        return <ModuleDetail title="Customer Management" icon="👤" page={2} description="Manage customer data and transactions. Track loyalty rewards and points. Store customer purchase histories. Generate customer insights. Handle customer-related CRUD operations." features={['Customer Profiles', 'Purchase History', 'Loyalty Points', 'Customer Search & Filtering', 'Customer Analytics']} />;
+        return (
+          <Suspense fallback={<ModuleLoading />}>
+            <CustomerListPage />
+          </Suspense>
+        );
       case 'supplier-mgmt':
         return (
           <Suspense fallback={<ModuleLoading />}>
@@ -496,9 +547,104 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
           </Suspense>
         );
       case 'product-mgmt':
-        return <ModuleDetail title="Product Management" icon="📦" page={2} description="Store product and category information. Manage pricing structures. Handle product CRUD operations. Validate product data. Support barcode integration." features={['Product Catalog', 'Category & Brand Management', 'Product Image Uploads', 'Search & Filtering', 'Pricing & Stock Details', 'Barcode Integration']} />;
+        return (
+          <Suspense fallback={<ModuleLoading />}>
+            <ProductListPage
+              onOpenCategories={() => showModule('product-categories')}
+              onAddProduct={() => showModule('product-add')}
+              onViewProduct={(id) => {
+                setSelectedProductId(id);
+                showModule('product-view');
+              }}
+              onEditProduct={(id) => {
+                setSelectedProductId(id);
+                showModule('product-edit');
+              }}
+            />
+          </Suspense>
+        );
+
+      case 'product-categories':
+        return (
+          <Suspense fallback={<ModuleLoading />}>
+            <CategoryManagementPage onBack={() => showModule('product-mgmt')} />
+          </Suspense>
+        );
+
+      case 'product-add':
+        return (
+          <Suspense fallback={<ModuleLoading />}>
+            <AddProductPage onBack={() => showModule('product-mgmt')} />
+          </Suspense>
+        );
+
+      case 'product-view':
+  if (!selectedProductId) {
+    return (
+      <Suspense fallback={<ModuleLoading />}>
+        <ProductListPage
+          onOpenCategories={() => showModule('product-categories')}
+          onAddProduct={() => showModule('product-add')}
+          onViewProduct={(id) => {
+            setSelectedProductId(id);
+            showModule('product-view');
+          }}
+          onEditProduct={(id) => {
+            setSelectedProductId(id);
+            showModule('product-edit');
+          }}
+        />
+      </Suspense>
+    );
+  }
+
+  return (
+    <Suspense fallback={<ModuleLoading />}>
+      <ProductDetailsPage
+        productId={selectedProductId}
+        onBack={() => showModule('product-mgmt')}
+        onEdit={(id) => {
+          setSelectedProductId(id);
+          showModule('product-edit');
+        }}
+      />
+    </Suspense>
+  );
+
+case 'product-edit':
+  if (!selectedProductId) {
+    return (
+      <Suspense fallback={<ModuleLoading />}>
+        <ProductListPage
+          onOpenCategories={() => showModule('product-categories')}
+          onAddProduct={() => showModule('product-add')}
+          onViewProduct={(id) => {
+            setSelectedProductId(id);
+            showModule('product-view');
+          }}
+          onEditProduct={(id) => {
+            setSelectedProductId(id);
+            showModule('product-edit');
+          }}
+        />
+      </Suspense>
+    );
+  }
+
+  return (
+    <Suspense fallback={<ModuleLoading />}>
+      <EditProductPage
+        productId={selectedProductId}
+        onBack={() => showModule('product-mgmt')}
+      />
+    </Suspense>
+  );
       case 'inventory-mgmt':
-        return <ModuleDetail title="Inventory Management" icon="📊" page={2} description="Track stock quantities in real time. Record stock movements. Calculate stock availability. Generate inventory alerts. Maintain inventory history." features={['Inventory Levels Across Branches', 'Stock Movement History', 'Low Stock Highlighting', 'Inventory Search', 'Inventory Summaries']} />;
+        return (
+          <InventoryProvider>
+            <InventoryDashboard />
+          </InventoryProvider>
+        );
       case 'warehouse-mgmt':
         return <ModuleDetail title="Warehouse Management" icon="🏭" page={2} description="Track warehouse inventory. Manage storage allocations. Record warehouse transactions. Handle warehouse transfers. Generate warehouse statistics." features={['Storage Location Visualization', 'Stock Allocations', 'Warehouse Transfers', 'Capacity Monitoring', 'Warehouse Reports']} />;
       case 'purchase-order':
@@ -507,8 +653,11 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
             <PurchaseOrdersPage />
           </Suspense>
         );
+      // case 'pos-sales':
+      //   return <ModuleDetail title="POS Sales & Billing" icon="🛒" page={3} description="Handle sales transactions. Process payments securely. Update inventory automatically. Store transaction records. Generate sales summaries." features={['Cashier POS Screens', 'Barcode Scanning', 'Shopping Cart Management', 'Digital Receipts', 'Multiple Payment Methods']} />;
       case 'pos-sales':
-        return <ModuleDetail title="POS Sales & Billing" icon="🛒" page={3} description="Handle sales transactions. Process payments securely. Update inventory automatically. Store transaction records. Generate sales summaries." features={['Cashier POS Screens', 'Barcode Scanning', 'Shopping Cart Management', 'Digital Receipts', 'Multiple Payment Methods']} />;
+        window.location.href = '/pos';
+        return null;
       case 'returns-refund':
         return (
           <Suspense fallback={<ModuleLoading />}>
@@ -927,19 +1076,19 @@ const AIDemandForecastModule = () => (
         <span className="module-page">📄 Page 3 of PDF Document</span>
       </div>
     </div>
-    
+
     <div className="module-description">
       <strong>📋 Module Overview:</strong><br />
       Train forecasting models. Predict future product demand. Analyze historical sales data. Generate forecast reports. Continuously update models using machine learning algorithms.
     </div>
-    
+
     <div className="forecast-stats">
       <div className="forecast-card"><div className="value">↑ 15%</div><div className="label">Next Month Demand Increase</div></div>
       <div className="forecast-card"><div className="value">94%</div><div className="label">Forecast Accuracy</div></div>
       <div className="forecast-card"><div className="value">2,450</div><div className="label">Predicted Sales (units)</div></div>
       <div className="forecast-card"><div className="value">$52.8K</div><div className="label">Expected Revenue</div></div>
     </div>
-    
+
     <h3 style={{ marginBottom: '16px', color: '#1e293b' }}>📈 Product Demand Forecast (Next 30 Days)</h3>
     <div className="forecast-list">
       <div className="forecast-item"><span className="product">Premium Basmati Rice</span><span className="trend-up">↑ 18% demand increase</span><span style={{ fontSize: '12px', color: '#64748b' }}>Confidence: 96%</span></div>
@@ -949,7 +1098,7 @@ const AIDemandForecastModule = () => (
       <div className="forecast-item"><span className="product">Spice Assortment Pack</span><span className="trend-up">↑ 27% demand increase</span><span style={{ fontSize: '12px', color: '#64748b' }}>Confidence: 88%</span></div>
       <div className="forecast-item"><span className="product">Sugar (1kg)</span><span className="trend-down">↓ 3% demand decrease</span><span style={{ fontSize: '12px', color: '#64748b' }}>Confidence: 91%</span></div>
     </div>
-    
+
     <h3 style={{ margin: '24px 0 16px', color: '#1e293b' }}>✨ Key Features</h3>
     <div className="features-grid">
       {[
