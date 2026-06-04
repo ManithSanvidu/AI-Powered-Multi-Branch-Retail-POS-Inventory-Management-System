@@ -66,16 +66,22 @@ import TransferActivityTrail from '../../components/stock-transfer/TransferActiv
 import TransferEditPanel from '../../components/stock-transfer/TransferEditPanel';
 import TransferLogsTab from '../../components/stock-transfer/TransferLogsTab';
 import {
+  AlertBanner,
   EmptyState,
   FilterBar,
+  KpiCard,
   PageHero,
   PanelHeader,
   SearchField,
   StatusBadge,
   WorkflowGuide,
+  transferBtnClass,
+  transferBtnGhostClass,
+  transferBtnPrimaryClass,
+  transferFieldClass,
+  transferLabelClass,
 } from '../../components/stock-transfer/StockTransferUI';
 import { formatLogDate, formatUserLabel } from '../../services/stockTransferApi';
-import './StockTransferPage.css';
 
 const STATUS_COLORS = {
   Pending: '#f59e0b',
@@ -716,8 +722,8 @@ function StockTransferPage() {
   };
 
   return (
-    <div className="st-transfer">
-      <div className="module-detail-inner">
+    <div className="min-h-full text-slate-800 antialiased">
+      <div className="relative mb-5 overflow-hidden rounded-3xl border border-white/60 bg-white/90 p-6 shadow-xl shadow-slate-200/50 ring-1 ring-slate-900/5 backdrop-blur-md sm:p-8">
         <PageHero
           perms={perms}
           connected={apiConnected}
@@ -731,67 +737,32 @@ function StockTransferPage() {
         <WorkflowGuide perms={perms} />
 
         {managerMissingBranch ? (
-          <div className="st-alert warn" role="status">
-            Your manager account has no branch assigned in the database. Transfers still
-            show for now — ask admin to set <strong>branchId</strong> on your user for
-            correct branch filtering.
-          </div>
+          <AlertBanner variant="warn">
+            Your manager account has no branch assigned. Transfers still show for now —
+            ask admin to set <strong className="font-semibold">branchId</strong> on your
+            user for correct branch filtering.
+          </AlertBanner>
         ) : null}
 
-        <div className="st-kpi-row" aria-label="Transfer summary">
-          <div className="st-kpi">
-            <div className="st-kpi-icon primary">
-              <FiTruck />
-            </div>
-            <div>
-              <strong>{kpis.inTransit}</strong>
-              <span>In transit</span>
-            </div>
-          </div>
-          <div className="st-kpi">
-            <div className="st-kpi-icon warning">
-              <FiClipboard />
-            </div>
-            <div>
-              <strong>{kpis.pending}</strong>
-              <span>{perms.canApproveTransfer ? 'Awaiting approval' : 'Pending'}</span>
-            </div>
-          </div>
-          <div className="st-kpi">
-            <div className="st-kpi-icon success">
-              <FiCheck />
-            </div>
-            <div>
-              <strong>{kpis.completed}</strong>
-              <span>Completed</span>
-            </div>
-          </div>
-          <div className="st-kpi">
-            <div className="st-kpi-icon info">
-              <FiPackage />
-            </div>
-            <div>
-              <strong>{kpis.lowStock}</strong>
-              <span>Low-stock branch lines</span>
-            </div>
-          </div>
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4" aria-label="Transfer summary">
+          <KpiCard variant="primary" icon={FiTruck} value={kpis.inTransit} label="In transit" />
+          <KpiCard variant="warning" icon={FiClipboard} value={kpis.pending} label={perms.canApproveTransfer ? 'Awaiting approval' : 'Pending'} />
+          <KpiCard variant="success" icon={FiCheck} value={kpis.completed} label="Completed" />
+          <KpiCard variant="info" icon={FiPackage} value={kpis.lowStock} label="Low-stock lines" />
         </div>
 
-        {message && (
-          <div
-            className={`st-alert ${isErrorMessage ? 'warn' : 'success'}`}
-            role="status"
-          >
+        {message ? (
+          <AlertBanner variant={isErrorMessage ? 'warn' : 'success'}>
             {message}
-          </div>
-        )}
+          </AlertBanner>
+        ) : null}
 
-        <nav className="st-tabs" aria-label="Stock transfer features">
+        <nav className="mb-6 inline-flex w-full flex-wrap gap-1 rounded-2xl bg-slate-100/80 p-1.5 ring-1 ring-slate-200/60 sm:w-auto" aria-label="Stock transfer features">
           {visibleTabs.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               type="button"
-              className={`st-tab ${activeTab === id ? 'active' : ''}`}
+              className={`inline-flex cursor-pointer items-center gap-2 rounded-xl border-0 px-4 py-2.5 text-sm font-medium transition-all ${activeTab === id ? "bg-white text-blue-700 shadow-sm ring-1 ring-slate-200/80" : "text-slate-600 hover:text-slate-900"}`}
               onClick={() => switchTab(id)}
             >
               <Icon aria-hidden="true" />
@@ -800,9 +771,9 @@ function StockTransferPage() {
           ))}
         </nav>
 
-        <div className="st-tab-panel">
+        <div className="min-h-[300px]">
         {loading && activeTab === 'request' ? (
-          <p className="st-loading">Loading branches and products…</p>
+          <p className="mb-3 flex items-center gap-2 text-sm text-slate-500">Loading branches and products…</p>
         ) : null}
 
         {activeTab === 'logs' && perms.tabs.logs ? (
@@ -822,7 +793,7 @@ function StockTransferPage() {
         ) : null}
 
         {activeTab === 'logs' && !perms.tabs.logs ? (
-          <section className="st-panel">
+          <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm ring-1 ring-slate-900/[0.03] sm:p-8">
             <EmptyState
               icon="🔒"
               title="Logs not available for your role"
@@ -832,15 +803,16 @@ function StockTransferPage() {
         ) : null}
 
         {activeTab === 'request' && (
-          <section className="st-panel" aria-labelledby="transfer-request-title">
+          <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm ring-1 ring-slate-900/[0.03] sm:p-8" aria-labelledby="transfer-request-title">
             <PanelHeader
               title="Create transfer request (Manager)"
               subtitle="Branch managers submit here. Status is set to Pending — only an admin can Approve or Reject on the Progress tab."
             />
-            <form className="st-form-grid" onSubmit={handleSubmitRequest}>
-              <label>
+            <form className="grid grid-cols-1 gap-5 sm:grid-cols-2 [&_.full]:sm:col-span-2" onSubmit={handleSubmitRequest}>
+              <label className={transferLabelClass}>
                 From branch
                 <select
+                  className={transferFieldClass}
                   value={form.fromBranchId}
                   onChange={(e) => handleFormChange('fromBranchId', e.target.value)}
                   required
@@ -856,9 +828,10 @@ function StockTransferPage() {
                   ))}
                 </select>
               </label>
-              <label>
+              <label className={transferLabelClass}>
                 To branch
                 <select
+                  className={transferFieldClass}
                   value={form.toBranchId}
                   onChange={(e) => handleFormChange('toBranchId', e.target.value)}
                   required
@@ -874,9 +847,10 @@ function StockTransferPage() {
                   ))}
                 </select>
               </label>
-              <label>
+              <label className={transferLabelClass}>
                 Product
                 <select
+                  className={transferFieldClass}
                   value={form.productId}
                   onChange={(e) => handleFormChange('productId', e.target.value)}
                   required
@@ -892,9 +866,10 @@ function StockTransferPage() {
                   ))}
                 </select>
               </label>
-              <label>
+              <label className={transferLabelClass}>
                 Quantity ({selectedProduct?.unit ?? 'units'})
                 <input
+                  className={transferFieldClass}
                   type="number"
                   min="1"
                   value={form.quantity}
@@ -906,20 +881,21 @@ function StockTransferPage() {
                   disabled={!form.productId}
                 />
               </label>
-              <label className="full">
+              <label className={`${transferLabelClass} full`}>
                 Notes (optional)
                 <textarea
+                  className={transferFieldClass}
                   rows={3}
                   value={form.notes}
                   onChange={(e) => handleFormChange('notes', e.target.value)}
                   placeholder="Reason for transfer, batch numbers, handling instructions..."
                 />
               </label>
-              <div className="full st-stock-card">
+              <div className="full flex flex-wrap items-start gap-3 rounded-xl border border-amber-200/60 bg-gradient-to-r from-amber-50 to-orange-50/50 p-4 text-sm text-amber-950 ring-1 ring-amber-100">
                 Available at <strong>{fromBranchName || 'source branch'}</strong>:{' '}
                 <strong>{availableQty}</strong> {selectedProduct?.unit ?? 'units'}
                 {!sourceStock && form.fromBranchId && form.productId && (
-                  <span className="st-stock-low">
+                  <span className="font-semibold text-red-600">
                     {' '}
                     — no inventory at this branch yet. Add stock in Inventory Management
                     first.
@@ -930,17 +906,17 @@ function StockTransferPage() {
                     {' '}
                     —{' '}
                     {availableQty < sourceStock.reorder ? (
-                      <span className="st-stock-low">below reorder level</span>
+                      <span className="font-semibold text-red-600">below reorder level</span>
                     ) : (
-                      <span className="st-stock-ok">healthy stock</span>
+                      <span className="font-semibold text-emerald-600">healthy stock</span>
                     )}
                   </>
                 )}
               </div>
-              <div className="full st-btn-row">
+              <div className="full flex flex-wrap gap-3 border-t border-slate-100 pt-5">
                 <button
                   type="submit"
-                  className="st-btn primary"
+                  className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border-0 px-5 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.98] bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/30 disabled:pointer-events-none disabled:opacity-50"
                   disabled={submitting || !apiConnected || !perms.canCreateTransfer}
                 >
                   <FiClipboard aria-hidden="true" />
@@ -948,7 +924,7 @@ function StockTransferPage() {
                 </button>
                 <button
                   type="button"
-                  className="st-btn ghost"
+                  className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border-0 px-5 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.98] bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 hover:ring-slate-300"
                   onClick={() =>
                     setForm({
                       fromBranchId: branches[0]?.id ?? '',
@@ -963,7 +939,7 @@ function StockTransferPage() {
                 </button>
               </div>
               {!perms.canCreateTransfer && (
-                <p className="full st-hint">
+                <p className="full rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 ring-1 ring-amber-100">
                   Your role can view transfers only. Managers create requests; admins
                   approve and dispatch.
                 </p>
@@ -973,7 +949,7 @@ function StockTransferPage() {
         )}
 
         {activeTab === 'tracking' && (
-          <section className="st-panel" aria-labelledby="transfer-tracking-title">
+          <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm ring-1 ring-slate-900/[0.03] sm:p-8" aria-labelledby="transfer-tracking-title">
             <PanelHeader
               title="Transfer progress"
               subtitle={
@@ -986,7 +962,7 @@ function StockTransferPage() {
             />
 
             {perms.canApproveTransfer && pendingForApproval.length > 0 ? (
-              <div className="st-admin-approval-banner" role="status">
+              <div className="mb-5 flex items-start gap-3 rounded-xl border border-amber-300/60 bg-gradient-to-r from-amber-50 to-yellow-50 px-4 py-4 text-sm text-amber-950 shadow-sm" role="status">
                 <strong>{pendingForApproval.length}</strong> manager transfer request
                 {pendingForApproval.length === 1 ? '' : 's'} waiting — use{' '}
                 <strong>Approve</strong> or <strong>Reject</strong> below.
@@ -994,22 +970,22 @@ function StockTransferPage() {
             ) : null}
 
             {perms.canTrackAllProgress ? (
-              <div className="st-pipeline" aria-label="Transfer pipeline">
-                <div className="st-pipeline-item pending">
-                  <strong>{progressPipeline.Pending}</strong>
-                  <span>Pending review</span>
+              <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Transfer pipeline">
+                <div className="rounded-xl border border-amber-200 bg-amber-50/80 px-4 py-4 text-center">
+                  <strong className="block text-2xl font-bold tabular-nums text-slate-900">{progressPipeline.Pending}</strong>
+                  <span className="text-xs font-medium text-slate-500">Pending review</span>
                 </div>
-                <div className="st-pipeline-item approved">
-                  <strong>{progressPipeline.Approved}</strong>
-                  <span>Approved</span>
+                <div className="rounded-xl border border-blue-200 bg-blue-50/80 px-4 py-4 text-center">
+                  <strong className="block text-2xl font-bold tabular-nums text-slate-900">{progressPipeline.Approved}</strong>
+                  <span className="text-xs font-medium text-slate-500">Approved</span>
                 </div>
-                <div className="st-pipeline-item transit">
-                  <strong>{progressPipeline['In Transit']}</strong>
-                  <span>In transit</span>
+                <div className="rounded-xl border border-indigo-200 bg-indigo-50/80 px-4 py-4 text-center">
+                  <strong className="block text-2xl font-bold tabular-nums text-slate-900">{progressPipeline['In Transit']}</strong>
+                  <span className="text-xs font-medium text-slate-500">In transit</span>
                 </div>
-                <div className="st-pipeline-item rejected">
-                  <strong>{progressPipeline.Rejected}</strong>
-                  <span>Rejected</span>
+                <div className="rounded-xl border border-red-200 bg-red-50/80 px-4 py-4 text-center">
+                  <strong className="block text-2xl font-bold tabular-nums text-slate-900">{progressPipeline.Rejected}</strong>
+                  <span className="text-xs font-medium text-slate-500">Rejected</span>
                 </div>
               </div>
             ) : null}
@@ -1041,7 +1017,7 @@ function StockTransferPage() {
                 onSecondary={refreshAll}
               />
             ) : (
-              <div className="st-progress-list">
+              <div className="space-y-4">
                 {sortedActiveTransfers.map((t) => {
                   const stepIdx = getWorkflowStepIndex(t.status);
                   const showApprove = canReviewPendingTransfer(t, perms);
@@ -1060,21 +1036,25 @@ function StockTransferPage() {
                     editingTransferId === String(t._id ?? t.id);
                   return (
                     <article
-                      className={`st-progress-card ${t.status === 'Pending' && perms.canApproveTransfer ? 'needs-approval' : ''}`}
+                      className={`rounded-2xl border bg-white p-5 shadow-sm transition-shadow hover:shadow-md ${
+                        t.status === 'Pending' && perms.canApproveTransfer
+                          ? 'border-amber-300/80 bg-gradient-to-br from-amber-50/50 to-white ring-2 ring-amber-400/20'
+                          : 'border-slate-200'
+                      }`}
                       key={t._id ?? t.id}
                     >
-                      <div className="st-progress-top">
+                      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
                         <div>
-                          <span className="st-ref-id">{t.id}</span>
+                          <span className="font-mono text-sm font-semibold text-blue-600">{t.id}</span>
                           <div style={{ fontSize: '0.82rem', color: '#64748b', marginTop: 4 }}>
                             {toDisplayString(t.product)} · {t.qty} units
                           </div>
-                          <div className="st-route-pill" style={{ marginTop: 6 }}>
+                          <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600" style={{ marginTop: 6 }}>
                             {toDisplayString(t.from)}{' '}
                             <FiArrowRight aria-hidden="true" /> {toDisplayString(t.to)}
                           </div>
                           {t.status === 'Rejected' && t.rejectReason ? (
-                            <p className="st-reject-reason">
+                            <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800 ring-1 ring-red-100">
                               Rejected: {t.rejectReason}
                             </p>
                           ) : null}
@@ -1087,17 +1067,27 @@ function StockTransferPage() {
                       ) : null}
 
                       {!isEditing ? (
-                      <div className="st-steps" role="list" aria-label={`Progress for ${t.id}`}>
+                      <div className="flex flex-wrap justify-center gap-1 py-2" role="list" aria-label={`Progress for ${t.id}`}>
                         {WORKFLOW_STEPS.map((step, i) => (
                           <div
                             key={step}
                             role="listitem"
-                            className={`st-step ${i < stepIdx ? 'done' : ''} ${i === stepIdx ? 'active' : ''}`}
+                            className={`relative flex min-w-[4.5rem] flex-1 flex-col items-center text-center after:absolute after:top-4 after:left-[55%] after:z-0 after:h-0.5 after:w-[90%] after:bg-slate-200 after:content-[''] last:after:hidden ${
+                              i < stepIdx || i === stepIdx ? 'after:bg-emerald-400' : ''
+                            }`}
                           >
-                            <div className="st-step-dot">
+                            <div
+                              className={`relative z-[1] mb-2 grid h-8 w-8 place-items-center rounded-full text-xs font-bold ${
+                                i < stepIdx
+                                  ? 'bg-emerald-500 text-white'
+                                  : i === stepIdx
+                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 ring-4 ring-blue-100'
+                                    : 'bg-slate-200 text-slate-500'
+                              }`}
+                            >
                               {i < stepIdx ? <FiCheck /> : i + 1}
                             </div>
-                            <span>{step}</span>
+                            <span className="max-w-[5rem] text-[0.65rem] font-medium leading-tight text-slate-500">{step}</span>
                           </div>
                         ))}
                       </div>
@@ -1115,15 +1105,15 @@ function StockTransferPage() {
                       )}
 
                       {!isEditing ? (
-                      <div className="st-btn-row st-action-row" style={{ marginTop: 14 }}>
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4" style={{ marginTop: 14 }}>
                         <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
                           {formatLogDate(t.date)} · {formatUserLabel(t.requestedBy)}
                         </span>
-                        <div className="st-btn-row">
+                        <div className="flex flex-wrap gap-3">
                           {showEdit && (
                             <button
                               type="button"
-                              className="st-btn ghost"
+                              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border-0 px-5 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.98] bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 hover:ring-slate-300"
                               disabled={submitting}
                               onClick={() =>
                                 setEditingTransferId(String(t._id ?? t.id))
@@ -1136,7 +1126,7 @@ function StockTransferPage() {
                           {showApprove && (
                             <button
                               type="button"
-                              className="st-btn primary"
+                              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border-0 px-5 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.98] bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/30 disabled:pointer-events-none disabled:opacity-50"
                               disabled={submitting}
                               onClick={() => handleApprove(t)}
                             >
@@ -1147,7 +1137,7 @@ function StockTransferPage() {
                           {showReject && (
                             <button
                               type="button"
-                              className="st-btn ghost st-btn-danger"
+                              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border-0 px-5 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.98] bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 hover:ring-slate-300 text-red-700 ring-red-100 hover:bg-red-50"
                               disabled={submitting}
                               onClick={() => handleReject(t)}
                             >
@@ -1158,7 +1148,7 @@ function StockTransferPage() {
                           {showDispatch && (
                             <button
                               type="button"
-                              className="st-btn primary"
+                              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border-0 px-5 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.98] bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/30 disabled:pointer-events-none disabled:opacity-50"
                               disabled={submitting}
                               onClick={() => handleDispatch(t)}
                             >
@@ -1169,7 +1159,7 @@ function StockTransferPage() {
                           {showConfirm && (
                             <button
                               type="button"
-                              className="st-btn primary"
+                              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border-0 px-5 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.98] bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/30 disabled:pointer-events-none disabled:opacity-50"
                               disabled={submitting}
                               onClick={() => handleConfirmReceipt(t)}
                             >
@@ -1180,7 +1170,7 @@ function StockTransferPage() {
                           {showCancel && (
                             <button
                               type="button"
-                              className="st-btn ghost st-btn-danger"
+                              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border-0 px-5 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.98] bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 hover:ring-slate-300 text-red-700 ring-red-100 hover:bg-red-50"
                               disabled={submitting}
                               onClick={() => handleCancel(t)}
                             >
@@ -1199,7 +1189,7 @@ function StockTransferPage() {
         )}
 
         {activeTab === 'availability' && (
-          <section className="st-panel" aria-labelledby="branch-stock-title">
+          <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm ring-1 ring-slate-900/[0.03] sm:p-8" aria-labelledby="branch-stock-title">
             <PanelHeader
               title="Branch stock levels"
               subtitle="See how much stock each branch has before planning a transfer."
@@ -1212,8 +1202,12 @@ function StockTransferPage() {
                 placeholder="Product name or SKU…"
               />
               <label>
-                <span className="st-ui-search-label">Branch</span>
-                <select value={stockBranch} onChange={(e) => setStockBranch(e.target.value)}>
+                <span className="mb-1.5 block text-xs font-medium text-slate-600">Branch</span>
+                <select
+                  className={transferFieldClass}
+                  value={stockBranch}
+                  onChange={(e) => setStockBranch(e.target.value)}
+                >
                   {perms.canViewAllBranches && <option value="All">All branches</option>}
                   {(perms.canViewAllBranches
                     ? branches
@@ -1227,7 +1221,7 @@ function StockTransferPage() {
               </label>
             </FilterBar>
             {stockLoading ? (
-              <p className="st-loading">Loading inventory…</p>
+              <p className="mb-3 flex items-center gap-2 text-sm text-slate-500">Loading inventory…</p>
             ) : filteredStockRows.length === 0 ? (
               <EmptyState
                 icon="📦"
@@ -1243,8 +1237,8 @@ function StockTransferPage() {
                 }
               />
             ) : (
-              <div className="st-table-card">
-              <div className="st-table-wrap">
+              <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm ring-1 ring-slate-900/[0.02]">
+              <div className="overflow-x-auto">
                 <table>
                   <thead>
                     <tr>
@@ -1266,12 +1260,12 @@ function StockTransferPage() {
                             <td>{row.sku}</td>
                             <td>{row.productName}</td>
                             <td>{row.branch}</td>
-                            <td className={low ? 'st-stock-low' : 'st-stock-ok'}>
+                            <td className={low ? 'font-semibold text-red-600' : 'font-semibold text-emerald-600'}>
                               {row.qty} {row.unit}
                             </td>
                             <td>{row.reorder || '—'}</td>
                             <td>
-                              <span className={`st-badge ${low ? 'pending' : 'received'}`}>
+                              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${low ? "bg-amber-50 text-amber-800 ring-amber-600/20" : "bg-emerald-50 text-emerald-800 ring-emerald-600/20"}`}>
                                 {low ? 'Low stock' : 'Healthy'}
                               </span>
                             </td>
@@ -1294,7 +1288,7 @@ function StockTransferPage() {
         )}
 
         {activeTab === 'history' && (
-          <section className="st-panel" aria-labelledby="transfer-history-title">
+          <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm ring-1 ring-slate-900/[0.03] sm:p-8" aria-labelledby="transfer-history-title">
             <PanelHeader
               title="Transfer history"
               subtitle="Browse completed and past transfers. Filter by status or search by ID, product, or branch."
@@ -1307,8 +1301,9 @@ function StockTransferPage() {
                 placeholder="Transfer ID, product, branch…"
               />
               <label>
-                <span className="st-ui-search-label">Status</span>
+                <span className="mb-1.5 block text-xs font-medium text-slate-600">Status</span>
                 <select
+                  className={transferFieldClass}
                   value={historyStatus}
                   onChange={async (e) => {
                     const val = e.target.value;
@@ -1348,8 +1343,8 @@ function StockTransferPage() {
                 onSecondary={refreshAll}
               />
             ) : (
-              <div className="st-table-card">
-                <div className="st-table-wrap">
+              <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm ring-1 ring-slate-900/[0.02]">
+                <div className="overflow-x-auto">
                   <table>
                     <thead>
                       <tr>
@@ -1366,11 +1361,11 @@ function StockTransferPage() {
                       {historyTransfers.map((t) => (
                         <tr key={t._id ?? t.id}>
                           <td>
-                            <span className="st-ref-id">{t.id}</span>
+                            <span className="font-mono text-sm font-semibold text-blue-600">{t.id}</span>
                           </td>
                           <td>{formatLogDate(t.date)}</td>
                           <td>{toDisplayString(t.product)}</td>
-                          <td className="st-route-pill">
+                          <td className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
                             {toDisplayString(t.from)} → {toDisplayString(t.to)}
                           </td>
                           <td>{t.qty}</td>
@@ -1390,79 +1385,67 @@ function StockTransferPage() {
 
         {activeTab === 'reports' && perms.canViewBranchReports && (
           <section aria-labelledby="transfer-reports-title">
-            <div className="st-panel" style={{ marginBottom: 20 }}>
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm ring-1 ring-slate-900/[0.03] sm:p-8" style={{ marginBottom: 20 }}>
               <PanelHeader
                 title="Transfer reports"
                 subtitle="Summary of transfer volume and status across branches."
               >
-                <div className="st-export-row">
-                  <button type="button" className="st-btn ghost" title="Coming soon">
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border-0 px-5 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.98] bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 hover:ring-slate-300" title="Coming soon">
                     <FiDownload aria-hidden="true" />
                     Export PDF
                   </button>
-                  <button type="button" className="st-btn ghost" title="Coming soon">
+                  <button type="button" className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border-0 px-5 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.98] bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 hover:ring-slate-300" title="Coming soon">
                     <FiDownload aria-hidden="true" />
                     Export Excel
                   </button>
                 </div>
               </PanelHeader>
-              <div className="st-kpi-row" style={{ marginBottom: 0 }}>
-                <div className="st-kpi">
-                  <div className="st-kpi-icon primary">
-                    <FiBarChart2 />
-                  </div>
-                  <div>
-                    <strong>
-                      {analytics?.volumeSummary?.totalTransfers ??
-                        analytics?.totalTransfers ??
-                        transfers.length}
-                    </strong>
-                    <span>Total transfers</span>
-                  </div>
-                </div>
-                <div className="st-kpi">
-                  <div className="st-kpi-icon success">
-                    <FiPackage />
-                  </div>
-                  <div>
-                    <strong>
-                      {analytics?.volumeSummary?.totalUnits ??
-                        analytics?.totalUnits ??
-                        transfers.reduce((s, t) => s + t.qty, 0)}
-                    </strong>
-                    <span>Units moved</span>
-                  </div>
-                </div>
-                <div className="st-kpi">
-                  <div className="st-kpi-icon warning">
-                    <FiTruck />
-                  </div>
-                  <div>
-                    <strong>{analytics?.cancelledCount ?? 0}</strong>
-                    <span>Cancelled</span>
-                  </div>
-                </div>
-                <div className="st-kpi">
-                  <div className="st-kpi-icon info">
-                    <FiCheck />
-                  </div>
-                  <div>
-                    <strong>
-                      {(analytics?.topProducts ?? []).length ||
-                        reportByStatus.find((r) => r.name === 'Completed')?.value ||
-                        0}
-                    </strong>
-                    <span>Top products tracked</span>
-                  </div>
-                </div>
+              <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+                <KpiCard
+                  variant="primary"
+                  icon={FiBarChart2}
+                  value={
+                    analytics?.volumeSummary?.totalTransfers ??
+                    analytics?.totalTransfers ??
+                    transfers.length
+                  }
+                  label="Total transfers"
+                />
+                <KpiCard
+                  variant="success"
+                  icon={FiPackage}
+                  value={
+                    analytics?.volumeSummary?.totalUnits ??
+                    analytics?.totalUnits ??
+                    transfers.reduce((s, t) => s + t.qty, 0)
+                  }
+                  label="Units moved"
+                />
+                <KpiCard
+                  variant="warning"
+                  icon={FiTruck}
+                  value={analytics?.cancelledCount ?? 0}
+                  label="Cancelled"
+                />
+                <KpiCard
+                  variant="info"
+                  icon={FiCheck}
+                  value={
+                    (analytics?.topProducts ?? []).length ||
+                    reportByStatus.find((r) => r.name === 'Completed')?.value ||
+                    0
+                  }
+                  label="Top products"
+                />
               </div>
             </div>
-            <div className="st-reports-grid">
-              <div className="st-panel">
-                <h3 className="st-ui-panel-title" style={{ marginBottom: 8 }}>
+            <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm ring-1 ring-slate-900/[0.03] sm:p-8">
+                <h3 className="text-lg font-semibold tracking-tight text-slate-900" style={{ marginBottom: 8 }}>
                   Transfers by branch
                 </h3>
-                <div className="st-chart-box">
+                <div className="h-[300px] rounded-xl bg-slate-50/50 p-2 ring-1 ring-slate-100">
                   {reportByBranch.length ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
@@ -1499,11 +1482,11 @@ function StockTransferPage() {
                   )}
                 </div>
               </div>
-              <div className="st-panel">
-                <h3 className="st-ui-panel-title" style={{ marginBottom: 8 }}>
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm ring-1 ring-slate-900/[0.03] sm:p-8">
+                <h3 className="text-lg font-semibold tracking-tight text-slate-900" style={{ marginBottom: 8 }}>
                   Status distribution
                 </h3>
-                <div className="st-chart-box">
+                <div className="h-[300px] rounded-xl bg-slate-50/50 p-2 ring-1 ring-slate-100">
                   {reportByStatus.length ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
