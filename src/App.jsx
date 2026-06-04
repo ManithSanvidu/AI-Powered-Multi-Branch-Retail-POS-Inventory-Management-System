@@ -10,6 +10,7 @@ import { ProductProvider } from './context/ProductContext';
 import { SalesProvider } from './context/SalesContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { BranchProvider } from "./context/BranchContext";
+import { CustomerProvider } from "./context/CustomerContext";
 
 // Routes
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -38,6 +39,9 @@ import CategoryManagementPage from "./pages/products/CategoryManagementPage";
 
 // Branch Pages
 import BranchListPage from "./pages/branches/BranchListPage";
+
+// Customer Pages
+import CustomerListPage from "./pages/customers/CustomerListPage";
 
 // Other Pages
 import ReturnsPage from "./pages/returns/ReturnsPage";
@@ -83,17 +87,18 @@ function App() {
           <SalesProvider>
             <CartProvider>
               <NotificationProvider>
-                <BranchProvider>
-                  <BrowserRouter>
-                    <ErrorBoundary>
-                      <div className="app-container">
-                        <Routes>
-                          {/* Public Auth Routes */}
-                          <Route path="/login" element={<Login />} />
-                          <Route path="/register" element={<Register />} />
-                          <Route path="/forgot-password" element={<ForgotPassword />} />
-                          <Route path="/reset-password/:token" element={<ResetPassword />} />
-                          <Route path="/unauthorized" element={<Unauthorized />} />
+                <CustomerProvider>
+                  <BranchProvider>
+                    <BrowserRouter>
+                      <ErrorBoundary>
+                        <div className="app-container">
+                          <Routes>
+                            {/* Public Auth Routes */}
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/register" element={<Register />} />
+                            <Route path="/forgot-password" element={<ForgotPassword />} />
+                            <Route path="/reset-password/:token" element={<ResetPassword />} />
+                            <Route path="/unauthorized" element={<Unauthorized />} />
 
                           {/* Protected Dashboard Route */}
                           <Route
@@ -165,6 +170,9 @@ function App() {
                           <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
                           <Route path="/branches" element={<BranchListPage />} />
 
+                          {/* Customer Routes */}
+                          <Route path="/customers" element={<CustomerListPage />} />
+
                           {/* Default Redirect */}
                           <Route path="*" element={<Navigate to="/dashboard" replace />} />
                         </Routes>
@@ -172,7 +180,8 @@ function App() {
                     </ErrorBoundary>
                   </BrowserRouter>
                 </BranchProvider>
-              </NotificationProvider>
+              </CustomerProvider>
+            </NotificationProvider>
             </CartProvider>
           </SalesProvider>
         </ProductProvider>
