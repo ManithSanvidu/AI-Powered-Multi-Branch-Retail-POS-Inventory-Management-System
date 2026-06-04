@@ -12,7 +12,7 @@ import { NotificationProvider } from './context/NotificationContext';
 import { BranchProvider } from "./context/BranchContext";
 import { CustomerProvider } from "./context/CustomerContext";
 
-// Routes
+import ReportsPage from "./pages/reports/ReportsPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 // Auth Pages
@@ -166,6 +166,14 @@ function App() {
 
                           {/* Other Routes */}
                           <Route path="/employees" element={<EmployeesPage />} />
+                          <Route
+                            path="/reports"
+                            element={
+                              <ProtectedRoute roles={["admin"]}>
+                                <ReportsPage />
+                              </ProtectedRoute>
+                            }
+                          />
                           <Route path="/returns" element={<ReturnsPage />} />
                           <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
                           <Route path="/branches" element={<BranchListPage />} />

@@ -22,8 +22,7 @@ const CategoryManagementPage = lazy(() => import('../products/CategoryManagement
 const AddProductPage = lazy(() => import('../products/AddProductPage'));
 const EditProductPage = lazy(() => import('../products/EditProductPage'));
 const ProductDetailsPage = lazy(() => import('../products/ProductDetailsPage'));
-
-
+const ReportsPage = lazy(() => import('../reports/ReportsPage'));
 
 const ModuleLoading = () => (
   <div
@@ -118,6 +117,11 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
   const { notifications = [], removeNotification, clearAll } = useNotification() || {};
   const navigate = useNavigate();
   const role = viewRole || user?.role || 'admin';
+
+  const filteredNavItems = MODULE_NAV_ITEMS.filter(item => {
+    if (item.id === 'reporting' && role !== 'admin') return false;
+    return true;
+  });
 
   const [dashboardData, setDashboardData] = useState(generateDemoData());
   const [loading, setLoading] = useState(false);
@@ -248,21 +252,26 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
   };
 
   const showModule = (moduleId) => {
-  const productInnerModules = [
-    'product-categories',
-    'product-add',
-    'product-view',
-    'product-edit',
-  ];
+    if (moduleId === 'reporting') {
+      navigate('/reports');
+      return;
+    }
 
-  if (productInnerModules.includes(moduleId)) {
-    setActiveModule('product-mgmt');
-  } else {
-    setActiveModule(moduleId);
-  }
+    const productInnerModules = [
+      'product-categories',
+      'product-add',
+      'product-view',
+      'product-edit',
+    ];
 
-  setVisibleModule(moduleId);
-};
+    if (productInnerModules.includes(moduleId)) {
+      setActiveModule('product-mgmt');
+    } else {
+      setActiveModule(moduleId);
+    }
+
+    setVisibleModule(moduleId);
+  };
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -697,7 +706,11 @@ case 'product-edit':
       case 'analytics':
         return <BusinessAnalyticsModule />;
       case 'reporting':
-        return <ReportingModule />;
+        return (
+          <Suspense fallback={<ModuleLoading />}>
+            <ReportsPage />
+          </Suspense>
+        );
       case 'notifications':
         return <NotificationsModule />;
       case 'audit-logs':
@@ -719,7 +732,7 @@ case 'product-edit':
           {navExpanded && <span className="nav-title">POS Modules</span>}
         </div>
         <div className="nav-items">
-          {MODULE_NAV_ITEMS.map(item => (
+          {filteredNavItems.map(item => (
             <button
               key={item.id}
               className={`nav-item ${activeModule === item.id ? 'active' : ''}`}
@@ -740,7 +753,7 @@ case 'product-edit':
           {navExpanded && (
             <>
               <div className="nav-badge">Multi-Branch POS</div>
-              <div className="nav-module-count">{MODULE_NAV_ITEMS.length} Active Modules</div>
+              <div className="nav-module-count">{filteredNavItems.length} Active Modules</div>
             </>
           )}
         </div>
