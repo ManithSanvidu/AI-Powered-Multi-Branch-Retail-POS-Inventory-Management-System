@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { FileDown, FileSpreadsheet, BarChart2, RefreshCw, Database, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-import MainLayout from '../../layouts/MainLayout';
 import ReportSummaryCards from '../../components/reports/ReportSummaryCards';
 import ReportFilter from '../../components/reports/ReportFilter';
 import ReportPreviewTable from '../../components/reports/ReportPreviewTable';
@@ -232,7 +231,7 @@ function ReportsPage() {
   };
 
   return (
-    <MainLayout activeRoute="reports" onNavigate={handleNavigate}>
+    <>
       <div className="min-h-screen bg-slate-50">
         {/* ── Page Header ── */}
         <div className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
@@ -396,7 +395,7 @@ function ReportsPage() {
           )}
         </div>
       </div>
-    </MainLayout>
+    </>
   );
 }
 export default ReportsPage;
