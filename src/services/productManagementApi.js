@@ -1,9 +1,18 @@
+const apiHost = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_ROOT = apiHost.endsWith("/api")
+  ? apiHost
+  : `${apiHost.replace(/\/$/, "")}/api`;
 const PRODUCT_API_URL =
-  import.meta.env.VITE_RETAIL_POS_PRODUCT_API_URL ||
-  "http://localhost:5000/api/products";
+  import.meta.env.VITE_RETAIL_POS_PRODUCT_API_URL || `${API_ROOT}/products`;
 
 const request = async (method, path, body, params) => {
   const url = new URL(`${PRODUCT_API_URL}${path}`);
+  const token = localStorage.getItem("token");
+  const headers = {};
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
 
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
@@ -13,12 +22,12 @@ const request = async (method, path, body, params) => {
     });
   }
 
-  const options = { method, headers: {} };
+  const options = { method, headers };
 
   if (body instanceof FormData) {
     options.body = body;
   } else if (body !== undefined) {
-    options.headers["Content-Type"] = "application/json";
+    headers["Content-Type"] = "application/json";
     options.body = JSON.stringify(body);
   }
 

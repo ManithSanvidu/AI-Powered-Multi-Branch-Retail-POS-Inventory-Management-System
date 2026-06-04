@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { addProduct } from "../../services/productManagementApi";
+import { getAllCategories } from "../../services/categoryManagementApi";
+import { getAllSuppliers } from "../../services/supplierManagementApi";
 
 function AddProductPage() {
   const navigate = useNavigate();
@@ -8,6 +10,8 @@ function AddProductPage() {
   const [formData, setFormData] = useState({
     name: "",
     barcode: "",
+    category: "",
+    supplier: "",
     brand: "",
     description: "",
     price: "",
@@ -16,10 +20,34 @@ function AddProductPage() {
     unit: "",
   });
 
+  const [categories, setCategories] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+
   const [image, setImage] = useState(null);
   const [previewImage, setPreviewImage] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
+
+  const fetchDropdownData = async () => {
+    try {
+      setDataLoading(true);
+
+      const categoryResponse = await getAllCategories();
+      const supplierResponse = await getAllSuppliers();
+
+      setCategories(categoryResponse.data.categories || []);
+      setSuppliers(supplierResponse.data.data || []);
+    } catch (error) {
+      setMessage("Failed to load categories or suppliers");
+    } finally {
+      setDataLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDropdownData();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -62,6 +90,14 @@ function AddProductPage() {
       productFormData.append("reorderLevel", formData.reorderLevel);
       productFormData.append("unit", formData.unit);
 
+      if (formData.category) {
+        productFormData.append("category", formData.category);
+      }
+
+      if (formData.supplier) {
+        productFormData.append("supplier", formData.supplier);
+      }
+
       if (image) {
         productFormData.append("image", image);
       }
@@ -74,13 +110,21 @@ function AddProductPage() {
         navigate("/products");
       }, 800);
     } catch (error) {
-      setMessage(
-        error.response?.data?.message || "Failed to add product"
-      );
+      setMessage(error.response?.data?.message || "Failed to add product");
     } finally {
       setLoading(false);
     }
   };
+
+  if (dataLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 p-6">
+        <div className="mx-auto max-w-5xl rounded-2xl bg-white p-6 shadow-sm">
+          <p className="text-slate-600">Loading product form data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-8">
@@ -88,7 +132,7 @@ function AddProductPage() {
         <div className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
           <h1 className="text-2xl font-bold text-slate-900">Add New Product</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Add product details, barcode, pricing, and product image.
+            Add product details, category, supplier, barcode, pricing, and image.
           </p>
         </div>
 
@@ -134,6 +178,46 @@ function AddProductPage() {
                   placeholder="Example: 123456789111"
                   className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  Category
+                </label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                >
+                  <option value="">Select category</option>
+                  {categories.map((category) => (
+                    <option key={category._id} value={category._id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  Supplier
+                </label>
+                <select
+                  name="supplier"
+                  value={formData.supplier}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                >
+                  <option value="">Select supplier</option>
+                  {suppliers
+                    .filter((supplier) => supplier.status === "Active")
+                    .map((supplier) => (
+                      <option key={supplier._id} value={supplier._id}>
+                        {supplier.companyName}
+                      </option>
+                    ))}
+                </select>
               </div>
 
               <div>
