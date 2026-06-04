@@ -7,6 +7,7 @@ import InventoryStatus from '../../components/dashboard/InventoryStatus';
 import TopProducts from '../../components/dashboard/TopProducts';
 import LiveFeed from '../../components/dashboard/LiveFeed';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import { socketService } from '../../services/socketService';
 import { useNavigate } from 'react-router-dom';
 
@@ -114,6 +115,7 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
 
 
   const { user, token, logout } = useAuth();
+  const { notifications = [], removeNotification, clearAll } = useNotification() || {};
   const navigate = useNavigate();
   const role = viewRole || user?.role || 'admin';
 
@@ -391,13 +393,30 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
                 <div className="notification-wrapper">
                   <button className="notification-btn" onClick={() => setShowNotifications(!showNotifications)}>
                     <span className="bell-icon">🔔</span>
-                    <span className="notification-dot"></span>
+                    {notifications.length > 0 && <span className="notification-dot" style={{ background: 'var(--danger)', right: '4px', top: '4px', width: '10px', height: '10px' }}></span>}
                   </button>
                   {showNotifications && (
-                    <div className="notification-dropdown">
-                      <div className="notification-header">Notifications</div>
-                      <div className="notification-item"><span className="notif-icon">🔄</span><span>Inventory updated</span><span className="notif-time">2 min ago</span></div>
-                      <div className="notification-item"><span className="notif-icon">💰</span><span>New sale recorded</span><span className="notif-time">15 min ago</span></div>
+                    <div className="notification-dropdown" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                      <div className="notification-header" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Notifications</span>
+                        {notifications.length > 0 && (
+                          <button onClick={clearAll} style={{ background: 'none', border: 'none', color: '#3b82f6', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold' }}>Clear</button>
+                        )}
+                      </div>
+                      {notifications.length === 0 ? (
+                        <div style={{ padding: '20px', textAlign: 'center', color: '#94a3b8', fontSize: '0.9rem' }}>No new notifications</div>
+                      ) : (
+                        notifications.map(n => (
+                          <div key={n.id} className={`notification-item notif-${n.type}`} style={{ alignItems: 'flex-start', gap: '10px', padding: '12px' }}>
+                            <span className="notif-icon" style={{ marginTop: '2px' }}>{n.type === 'warning' ? '⚠️' : n.type === 'success' ? '✅' : 'ℹ️'}</span>
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <span style={{ lineHeight: '1.4', whiteSpace: 'normal', wordBreak: 'break-word' }}>{n.msg}</span>
+                              <span className="notif-time">{n.time}</span>
+                            </div>
+                            <button onClick={(e) => { e.stopPropagation(); removeNotification(n.id); }} style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', fontSize: '1rem' }}>×</button>
+                          </div>
+                        ))
+                      )}
                     </div>
                   )}
                 </div>

@@ -8,6 +8,7 @@ import { CartProvider } from './context/CartContext';
 import { EmployeeProvider } from './context/EmployeeContext';
 import { ProductProvider } from './context/ProductContext';
 import { SalesProvider } from './context/SalesContext';
+import { NotificationProvider } from './context/NotificationContext';
 import { BranchProvider } from "./context/BranchContext";
 import { CustomerProvider } from "./context/CustomerContext";
 
@@ -85,100 +86,102 @@ function App() {
         <ProductProvider>
           <SalesProvider>
             <CartProvider>
-            <CustomerProvider>
-              <BranchProvider>
-                <BrowserRouter>
-                  <ErrorBoundary>
-                  <div className="app-container">
-                    <Routes>
-                      {/* Public Auth Routes */}
-                      <Route path="/login" element={<Login />} />
-                      <Route path="/register" element={<Register />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
-                    <Route path="/reset-password/:token" element={<ResetPassword />} />
-                    <Route path="/unauthorized" element={<Unauthorized />} />
+              <NotificationProvider>
+                <CustomerProvider>
+                  <BranchProvider>
+                    <BrowserRouter>
+                      <ErrorBoundary>
+                        <div className="app-container">
+                          <Routes>
+                            {/* Public Auth Routes */}
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/register" element={<Register />} />
+                            <Route path="/forgot-password" element={<ForgotPassword />} />
+                            <Route path="/reset-password/:token" element={<ResetPassword />} />
+                            <Route path="/unauthorized" element={<Unauthorized />} />
 
-                    {/* Protected Dashboard Route */}
-                    <Route
-                      path="/dashboard"
-                      element={
-                        <ProtectedRoute roles={["admin", "manager", "cashier"]}>
-                          <Suspense
-                            fallback={
-                              <div
-                                style={{
-                                  minHeight: '100vh',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  background: 'linear-gradient(180deg, #4facfe 0%, #00f2fe 100%)',
-                                  fontWeight: 600,
-                                  color: '#0f172a',
-                                }}
-                              >
-                                Loading dashboard…
-                              </div>
+                          {/* Protected Dashboard Route */}
+                          <Route
+                            path="/dashboard"
+                            element={
+                              <ProtectedRoute roles={["admin", "manager", "cashier"]}>
+                                <Suspense
+                                  fallback={
+                                    <div
+                                      style={{
+                                        minHeight: '100vh',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        background: 'linear-gradient(180deg, #4facfe 0%, #00f2fe 100%)',
+                                        fontWeight: 600,
+                                        color: '#0f172a',
+                                      }}
+                                    >
+                                      Loading dashboard…
+                                    </div>
+                                  }
+                                >
+                                  <Dashboard
+                                    returnState={returnState}
+                                    setReturnState={setReturnState}
+                                  />
+                                </Suspense>
+                              </ProtectedRoute>
                             }
-                          >
-                            <Dashboard
-                              returnState={returnState}
-                              setReturnState={setReturnState}
-                            />
-                          </Suspense>
-                        </ProtectedRoute>
-                      }
-                    />
+                          />
 
-                    {/* Protected Profile Route */}
-                    <Route
-                      path="/profile"
-                      element={
-                        <ProtectedRoute>
-                          <Profile />
-                        </ProtectedRoute>
-                      }
-                    />
+                          {/* Protected Profile Route */}
+                          <Route
+                            path="/profile"
+                            element={
+                              <ProtectedRoute>
+                                <Profile />
+                              </ProtectedRoute>
+                            }
+                          />
 
-                    {/* Protected Admin Route */}
-                    <Route
-                      path="/admin"
-                      element={
-                        <ProtectedRoute roles={["admin"]}>
-                          <AdminPanel />
-                        </ProtectedRoute>
-                      }
-                    />
+                          {/* Protected Admin Route */}
+                          <Route
+                            path="/admin"
+                            element={
+                              <ProtectedRoute roles={["admin"]}>
+                                <AdminPanel />
+                              </ProtectedRoute>
+                            }
+                          />
 
-                    {/* POS Routes */}
-                    <Route path="/pos" element={<POSPage />} />
-                    <Route path="/checkout" element={<CheckoutPage />} />
-                    <Route path="/receipt" element={<ReceiptPage />} />
-                    <Route path="/history" element={<SalesHistoryPage />} />
+                          {/* POS Routes */}
+                          <Route path="/pos" element={<POSPage />} />
+                          <Route path="/checkout" element={<CheckoutPage />} />
+                          <Route path="/receipt" element={<ReceiptPage />} />
+                          <Route path="/history" element={<SalesHistoryPage />} />
 
-                    {/* Product Routes */}
-                    <Route path="/products" element={<ProductListPage />} />
-                    <Route path="/products/add" element={<AddProductPage />} />
-                    <Route path="/products/edit/:id" element={<EditProductPage />} />
-                    <Route path="/products/categories" element={<CategoryManagementPage />} />
-                    <Route path="/products/:id" element={<ProductDetailsPage />} />
+                          {/* Product Routes */}
+                          <Route path="/products" element={<ProductListPage />} />
+                          <Route path="/products/add" element={<AddProductPage />} />
+                          <Route path="/products/edit/:id" element={<EditProductPage />} />
+                          <Route path="/products/categories" element={<CategoryManagementPage />} />
+                          <Route path="/products/:id" element={<ProductDetailsPage />} />
 
-                    {/* Other Routes */}
-                    <Route path="/employees" element={<EmployeesPage />} />
-                    <Route path="/returns" element={<ReturnsPage />} />
-                    <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
-                    <Route path="/branches" element={<BranchListPage />} />
-                    {/* Customer Routes */}
-                    <Route path="/customers" element={<CustomerListPage />} />
-                  
+                          {/* Other Routes */}
+                          <Route path="/employees" element={<EmployeesPage />} />
+                          <Route path="/returns" element={<ReturnsPage />} />
+                          <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
+                          <Route path="/branches" element={<BranchListPage />} />
 
-                    {/* Default Redirect */}
-                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                  </Routes>
-                </div>
-                  </ErrorBoundary>
-               </BrowserRouter>
-              </BranchProvider>
-             </CustomerProvider>
+                          {/* Customer Routes */}
+                          <Route path="/customers" element={<CustomerListPage />} />
+
+                          {/* Default Redirect */}
+                          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                        </Routes>
+                      </div>
+                    </ErrorBoundary>
+                  </BrowserRouter>
+                </BranchProvider>
+              </CustomerProvider>
+            </NotificationProvider>
             </CartProvider>
           </SalesProvider>
         </ProductProvider>
