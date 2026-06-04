@@ -2,14 +2,8 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../../api/axiosInstance";
 
-const ROLES = [
-  { label: "Cashier", value: "cashier", icon: "ti-receipt"      },
-  { label: "Manager", value: "manager", icon: "ti-briefcase"    },
-  { label: "Admin",   value: "admin",   icon: "ti-shield-check" },
-];
-
 const Register = () => {
-  const [form, setForm]         = useState({ name:"", email:"", password:"", role:"cashier" });
+  const [form, setForm]         = useState({ name:"", email:"", password:"", role:"user" });
   const [showPass, setShowPass] = useState(false);
   const [error, setError]       = useState("");
   const [success, setSuccess]   = useState("");
@@ -35,15 +29,15 @@ const Register = () => {
   };
 
   const inputBase = {
-    width: "100%", height: 48,
-    background: "#0a1628",
-    border: "1px solid #1a3060",
-    borderRadius: 10,
-    color: "#e2eaf4", fontSize: 14,
-    outline: "none",
-    padding: "0 44px 0 42px",
-    transition: "border-color .15s",
-    letterSpacing: ".2px",
+    width:"100%", height:48,
+    background:"#0a1628",
+    border:"1px solid #1a3060",
+    borderRadius:10,
+    color:"#e2eaf4", fontSize:14,
+    outline:"none",
+    padding:"0 44px 0 42px",
+    transition:"border-color .15s",
+    letterSpacing:".2px",
   };
 
   return (
@@ -51,16 +45,14 @@ const Register = () => {
 
       {/* ── Left Panel ── */}
       <div style={{
-        width: "82%", padding: "56px 52px",
-        display: "flex", flexDirection: "column",
-        justifyContent: "space-between",
-        position: "relative", overflow: "hidden",
-        background: "#050d1f",
+        width:"42%", padding:"56px 52px",
+        display:"flex", flexDirection:"column",
+        justifyContent:"space-between",
+        position:"relative", overflow:"hidden",
+        background:"#050d1f",
       }}>
-        {/* Top accent bar */}
         <div style={{ position:"absolute", top:0, left:0, right:0,
                       height:2, background:"#3b82f6" }} />
-        {/* Orbs */}
         <div style={{ position:"absolute", width:400, height:400,
                       borderRadius:"50%", background:"#3b82f6",
                       opacity:.04, top:-120, right:-100 }} />
@@ -111,42 +103,35 @@ const Register = () => {
             employees and real-time analytics.
           </p>
 
-          {/* Dashboard illustration */}
-          <div style={{ marginTop:32, position:"relative" }}>
-
-            {/* Main card */}
+          {/* Illustration */}
+          <div style={{ marginTop:32 }}>
             <div style={{
               background:"rgba(59,130,246,.06)",
               border:"1px solid rgba(59,130,246,.15)",
-              borderRadius:16, padding:"20px",
-              marginBottom:12,
+              borderRadius:16, padding:"20px", marginBottom:12,
             }}>
-              {/* Window dots */}
               <div style={{ display:"flex", alignItems:"center",
                             gap:6, marginBottom:14 }}>
-                <div style={{ width:7, height:7, borderRadius:"50%",
-                              background:"#ef4444" }} />
-                <div style={{ width:7, height:7, borderRadius:"50%",
-                              background:"#f59e0b" }} />
-                <div style={{ width:7, height:7, borderRadius:"50%",
-                              background:"#22c55e" }} />
+                {["#ef4444","#f59e0b","#22c55e"].map(c => (
+                  <div key={c} style={{ width:7, height:7,
+                    borderRadius:"50%", background:c }} />
+                ))}
                 <div style={{ flex:1, height:5,
                               background:"rgba(255,255,255,.05)",
                               borderRadius:4, marginLeft:8 }} />
-                <div style={{ fontSize:9, color:"#2a4070",
-                              letterSpacing:.5 }}>LIVE</div>
+                <span style={{ fontSize:9, color:"#2a4070",
+                               letterSpacing:.5 }}>LIVE</span>
                 <div style={{ width:5, height:5, borderRadius:"50%",
-                              background:"#3b82f6" }} />
+                              background:"#3b82f6", marginLeft:4 }} />
               </div>
 
-              {/* Stats row */}
               <div style={{ display:"grid",
                             gridTemplateColumns:"repeat(3,1fr)",
                             gap:8, marginBottom:12 }}>
                 {[
-                  { val:"$12,450", lbl:"Revenue",    color:"#3b82f6", tag:"↑ 8.2%" },
-                  { val:"526",     lbl:"Sales",      color:"#93c5fd", tag:"↑ 3.8%" },
-                  { val:"99%",     lbl:"Uptime",     color:"#fff",    tag:"● Live"  },
+                  { val:"$12,450", lbl:"Revenue", color:"#3b82f6", tag:"↑ 8.2%" },
+                  { val:"526",     lbl:"Sales",   color:"#93c5fd", tag:"↑ 3.8%" },
+                  { val:"99%",     lbl:"Uptime",  color:"#fff",    tag:"● Live"  },
                 ].map(({ val, lbl, color, tag }) => (
                   <div key={lbl} style={{
                     background:"rgba(255,255,255,.04)",
@@ -164,16 +149,14 @@ const Register = () => {
                 ))}
               </div>
 
-              {/* Bar chart */}
               <div style={{ display:"flex", alignItems:"flex-end",
                             gap:4, height:44, padding:"0 2px" }}>
-                {[30,50,38,65,48,80,55,72,42,88,60,75].map((h, i) => (
+                {[30,50,38,65,48,80,55,72,42,88,60,75].map((h,i) => (
                   <div key={i} style={{
                     flex:1, height:`${h}%`,
                     borderRadius:"3px 3px 0 0",
-                    background: i === 9
-                      ? "#3b82f6"
-                      : `rgba(59,130,246,${0.15 + (h/100)*0.3})`,
+                    background: i===9 ? "#3b82f6"
+                      : `rgba(59,130,246,${0.15+(h/100)*0.3})`,
                   }} />
                 ))}
               </div>
@@ -183,12 +166,11 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Feature pills */}
             <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
               {[
-                { icon:"ti-shield-lock", text:"Bank-grade JWT security"      },
-                { icon:"ti-git-branch",  text:"Multi-branch real-time sync"  },
-                { icon:"ti-brain",       text:"AI demand forecasting engine" },
+                { icon:"ti-shield-lock", text:"Bank-grade JWT security"     },
+                { icon:"ti-git-branch",  text:"Multi-branch real-time sync" },
+                { icon:"ti-brain",       text:"AI demand forecasting engine"},
               ].map(({ icon, text }) => (
                 <div key={text} style={{
                   display:"flex", alignItems:"center", gap:10,
@@ -221,14 +203,13 @@ const Register = () => {
 
       {/* ── Right Panel ── */}
       <div style={{
-        width: "58%", background:"#070f21",
+        width:"58%", background:"#070f21",
         display:"flex", alignItems:"center", justifyContent:"center",
         padding:"40px 60px",
         borderLeft:"1px solid rgba(255,255,255,.05)",
       }}>
         <div style={{ width:"100%", maxWidth:480 }}>
 
-          {/* Header */}
           <div style={{ marginBottom:28 }}>
             <h2 style={{ fontSize:24, fontWeight:700, color:"#fff",
                          marginBottom:4, letterSpacing:-.3 }}>
@@ -239,7 +220,6 @@ const Register = () => {
             </p>
           </div>
 
-          {/* Error */}
           {error && (
             <div style={{
               display:"flex", alignItems:"center", gap:8, fontSize:12,
@@ -252,7 +232,6 @@ const Register = () => {
             </div>
           )}
 
-          {/* Success */}
           {success && (
             <div style={{
               display:"flex", alignItems:"center", gap:8, fontSize:12,
@@ -267,27 +246,22 @@ const Register = () => {
 
           <form onSubmit={handleSubmit}>
 
-            {/* Full Name */}
+            {/* Name */}
             <label style={{ fontSize:11, fontWeight:500, color:"#4a70b0",
                             letterSpacing:.5, textTransform:"uppercase",
                             marginBottom:6, display:"block" }}>
               Full name
             </label>
             <div style={{ position:"relative", marginBottom:16 }}>
-              <i className="ti ti-user" style={{
-                position:"absolute", left:14, top:"50%",
-                transform:"translateY(-50%)",
-                color:"#1e3a6e", fontSize:16,
-              }} />
-              <input
-                type="text" name="name"
-                value={form.name} onChange={handleChange}
-                placeholder="John Doe"
+              <i className="ti ti-user" style={{ position:"absolute",
+                left:14, top:"50%", transform:"translateY(-50%)",
+                color:"#1e3a6e", fontSize:16 }} />
+              <input type="text" name="name" value={form.name}
+                onChange={handleChange} placeholder="John Doe"
                 style={inputBase}
-                onFocus={e => e.target.style.borderColor = "#3b82f6"}
-                onBlur={e  => e.target.style.borderColor = "#1a3060"}
-                required
-              />
+                onFocus={e => e.target.style.borderColor="#3b82f6"}
+                onBlur={e  => e.target.style.borderColor="#1a3060"}
+                required />
             </div>
 
             {/* Email */}
@@ -297,20 +271,15 @@ const Register = () => {
               Email address
             </label>
             <div style={{ position:"relative", marginBottom:16 }}>
-              <i className="ti ti-mail" style={{
-                position:"absolute", left:14, top:"50%",
-                transform:"translateY(-50%)",
-                color:"#1e3a6e", fontSize:16,
-              }} />
-              <input
-                type="email" name="email"
-                value={form.email} onChange={handleChange}
-                placeholder="admin@company.com"
+              <i className="ti ti-mail" style={{ position:"absolute",
+                left:14, top:"50%", transform:"translateY(-50%)",
+                color:"#1e3a6e", fontSize:16 }} />
+              <input type="email" name="email" value={form.email}
+                onChange={handleChange} placeholder="admin@company.com"
                 style={inputBase}
-                onFocus={e => e.target.style.borderColor = "#3b82f6"}
-                onBlur={e  => e.target.style.borderColor = "#1a3060"}
-                required
-              />
+                onFocus={e => e.target.style.borderColor="#3b82f6"}
+                onBlur={e  => e.target.style.borderColor="#1a3060"}
+                required />
             </div>
 
             {/* Password */}
@@ -319,61 +288,58 @@ const Register = () => {
                             marginBottom:6, display:"block" }}>
               Password
             </label>
-            <div style={{ position:"relative", marginBottom:16 }}>
-              <i className="ti ti-lock" style={{
-                position:"absolute", left:14, top:"50%",
-                transform:"translateY(-50%)",
-                color:"#1e3a6e", fontSize:16,
-              }} />
-              <input
-                type={showPass ? "text" : "password"} name="password"
+            <div style={{ position:"relative", marginBottom:24 }}>
+              <i className="ti ti-lock" style={{ position:"absolute",
+                left:14, top:"50%", transform:"translateY(-50%)",
+                color:"#1e3a6e", fontSize:16 }} />
+              <input type={showPass?"text":"password"} name="password"
                 value={form.password} onChange={handleChange}
-                placeholder="Min. 6 characters"
-                style={inputBase}
-                onFocus={e => e.target.style.borderColor = "#3b82f6"}
-                onBlur={e  => e.target.style.borderColor = "#1a3060"}
-                minLength={6} required
-              />
-              <button type="button" onClick={() => setShowPass(!showPass)}
+                placeholder="Min. 6 characters" style={inputBase}
+                onFocus={e => e.target.style.borderColor="#3b82f6"}
+                onBlur={e  => e.target.style.borderColor="#1a3060"}
+                minLength={6} required />
+              <button type="button" onClick={()=>setShowPass(!showPass)}
                 style={{ position:"absolute", right:13, top:"50%",
                          transform:"translateY(-50%)", background:"none",
                          border:"none", color:"#1e3a6e",
                          cursor:"pointer", padding:0, fontSize:16 }}>
-                <i className={`ti ${showPass ? "ti-eye-off" : "ti-eye"}`} />
+                <i className={`ti ${showPass?"ti-eye-off":"ti-eye"}`} />
               </button>
             </div>
 
-            {/* Role */}
-            <label style={{ fontSize:11, fontWeight:500, color:"#4a70b0",
-                            letterSpacing:.5, textTransform:"uppercase",
-                            marginBottom:10, display:"block" }}>
-              Select role
-            </label>
-            <div style={{ display:"grid",
-                          gridTemplateColumns:"repeat(3,1fr)",
-                          gap:8, marginBottom:22 }}>
-              {ROLES.map(({ label, value, icon }) => (
-                <button key={value} type="button"
-                  onClick={() => setForm({ ...form, role: value })}
-                  style={{
-                    border: form.role === value
-                      ? "1px solid #3b82f6"
-                      : "1px solid #0f2040",
-                    borderRadius:9,
-                    background: form.role === value
-                      ? "rgba(59,130,246,.1)" : "#0a1628",
-                    color: form.role === value
-                      ? "#3b82f6" : "#4a6090",
-                    fontSize:12, cursor:"pointer",
-                    padding:"12px 4px",
-                    display:"flex", flexDirection:"column",
-                    alignItems:"center", gap:5,
-                    transition:"all .15s",
-                  }}>
-                  <i className={`ti ${icon}`} style={{ fontSize:18 }} />
-                  {label}
-                </button>
-              ))}
+            {/* ✅ Role hidden — default "user" */}
+            <input type="hidden" name="role" value="user" />
+
+            {/* Role info badge */}
+            <div style={{
+              display:"flex", alignItems:"center", gap:8,
+              background:"rgba(59,130,246,.05)",
+              border:"1px solid rgba(59,130,246,.12)",
+              borderRadius:9, padding:"10px 14px", marginBottom:22,
+            }}>
+              <div style={{ width:28, height:28, borderRadius:7,
+                            background:"rgba(59,130,246,.12)",
+                            border:"1px solid rgba(59,130,246,.2)",
+                            display:"flex", alignItems:"center",
+                            justifyContent:"center", flexShrink:0 }}>
+                <i className="ti ti-user"
+                   style={{ color:"#3b82f6", fontSize:14 }} />
+              </div>
+              <div>
+                <div style={{ fontSize:11, color:"#93c5fd",
+                              fontWeight:500, letterSpacing:.3 }}>
+                  Default role: User
+                </div>
+                <div style={{ fontSize:10, color:"#1e3a6e", marginTop:1 }}>
+                  Role can be changed by an admin after registration
+                </div>
+              </div>
+              <div style={{ marginLeft:"auto", fontSize:9,
+                            color:"#3b82f6", background:"rgba(59,130,246,.1)",
+                            border:"1px solid rgba(59,130,246,.2)",
+                            borderRadius:20, padding:"2px 8px" }}>
+                USER
+              </div>
             </div>
 
             {/* Submit */}
@@ -400,7 +366,6 @@ const Register = () => {
             </button>
           </form>
 
-          {/* Divider */}
           <div style={{ display:"flex", alignItems:"center",
                         gap:10, margin:"22px 0" }}>
             <hr style={{ flex:1, border:"none",
@@ -413,7 +378,6 @@ const Register = () => {
                          borderTop:"1px solid #0f2040" }} />
           </div>
 
-          {/* Status */}
           <div style={{
             display:"flex", alignItems:"center", gap:7,
             background:"rgba(59,130,246,.07)",

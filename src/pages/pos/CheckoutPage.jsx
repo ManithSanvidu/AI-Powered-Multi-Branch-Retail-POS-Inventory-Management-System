@@ -162,7 +162,7 @@ import { useSales } from "../../context/SalesContext";
 import { createSale } from "../../services/salesApi";
 import PaymentMethod from "../../components/pos/PaymentMethod";
 
-const CheckoutPage = () => {
+const CheckoutPage = ({ onBack, onComplete }) => {
   const navigate = useNavigate();
   const { cart, subtotal, discount, taxAmount, total, buildCheckoutPayload, clearCart } = useCart();
   const { addSale } = useSales();
@@ -173,7 +173,7 @@ const CheckoutPage = () => {
   const [loading, setLoading]             = useState(false);
   const [error, setError]                 = useState("");
 
-  if (cart.length === 0) { navigate("/pos"); return null; }
+  if (cart.length === 0) { onBack ? onBack() : navigate("/pos"); return null; }
 
   const change     = paymentMethod === "CASH" && cashReceived ? parseFloat(cashReceived) - total : 0;
   const canConfirm = paymentMethod !== "CASH" || (cashReceived && parseFloat(cashReceived) >= total);
@@ -186,7 +186,7 @@ const CheckoutPage = () => {
       const sale    = res.data.data;
       addSale(sale);
       clearCart();
-      navigate("/receipt", { state: { sale } });
+      if (onComplete) { onComplete(sale); } else { navigate("/receipt", { state: { sale } }); }
     } catch (err) {
       setError(err.response?.data?.message || "Payment failed. Please try again.");
     } finally {
@@ -195,22 +195,18 @@ const CheckoutPage = () => {
   };
 
   return (
-    // POS Page එකට දාපු ලස්සන Vibrant Gradient එකම මෙතනටත් දැම්මා
     <div className="min-h-screen bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600 flex flex-col justify-start items-center py-10 px-4 antialiased relative overflow-hidden">
       
-      {/* Decorative Sun Glow */}
       <div className="absolute top-10 right-1/4 w-36 h-36 bg-yellow-400 rounded-full blur-2xl opacity-50 pointer-events-none" />
 
       <div className="w-full max-w-xl z-10">
-        {/* Back Button with glass effect hover */}
         <button
-          onClick={() => navigate("/pos")}
+          onClick={() => onBack ? onBack() : navigate("/pos")}
           className="flex items-center gap-2 text-white/90 hover:text-white bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 rounded-xl mb-6 text-xs font-bold uppercase tracking-wider backdrop-blur-md transition-all duration-200"
         >
           <ArrowLeft size={14} strokeWidth={2.5} /> Back to POS
         </button>
 
-        {/* Premium Semi-Transparent Glass Card */}
         <div className="backdrop-blur-xl bg-white/90 border border-white/40 rounded-3xl shadow-2xl p-6 md:p-8">
           <div className="flex items-center gap-2 mb-6">
             <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-blue-500/20">

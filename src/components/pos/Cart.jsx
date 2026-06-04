@@ -159,6 +159,7 @@
 // };
 
 // export default Cart;
+
 import { useNavigate } from "react-router-dom";
 import { ShoppingCart, Tag, ArrowRight, Trash2 } from "lucide-react";
 import CartItem from "./CartItem";
@@ -175,6 +176,7 @@ const Cart = ({
   decreaseQty,
   removeItem,
   onClearCart,
+  onCheckout,
 }) => {
   const navigate = useNavigate();
   const itemCount = cart.reduce((s, i) => s + i.qty, 0);
@@ -275,7 +277,7 @@ const Cart = ({
           </div>
 
           <button
-            onClick={() => navigate("/checkout")}
+            onClick={() => onCheckout ? onCheckout() : navigate("/checkout")}
             className="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold hover:bg-blue-700 transition flex items-center justify-center gap-2 text-sm shadow-lg shadow-blue-600/10 mt-1"
           >
             Proceed to Checkout <ArrowRight size={16} />
