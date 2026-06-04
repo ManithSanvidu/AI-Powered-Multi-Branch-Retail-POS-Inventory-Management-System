@@ -1,9 +1,19 @@
 import axios from "axios";
 
-const PRODUCT_API_URL = import.meta.env.VITE_RETAIL_POS_PRODUCT_API_URL;
+const API_ROOT = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const PRODUCT_API_URL =
+  import.meta.env.VITE_RETAIL_POS_PRODUCT_API_URL || `${API_ROOT}/products`;
 
 const productManagementApi = axios.create({
   baseURL: PRODUCT_API_URL,
+});
+
+productManagementApi.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 export const getAllProducts = () => {
