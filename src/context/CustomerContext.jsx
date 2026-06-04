@@ -5,6 +5,7 @@ import {
   updateCustomer,
   deleteCustomer,
   searchCustomers,
+  getCustomersByBranch,
 } from "../services/customerApi";
 
 const CustomerContext = createContext();
@@ -12,8 +13,8 @@ const CustomerContext = createContext();
 export const useCustomers = () => useContext(CustomerContext);
 
 export const CustomerProvider = ({ children }) => {
-  const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [customers, setCustomers]             = useState([]);
+  const [loading, setLoading]                 = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   // GET ALL
@@ -21,7 +22,6 @@ export const CustomerProvider = ({ children }) => {
     setLoading(true);
     try {
       const res = await getAllCustomers();
-
       const raw = res.data;
       const list = Array.isArray(raw)
         ? raw
@@ -30,7 +30,6 @@ export const CustomerProvider = ({ children }) => {
         : Array.isArray(raw?.customers)
         ? raw.customers
         : [];
-
       setCustomers(list);
     } catch (err) {
       console.error("Failed to load customers:", err);
@@ -60,14 +59,34 @@ export const CustomerProvider = ({ children }) => {
     return res.data;
   };
 
-  // SEARCH
-  const searchCustomer = async (keyword) => {
+  // SEARCH — supports optional branchId
+  // If branchId is provided → GET /branch/:branchId?search=
+  // Otherwise              → GET /?search=
+  const searchCustomer = async (keyword = "", branchId = null) => {
     setLoading(true);
     try {
-      const res = await searchCustomers(keyword);
-      setCustomers(res.data || []);
+      let res;
+
+      if (branchId && branchId !== "all") {
+        res = await getCustomersByBranch(branchId, keyword);
+      } else {
+        res = await searchCustomers(keyword);
+      }
+
+      const raw  = res.data;
+      const list = Array.isArray(raw)
+        ? raw
+        : Array.isArray(raw?.data)
+        ? raw.data
+        : Array.isArray(raw?.customers)
+        ? raw.customers
+        : [];
+
+      setCustomers(list);
+      return list;
     } catch (err) {
       console.error("Search failed:", err);
+      return [];
     } finally {
       setLoading(false);
     }
