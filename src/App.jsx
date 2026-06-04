@@ -21,6 +21,7 @@ import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import Profile from "./pages/auth/Profile";
+import Unauthorized from "./pages/auth/Unauthorized";
 
 // POS / Dashboard Pages
 import Dashboard from "./pages/dashboard/Dashboard";
@@ -42,7 +43,6 @@ import BranchListPage from "./pages/branches/BranchListPage";
 
 // Customer Pages
 import CustomerListPage from "./pages/customers/CustomerListPage";
-//import CustomerAddModal from "./pages/customers/CustomerAddModal";
 
 // Other Pages
 import ReturnsPage from "./pages/returns/ReturnsPage";
@@ -55,7 +55,6 @@ import "./App.css";
 
 // Placeholder pages
 const AdminPanel = () => <h1>🔐 Admin Panel</h1>;
-const Unauthorized = () => <h1>⛔ Unauthorized Access</h1>;
 
 function App() {
   const [returnState, setReturnState] = useState({
@@ -101,84 +100,82 @@ function App() {
                             <Route path="/reset-password/:token" element={<ResetPassword />} />
                             <Route path="/unauthorized" element={<Unauthorized />} />
 
-                          {/* Protected Dashboard Route */}
-                          <Route
-                            path="/dashboard"
-                            element={
-                              <ProtectedRoute roles={["admin", "manager", "cashier"]}>
-                                <Suspense
-                                  fallback={
-                                    <div
-                                      style={{
-                                        minHeight: '100vh',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        background: 'linear-gradient(180deg, #4facfe 0%, #00f2fe 100%)',
-                                        fontWeight: 600,
-                                        color: '#0f172a',
-                                      }}
-                                    >
-                                      Loading dashboard…
-                                    </div>
-                                  }
-                                >
-                                  <Dashboard
-                                    returnState={returnState}
-                                    setReturnState={setReturnState}
-                                  />
-                                </Suspense>
-                              </ProtectedRoute>
-                            }
-                          />
+                            {/* Protected Dashboard Route */}
+                            <Route
+                              path="/dashboard"
+                              element={
+                                <ProtectedRoute roles={["admin", "manager", "cashier"]}>
+                                  <Suspense
+                                    fallback={
+                                      <div
+                                        style={{
+                                          minHeight: '100vh',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          background: 'linear-gradient(180deg, #4facfe 0%, #00f2fe 100%)',
+                                          fontWeight: 600,
+                                          color: '#0f172a',
+                                        }}
+                                      >
+                                        Loading dashboard…
+                                      </div>
+                                    }
+                                  >
+                                    <Dashboard
+                                      returnState={returnState}
+                                      setReturnState={setReturnState}
+                                    />
+                                  </Suspense>
+                                </ProtectedRoute>
+                              }
+                            />
 
-                          {/* Protected Profile Route */}
-                          <Route
-                            path="/profile"
-                            element={
-                              <ProtectedRoute>
-                                <Profile />
-                              </ProtectedRoute>
-                            }
-                          />
+                            {/* Protected Profile Route */}
+                            <Route
+                              path="/profile"
+                              element={
+                                <ProtectedRoute>
+                                  <Profile />
+                                </ProtectedRoute>
+                              }
+                            />
 
-                          {/* Protected Admin Route */}
-                          <Route
-                            path="/admin"
-                            element={
-                              <ProtectedRoute roles={["admin"]}>
-                                <AdminPanel />
-                              </ProtectedRoute>
-                            }
-                          />
+                            {/* Protected Admin Route */}
+                            <Route
+                              path="/admin"
+                              element={
+                                <ProtectedRoute roles={["admin"]}>
+                                  <AdminPanel />
+                                </ProtectedRoute>
+                              }
+                            />
 
-                          {/* POS Routes */}
-                          <Route path="/pos" element={<POSPage />} />
-                          <Route path="/checkout" element={<CheckoutPage />} />
-                          <Route path="/receipt" element={<ReceiptPage />} />
-                          <Route path="/history" element={<SalesHistoryPage />} />
+                            {/* POS Routes */}
+                            <Route path="/pos" element={<POSPage />} />
+                            <Route path="/checkout" element={<CheckoutPage />} />
+                            <Route path="/receipt" element={<ReceiptPage />} />
+                            <Route path="/history" element={<SalesHistoryPage />} />
 
-                          {/* Product Routes */}
-                          <Route path="/products" element={<ProductListPage />} />
-                          <Route path="/products/add" element={<AddProductPage />} />
-                          <Route path="/products/edit/:id" element={<EditProductPage />} />
-                          <Route path="/products/categories" element={<CategoryManagementPage />} />
-                          <Route path="/products/:id" element={<ProductDetailsPage />} />
+                            {/* Product Routes */}
+                            <Route path="/products" element={<ProductListPage />} />
+                            <Route path="/products/add" element={<AddProductPage />} />
+                            <Route path="/products/edit/:id" element={<EditProductPage />} />
+                            <Route path="/products/categories" element={<CategoryManagementPage />} />
+                            <Route path="/products/:id" element={<ProductDetailsPage />} />
 
+                            {/* Customer Routes */}
+                            <Route path="/customers" element={<CustomerListPage />} />
 
-
-                          {/* Customer Routes */}
-                          <Route path="/customers" element={<CustomerListPage />} />
-
-                          {/* Default Redirect */}
-                          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                        </Routes>
-                      </div>
-                    </ErrorBoundary>
-                  </BrowserRouter>
-                </BranchProvider>
-              </CustomerProvider>
-            </NotificationProvider>
+                            {/* Default Redirect */}
+                            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                          </Routes>
+                        </div>
+                      </ErrorBoundary>
+                    </BrowserRouter>
+                  </BranchProvider>
+                </CustomerProvider>
+              </NotificationProvider>
             </CartProvider>
           </SalesProvider>
         </ProductProvider>
