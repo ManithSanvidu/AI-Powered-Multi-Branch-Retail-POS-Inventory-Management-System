@@ -51,18 +51,36 @@ const EmbeddedChat = ({ darkMode, nlQuery, onQueryHandled }) => {
     }
   }, [nlQuery]);
 
-  const sendMessage = (text) => {
+  const sendMessage = async (text) => {
     if (!text?.trim() || isTyping) return;
     const userMsg = { id: Date.now(), sender: 'user', text: text.trim(), time: now() };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      const aiMsg = { id: Date.now() + 1, sender: 'ai', text: getAIResponse(text), time: now() };
-      setMessages(prev => [...prev, aiMsg]);
+    try {
+      const res = await fetch('http://localhost:5000/api/chat/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: text.trim(),
+          sessionId: 'embedded-chat-session',
+          chatType: 'assistant'
+        })
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'ai', text: data.response, time: now() }]);
+      } else {
+        setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'ai', text: "Sorry, I encountered an error. Please try again.", time: now() }]);
+      }
+    } catch (err) {
+      console.error(err);
+      setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'ai', text: "Error: Cannot connect to the AI backend.", time: now() }]);
+    } finally {
       setIsTyping(false);
-    }, 1200 + Math.random() * 600);
+    }
   };
 
   const handleSubmit = (e) => {

@@ -1,32 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// ─── AI Response Engine ───────────────────────────────────────────────────────
-const getAIResponse = (text) => {
-  const msg = text.toLowerCase();
-  if (msg.includes('revenue') || msg.includes('sales') || msg.includes('how much'))
-    return "📊 Sales Performance\n\n• Total Revenue: $48,250\n• Sales Count: 1,284\n• Growth: +12.4%\n• Avg Transaction: $37.58\n\nWould you like a branch-wise breakdown?";
-  if (msg.includes('profit') || msg.includes('margin'))
-    return "💰 Profit Analysis\n\n• Total Profit: $14,820\n• Profit Margin: 30.7%\n\nProfit is healthy vs. industry average of 25–30%.";
-  if (msg.includes('stock') || msg.includes('inventory') || msg.includes('reorder'))
-    return "📦 Inventory Status\n\n• Total Products: 486\n• Low Stock Alerts: 12 items\n• Stock Turnover: 4.2x (Healthy)\n\n⚠️ Reorder soon: Rice (50 left), Coconut Oil (23 left)";
-  if (msg.includes('branch') || msg.includes('location'))
-    return "🏢 Branch Performance\n\n• Colombo HQ: $18,240 (Top)\n• Kandy City: $12,560\n• Galle Fort: $9,340\n\nColombo leads with 38% of total revenue.";
-  if (msg.includes('forecast') || msg.includes('predict') || msg.includes('demand'))
-    return "🔮 AI Demand Forecast (30 days)\n\n• Rice & Grains: ↑15%\n• Cooking Oils: ↑12%\n• Spices: ↑20%\n\nRecommend increasing stock by 25% for essentials.";
-  if (msg.includes('top') || msg.includes('product') || msg.includes('best'))
-    return "⭐ Top Products\n\n1. Premium Rice — $12,450\n2. Coconut Oil — $8,920\n3. Ceylon Tea — $7,340\n\n🎯 Organic products demand up 23% this month!";
-  if (msg.includes('low stock') || msg.includes('alert'))
-    return "⚠️ Low Stock Alerts\n\n12 products running low:\n1. Rice — 50 units\n2. Coconut Oil — 23 units\n3. Sugar — 35 units\n\n🔔 Suggestion: Create POs today.";
-  if (msg.includes('trend') || msg.includes('popular'))
-    return "📈 Trending Now\n\n• Electronics: +40%\n• Office Supplies: +22%\n• Furniture: +18%\n\n💡 Bundle Mouse + Keyboard for a 15% offer!";
-  if (msg.includes('help') || msg.includes('hi') || msg.includes('hello'))
-    return "🤖 How I Can Help\n\nAsk me about:\n• 📊 Sales & revenue\n• 💰 Profit margins\n• 📦 Inventory status\n• 🏢 Branch performance\n• 🔮 Demand forecasting\n• 🛒 Reorder suggestions\n\nWhat would you like to know?";
-  return `🤔 You asked about "${text.substring(0, 40)}..."\n\nI can help with Sales, Inventory, Branches, Products, or Forecasts. Try asking: "What's our total revenue?"`;
-};
+const ts = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 const QUICK = ["Low Stock", "Top Products", "Sales Report", "Trending", "Help"];
-const ts = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 // ─── Main Chatbot Component ───────────────────────────────────────────────────
 const Chatbot = () => {
@@ -45,22 +22,50 @@ const Chatbot = () => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  const sendMessage = (text) => {
+  const sendMessage = async (text) => {
     if (!text?.trim() || isTyping) return;
     const userMsg = { id: Date.now(), sender: 'user', text: text.trim(), time: ts() };
     setMessages(p => [...p, userMsg]);
     setInput('');
     setIsTyping(true);
-    setTimeout(() => {
-      const aiMsg = { id: Date.now() + 1, sender: 'ai', text: getAIResponse(text), time: ts() };
+    
+    try {
+      const res = await fetch('http://localhost:5000/api/chat/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: text.trim(),
+          sessionId: 'floating-chatbot-session',
+          chatType: 'assistant'
+        })
+      });
+      const data = await res.json();
+      
+      const aiMsg = { 
+        id: Date.now() + 1, 
+        sender: 'ai', 
+        text: data.success ? data.response : "Sorry, I encountered an error. Please try again.", 
+        time: ts() 
+      };
+      
       setMessages(p => [...p, aiMsg]);
+    } catch (err) {
+      console.error(err);
+      setMessages(p => [...p, { id: Date.now() + 1, sender: 'ai', text: "Error: Cannot connect to the AI backend.", time: ts() }]);
+    } finally {
       setIsTyping(false);
       if (!isOpen || isMinimized) setUnread(u => u + 1);
-    }, 1200 + Math.random() * 500);
+    }
   };
 
   const open = () => { setIsOpen(true); setIsMinimized(false); setUnread(0); };
-  const close = () => setIsOpen(false);
+  const close = () => {
+    setIsOpen(false);
+    setMessages([{
+      id: 0, sender: 'ai', time: ts(),
+      text: "👋 Hello! I'm your AI Retail Assistant.\n\nHow can I help you today?\n\nYou can ask me about:\n• Sales performance and revenue\n• Inventory status and low stock\n• Branch performance comparisons\n• Product recommendations\n• Business insights and forecasts",
+    }]);
+  };
   const minimize = () => setIsMinimized(m => !m);
 
   return (

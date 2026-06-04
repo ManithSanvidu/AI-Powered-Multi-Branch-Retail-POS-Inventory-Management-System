@@ -87,7 +87,6 @@ const MODULE_NAV_ITEMS = [
   { id: 'reporting', label: 'Reporting Management', icon: '📄', page: 4 },
   { id: 'notifications', label: 'Notifications & Alerts', icon: '🔔', page: 4 },
   { id: 'audit-logs', label: 'Audit Logs & Security', icon: '🛡️', page: 4 },
-  { id: 'ai-assistant', label: 'AI Retail Assistant & Recommendation', icon: '🧠', page: 4 },
   // ── AI Intelligence ──
   { id: 'ai-intelligence', label: 'AI Intelligence', icon: '🧠', page: 5, isAI: true },
 ];
@@ -122,8 +121,12 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
   const [greeting, setGreeting] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
   const [navExpanded, setNavExpanded] = useState(true);
-  const [activeModule, setActiveModule] = useState('dashboard');
-  const [visibleModule, setVisibleModule] = useState('dashboard');
+  const [activeModule, setActiveModule] = useState(() => {
+    return sessionStorage.getItem('dashboard_activeModule') || 'dashboard';
+  });
+  const [visibleModule, setVisibleModule] = useState(() => {
+    return sessionStorage.getItem('dashboard_visibleModule') || 'dashboard';
+  });
   
   // Chatbot state
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -239,6 +242,8 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
   const showModule = (moduleId) => {
     setActiveModule(moduleId);
     setVisibleModule(moduleId);
+    sessionStorage.setItem('dashboard_activeModule', moduleId);
+    sessionStorage.setItem('dashboard_visibleModule', moduleId);
   };
 
   useEffect(() => {
@@ -486,7 +491,7 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
                 <div className="top-products-wrapper"><div className="section-header"><div className="section-title-wrapper"><span className="section-icon">⭐</span><h2 className="section-title">Top Performing Products</h2></div></div><TopProducts data={dashboardData} /></div>
                 <div className="live-feed-wrapper"><div className="section-header"><div className="section-title-wrapper"><span className="section-icon">🔴</span><h2 className="section-title">Live Activity</h2>{wsConnected && <span className="live-badge">LIVE</span>}</div></div><LiveFeed wsConnected={wsConnected} liveTransaction={liveTransaction} /></div>
               </div>
-            </div>
+            </section>
           </>
         );
 

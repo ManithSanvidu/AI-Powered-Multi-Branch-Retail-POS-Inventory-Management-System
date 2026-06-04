@@ -16,7 +16,7 @@ const formatMoney = (value) => {
 const RecommendationCard = ({ product, rank, variant = 'seller', index = 0 }) => {
   const name = product.name || product.productName || product.product_name || 'Recommended Product';
   const category = product.category || product.categoryName || product.categoryId || 'Retail item';
-  const sold = product.totalSold || product.units_sold || product.timesSold || product.quantity;
+  const sold = product.totalSold || product.units_sold || product.timesSold || product.quantity || product.currentSales;
   const price = formatMoney(product.price);
   const revenue = formatMoney(product.revenue);
   const growth = product.growthPercentage || product.growth || product.trendPercent || product.lift || product.score;

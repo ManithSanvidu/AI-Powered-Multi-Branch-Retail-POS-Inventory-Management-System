@@ -15,6 +15,8 @@ const PersonalizedRecommendations = () => {
 
   const customer = customers.find((item) => item.id === selectedCustomerId);
 
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
   // Fetch real customer list from backend on mount
   useEffect(() => {
     const loadCustomers = async () => {
@@ -86,7 +88,7 @@ const PersonalizedRecommendations = () => {
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <div className="relative flex-1 sm:min-w-[200px]">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
               <UserRound className="h-4 w-4 text-slate-400" />
             </div>
             {customersLoading ? (
@@ -95,21 +97,42 @@ const PersonalizedRecommendations = () => {
                 Loading customers...
               </div>
             ) : (
-              <select
-                value={selectedCustomerId}
-                onChange={(event) => setSelectedCustomerId(event.target.value)}
-                className="block w-full pl-10 pr-10 py-2 text-sm bg-white border border-slate-200 rounded-xl text-slate-700 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm appearance-none cursor-pointer hover:border-slate-300 transition-colors"
-              >
-                {customers.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
-            )}
-            {!customersLoading && (
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+              <div className="relative w-full">
+                <button
+                  type="button"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="w-full flex items-center justify-between pl-10 pr-4 py-2 text-sm bg-white border border-slate-200 rounded-xl text-slate-700 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm cursor-pointer hover:border-slate-300 transition-colors text-left"
+                >
+                  <span className="truncate">{customer?.name || 'Select Customer'}</span>
+                  <svg className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </button>
+                
+                <AnimatePresence>
+                  {isDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute z-50 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl max-h-60 overflow-y-auto"
+                    >
+                      {customers.map((item) => (
+                        <div
+                          key={item.id}
+                          onClick={() => {
+                            setSelectedCustomerId(item.id);
+                            setIsDropdownOpen(false);
+                          }}
+                          className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-slate-50 transition-colors ${selectedCustomerId === item.id ? 'bg-blue-50 text-blue-700 font-semibold border-l-2 border-blue-600' : 'text-slate-700'}`}
+                        >
+                          {item.name}
+                        </div>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             )}
           </div>

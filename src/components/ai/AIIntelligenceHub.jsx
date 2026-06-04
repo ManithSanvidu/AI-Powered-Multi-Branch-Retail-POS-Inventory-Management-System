@@ -24,10 +24,26 @@ const WELCOME = {
 const AIIntelligenceHub = () => {
   const [activeTab, setActiveTab] = useState('chat'); // 'chat', 'insights', 'decision'
 
-  // Lifted Chat State to persist across tab changes
-  const [messages, setMessages] = useState([WELCOME]);
+  // Lifted Chat State to persist across tab changes and unmounts
+  const [messages, setMessages] = useState(() => {
+    const saved = sessionStorage.getItem('aiHubMessages');
+    return saved ? JSON.parse(saved) : [WELCOME];
+  });
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+
+  useEffect(() => {
+    sessionStorage.setItem('aiHubMessages', JSON.stringify(messages));
+  }, [messages]);
+
+  // Clear chat history on hard refresh, but persist when just switching dashboard tabs
+  useEffect(() => {
+    const handleUnload = () => {
+      sessionStorage.removeItem('aiHubMessages');
+    };
+    window.addEventListener('beforeunload', handleUnload);
+    return () => window.removeEventListener('beforeunload', handleUnload);
+  }, []);
 
   return (
     <div style={{
@@ -65,6 +81,11 @@ const AIIntelligenceHub = () => {
           <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
             <h1 style={{ margin:0, fontSize:'18px', fontWeight:800, color:'white', letterSpacing:'-0.3px' }}>AI Hub</h1>
             <span style={{ background:'rgba(16,185,129,0.2)', color:'#34D399', fontSize:'9px', fontWeight:800, padding:'2px 6px', borderRadius:'999px', border:'1px solid rgba(16,185,129,0.4)' }}>LIVE</span>
+            <button onClick={() => window.location.reload()} style={{
+              background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '999px', padding: '2px 8px', color: 'white', fontSize: '10px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
+            }} onMouseEnter={e => e.target.style.background='rgba(255,255,255,0.3)'} onMouseLeave={e => e.target.style.background='rgba(255,255,255,0.15)'}>
+              🔄 Refresh
+            </button>
           </div>
         </div>
 
@@ -136,23 +157,7 @@ const AIIntelligenceHub = () => {
                   </div>
                 </div>
 
-                {/* KPI Cards */}
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'16px', marginBottom:'28px' }} className="kpi-grid">
-                  {[
-                    { title:'Total Revenue', value:'$52,800', change:'+16.8%', up:true, color:'#2563EB' },
-                    { title:'Avg Order Value', value:'$124.50', change:'+3.2%', up:true, color:'#7C3AED' },
-                    { title:'Return Rate', value:'2.4%', change:'-0.5%', up:true, color:'#10B981' },
-                    { title:'Active Customers', value:'1,432', change:'+5.1%', up:true, color:'#F59E0B' },
-                  ].map((kpi, i) => (
-                    <motion.div key={i} whileHover={{ scale:1.02, y:-2 }} style={{ background:'rgba(255,255,255,0.7)', border:'1px solid rgba(255,255,255,1)', borderRadius:'16px', padding:'20px', boxShadow:'0 4px 16px rgba(0,0,0,0.03)' }}>
-                      <p style={{ margin:'0 0 6px', fontSize:'11px', color:'#64748B', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em' }}>{kpi.title}</p>
-                      <p style={{ margin:'0 0 10px', fontSize:'28px', fontWeight:800, color:'#1E293B' }}>{kpi.value}</p>
-                      <span style={{ background: kpi.up ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)', color: kpi.up ? '#059669' : '#DC2626', fontSize:'11px', fontWeight:700, padding:'4px 10px', borderRadius:'999px' }}>
-                        {kpi.up ? '↑' : '↓'} {kpi.change}
-                      </span>
-                    </motion.div>
-                  ))}
-                </div>
+                {/* KPI Cards removed in favor of real data component below */}
 
                 <div style={{ background:'rgba(255,255,255,0.7)', border:'1px solid rgba(255,255,255,1)', borderRadius:'16px', padding:'24px', boxShadow:'0 4px 16px rgba(0,0,0,0.03)' }}>
                   <BusinessInsights />
@@ -269,12 +274,12 @@ const InlineChatPanelConnected = ({ messages, setMessages, input, setInput, isTy
             {EXAMPLES.map((q, i) => (
               <motion.button key={i} whileHover={{ scale:1.02, y:-2 }} whileTap={{ scale:0.98 }}
                 onClick={() => sendQuery(q.text)}
-                style={{ background:'rgba(255,255,255,0.15)', backdropFilter:'blur(10px)', border:'1px solid rgba(255,255,255,0.3)', borderRadius:'14px', padding:'14px', cursor:'pointer', textAlign:'left', transition:'all 0.2s', boxShadow:'0 2px 8px rgba(0,0,0,0.02)' }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor='#3B82F6'; e.currentTarget.style.background='rgba(255,255,255,0.25)'; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(255,255,255,0.3)'; e.currentTarget.style.background='rgba(255,255,255,0.15)'; }}
+                style={{ background:'rgba(255,255,255,0.9)', backdropFilter:'blur(10px)', border:'1px solid rgba(255,255,255,0.8)', borderRadius:'14px', padding:'14px', cursor:'pointer', textAlign:'left', transition:'all 0.2s', boxShadow:'0 4px 12px rgba(0,0,0,0.05)' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor='#3B82F6'; e.currentTarget.style.background='#ffffff'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(255,255,255,0.8)'; e.currentTarget.style.background='rgba(255,255,255,0.9)'; }}
               >
                 <div style={{ fontSize:'24px', marginBottom:'8px' }}>{q.icon}</div>
-                <div style={{ fontSize:'12.5px', color:'white', fontWeight:600, lineHeight:1.45 }}>{q.text}</div>
+                <div style={{ fontSize:'13px', color:'#1E293B', fontWeight:600, lineHeight:1.45 }}>{q.text}</div>
               </motion.button>
             ))}
           </div>
@@ -297,9 +302,9 @@ const InlineChatPanelConnected = ({ messages, setMessages, input, setInput, isTy
                   </div>
                 )}
                 <div style={{
-                  background: msg.sender === 'user' ? 'linear-gradient(135deg,#3B82F6,#8B5CF6)' : 'rgba(255,255,255,0.15)',
-                  backdropFilter: msg.sender === 'ai' ? 'blur(16px)' : 'none',
-                  color: 'white',
+                  background: msg.sender === 'user' ? 'linear-gradient(135deg,#3B82F6,#8B5CF6)' : '#ffffff',
+                  backdropFilter: msg.sender === 'ai' ? 'none' : 'none',
+                  color: msg.sender === 'user' ? 'white' : '#1E293B',
                   borderRadius: msg.sender === 'user' ? '20px 20px 4px 20px' : '4px 20px 20px 20px',
                   padding:'14px 18px', fontSize:'14.5px', lineHeight:'1.55',
                   whiteSpace:'pre-wrap', wordBreak:'break-word',
@@ -319,7 +324,7 @@ const InlineChatPanelConnected = ({ messages, setMessages, input, setInput, isTy
                 <div style={{ width:'26px', height:'26px', borderRadius:'8px', background:'linear-gradient(135deg,#3B82F6,#8B5CF6)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'13px', boxShadow:'0 2px 6px rgba(37,99,235,0.3)' }}>🧠</div>
                 <span style={{ fontSize:'12px', fontWeight:700, color:'white' }}>Thinking...</span>
               </div>
-              <div style={{ background:'rgba(255,255,255,0.15)', backdropFilter:'blur(16px)', borderRadius:'4px 20px 20px 20px', padding:'14px 18px', display:'flex', gap:'6px', alignItems:'center', boxShadow:'0 4px 12px rgba(0,0,0,0.05)', border:'1px solid rgba(255,255,255,0.3)' }}>
+              <div style={{ background:'#ffffff', borderRadius:'4px 20px 20px 20px', padding:'14px 18px', display:'flex', gap:'6px', alignItems:'center', boxShadow:'0 4px 12px rgba(0,0,0,0.05)', border:'1px solid rgba(0,0,0,0.05)' }}>
                 {[0,1,2].map(i => (
                   <motion.div key={i} style={{ width:'8px', height:'8px', background:'#2563EB', borderRadius:'50%' }}
                     animate={{ y:[0,-6,0] }} transition={{ duration:0.5, repeat:Infinity, delay:i*0.15 }} />
