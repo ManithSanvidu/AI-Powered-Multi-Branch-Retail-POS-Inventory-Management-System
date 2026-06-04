@@ -9,6 +9,7 @@ import { EmployeeProvider } from './context/EmployeeContext';
 import { ProductProvider } from './context/ProductContext';
 import { SalesProvider } from './context/SalesContext';
 import { BranchProvider } from "./context/BranchContext";
+import { CustomerProvider } from "./context/CustomerContext";
 
 // Routes
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -37,6 +38,9 @@ import CategoryManagementPage from "./pages/products/CategoryManagementPage";
 
 // Branch Pages
 import BranchListPage from "./pages/branches/BranchListPage";
+
+// Customer Pages
+import CustomerListPage from "./pages/customers/CustomerListPage";
 
 // Other Pages
 import ReturnsPage from "./pages/returns/ReturnsPage";
@@ -81,6 +85,7 @@ function App() {
         <ProductProvider>
           <SalesProvider>
             <CartProvider>
+            <CustomerProvider>
               <BranchProvider>
                 <BrowserRouter>
                   <ErrorBoundary>
@@ -162,6 +167,9 @@ function App() {
                     <Route path="/returns" element={<ReturnsPage />} />
                     <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
                     <Route path="/branches" element={<BranchListPage />} />
+                    // Customer Routes
+                    <Route path="/customers" element={<CustomerListPage />} />
+                  
 
                     {/* Default Redirect */}
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
@@ -170,6 +178,7 @@ function App() {
                   </ErrorBoundary>
                </BrowserRouter>
               </BranchProvider>
+             </CustomerProvider>
             </CartProvider>
           </SalesProvider>
         </ProductProvider>
