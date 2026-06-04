@@ -1,3 +1,4 @@
+// Dashboard.jsx
 import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import KPICards from '../../components/dashboard/KPICards';
 import SalesChart from '../../components/dashboard/SalesChart';
@@ -7,6 +8,7 @@ import TopProducts from '../../components/dashboard/TopProducts';
 import LiveFeed from '../../components/dashboard/LiveFeed';
 import { useAuth } from '../../context/AuthContext';
 import { socketService } from '../../services/socketService';
+import { useNavigate } from 'react-router-dom';
 
 const SuppliersPage = lazy(() => import('../suppliers/SuppliersPage'));
 const EmployeesPage = lazy(() => import('../employees/EmployeesPage'));
@@ -58,9 +60,10 @@ const DATE_PRESETS = [
   { label: 'Custom', value: 'custom', icon: '⚙️' },
 ];
 
-// 20 Modules (excluding AI Retail Assistant which is now the chatbot)
+// 22 Modules exactly as per your image
 const MODULE_NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard & Business Overview', icon: '📊', page: 1, isMain: true },
+  { id: 'auth', label: 'Authentication & Authorization', icon: '🔐', page: 1 },
   { id: 'user-mgmt', label: 'User Management', icon: '👥', page: 1 },
   { id: 'branch-mgmt', label: 'Branch Management', icon: '🏢', page: 1 },
   { id: 'employee-mgmt', label: 'Employee Management', icon: '👔', page: 1 },
@@ -71,15 +74,16 @@ const MODULE_NAV_ITEMS = [
   { id: 'warehouse-mgmt', label: 'Warehouse Management', icon: '🏭', page: 2 },
   { id: 'purchase-order', label: 'Purchase Order Management', icon: '📋', page: 2 },
   { id: 'pos-sales', label: 'POS Sales & Billing', icon: '🛒', page: 3 },
-  { id: 'returns-refund', label: 'Returns & Refund', icon: '🔄', page: 3 },
-  { id: 'stock-transfer', label: 'Stock Transfer', icon: '🚛', page: 3 },
-  { id: 'promotion', label: 'Promotion & Discount', icon: '🏷️', page: 3 },
+  { id: 'returns-refund', label: 'Returns & Refund Management', icon: '🔄', page: 3 },
+  { id: 'stock-transfer', label: 'Stock Transfer Management', icon: '🚛', page: 3 },
+  { id: 'promotion', label: 'Promotion & Discount Management', icon: '🏷️', page: 3 },
   { id: 'ai-forecast', label: 'AI Demand Forecasting', icon: '🤖', page: 3 },
   { id: 'ai-reorder', label: 'AI Smart Reordering', icon: '📈', page: 3 },
   { id: 'analytics', label: 'Business Analytics', icon: '📉', page: 3 },
-  { id: 'reporting', label: 'Reporting', icon: '📄', page: 4 },
-  { id: 'notifications', label: 'Notifications & Alert', icon: '🔔', page: 4 },
+  { id: 'reporting', label: 'Reporting Management', icon: '📄', page: 4 },
+  { id: 'notifications', label: 'Notifications & Alerts', icon: '🔔', page: 4 },
   { id: 'audit-logs', label: 'Audit Logs & Security', icon: '🛡️', page: 4 },
+  { id: 'ai-assistant', label: 'AI Retail Assistant & Recommendation', icon: '🧠', page: 4 },
 ];
 
 const _getDateRange = (preset) => {
@@ -95,7 +99,8 @@ const _getDateRange = (preset) => {
 };
 
 const Dashboard = ({ viewRole, returnState, setReturnState }) => {
-  const { user, token } = useAuth();
+  const { user, token, logout } = useAuth();
+  const navigate = useNavigate();
   const role = viewRole || user?.role || 'admin';
 
   const [dashboardData, setDashboardData] = useState(generateDemoData());
@@ -107,6 +112,7 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
   const [liveTransaction, setLiveTransaction] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [greeting, setGreeting] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
   const [navExpanded, setNavExpanded] = useState(true);
@@ -126,6 +132,16 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
   const [sunPhase, setSunPhase] = useState('morning');
   const [moonVisible, setMoonVisible] = useState(false);
   const [clouds, setClouds] = useState([]);
+
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   // Scroll to bottom of chat
   useEffect(() => {
@@ -362,6 +378,23 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
                 <button className="refresh-btn" onClick={fetchData} disabled={loading}>
                   <span className={loading ? 'spinning' : ''}>↻</span><span>Refresh</span>
                 </button>
+                <div className="logout-wrapper">
+                  <button className="logout-btn" onClick={() => setShowLogoutConfirm(true)}>
+                    <span className="logout-icon">🚪</span><span>Logout</span>
+                  </button>
+                  {showLogoutConfirm && (
+                    <div className="logout-confirm-modal">
+                      <div className="logout-confirm-content">
+                        <span className="logout-confirm-icon">⚠️</span>
+                        <p>Are you sure you want to logout?</p>
+                        <div className="logout-confirm-buttons">
+                          <button onClick={() => setShowLogoutConfirm(false)} className="logout-cancel">Cancel</button>
+                          <button onClick={handleLogout} className="logout-confirm">Logout</button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -437,6 +470,10 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
           </>
         );
 
+      case 'auth':
+        return <ModuleDetail title="Authentication & Authorization" icon="🔐" page={1} description="Secure authentication system with role-based access control. Manage user sessions, permissions, and security policies. Implement JWT tokens and multi-factor authentication." features={['User Login & Registration', 'Role-Based Access Control (RBAC)', 'JWT Token Authentication', 'Session Management', 'Password Reset & Recovery', 'Multi-Factor Authentication Support', 'Permission Management', 'Security Policy Enforcement']} />;
+      case 'ai-assistant':
+        return <AIRetailAssistantModule />;
       case 'ai-forecast':
         return <AIDemandForecastModule />;
       case 'user-mgmt':
@@ -508,15 +545,15 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
       case 'promotion':
         return <ModuleDetail title="Promotion & Discount Management" icon="🏷️" page={3} description="Apply pricing rules automatically. Manage promotional campaigns. Validate discount eligibility. Generate campaign reports. Maintain coupon records." features={['Promotion Campaigns', 'Discount Rule Configuration', 'Active Promotions Display', 'Coupon System Management', 'Campaign Performance Monitoring']} />;
       case 'ai-reorder':
-        return <ModuleDetail title="AI Smart Reordering" icon="📈" page={3} description="Calculate reorder points automatically. Analyze inventory consumption. Generate purchase recommendations. Trigger low-stock alerts. Improve recommendations using AI." features={['Reorder Recommendations', 'Stock Risk Indicators', 'AI Suggestion Approval', 'Reorder Action Tracking', 'Procurement Alerts']} />;
+        return <AISmartReorderingModule />;
       case 'analytics':
-        return <ModuleDetail title="Business Analytics" icon="📉" page={3} description="Aggregate business data. Calculate business KPIs. Generate analytical insights. Support complex queries. Provide reporting APIs." features={['Advanced Analytics Dashboards', 'Sales & Profit Trends', 'Branch Performance Comparison', 'Visual Reports', 'Drill-down Analysis']} />;
+        return <BusinessAnalyticsModule />;
       case 'reporting':
-        return <ModuleDetail title="Reporting Module" icon="📄" page={4} description="Generate reports dynamically. Export data in multiple formats. Manage scheduled reports. Process large datasets efficiently. Store report history." features={['Downloadable Reports', 'Report Filters', 'Report Previews', 'PDF & Excel Export', 'Scheduled Report Generation']} />;
+        return <ReportingModule />;
       case 'notifications':
-        return <ModuleDetail title="Notifications & Alert Module" icon="🔔" page={4} description="Send email, SMS, and push notifications. Trigger inventory and sales alerts. Manage notification queues. Store notification history. Monitor delivery status." features={['Notification Center', 'Alerts & Reminders', 'Real-time Notifications', 'Notification Settings', 'Alert Preferences']} />;
+        return <NotificationsModule />;
       case 'audit-logs':
-        return <ModuleDetail title="Audit Logs & Security" icon="🛡️" page={4} description="Record all system activities. Monitor suspicious actions. Store audit trails. Implement security policies. Generate compliance reports." features={['Activity Logs Display', 'Login History', 'Security Monitoring Views', 'Audit Record Filtering', 'Security Reports']} />;
+        return <AuditLogsModule />;
       default:
         return <ModuleDetail title="Module Coming Soon" icon="🚀" page={0} description="This module is under development." features={['Full implementation coming in next update']} />;
     }
@@ -783,6 +820,23 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
         .view-all-btn:hover { background: #3b82f6; color: white; }
         .refresh-btn { display: flex; align-items: center; gap: 8px; padding: 8px 20px; border-radius: 30px; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
         .refresh-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+        
+        /* Logout Button Styles */
+        .logout-wrapper { position: relative; }
+        .logout-btn { display: flex; align-items: center; gap: 8px; padding: 8px 20px; border-radius: 30px; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+        .logout-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(239,68,68,0.3); background: linear-gradient(135deg, #dc2626, #b91c1c); }
+        .logout-icon { font-size: 16px; }
+        .logout-confirm-modal { position: absolute; top: 100%; right: 0; margin-top: 10px; background: white; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); z-index: 1000; min-width: 260px; animation: fadeInScale 0.2s ease; }
+        @keyframes fadeInScale { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .logout-confirm-content { padding: 20px; text-align: center; }
+        .logout-confirm-icon { font-size: 40px; display: block; margin-bottom: 12px; }
+        .logout-confirm-content p { margin-bottom: 20px; color: #1e293b; font-weight: 500; }
+        .logout-confirm-buttons { display: flex; gap: 12px; justify-content: center; }
+        .logout-cancel { padding: 8px 20px; border-radius: 30px; background: #e2e8f0; border: none; color: #475569; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .logout-cancel:hover { background: #cbd5e1; }
+        .logout-confirm { padding: 8px 20px; border-radius: 30px; background: #ef4444; border: none; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .logout-confirm:hover { background: #dc2626; transform: scale(1.02); }
+        
         .spinning { display: inline-block; animation: spin 0.8s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
@@ -803,18 +857,16 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
         .feature-icon { font-size: 24px; }
         .feature-text { font-size: 0.9rem; font-weight: 500; color: #334155; }
         
-        /* AI Demand Forecast Module */
-        .ai-forecast-module { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 28px; padding: 32px; animation: fadeIn 0.4s ease; }
-        .forecast-header { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; }
-        .forecast-icon { font-size: 60px; background: linear-gradient(135deg, #8b5cf6, #3b82f6); width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; border-radius: 30px; }
-        .forecast-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin: 30px 0; }
-        .forecast-card { background: linear-gradient(135deg, #f8fafc, #ffffff); padding: 20px; border-radius: 20px; text-align: center; border: 1px solid #e2e8f0; }
-        .forecast-card .value { font-size: 28px; font-weight: 800; color: #3b82f6; }
-        .forecast-card .label { font-size: 12px; color: #64748b; margin-top: 8px; }
-        .forecast-list { margin-top: 20px; }
-        .forecast-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid #e2e8f0; }
-        .forecast-item .product { font-weight: 600; }
-        .forecast-item .prediction { color: #10b981; font-weight: 600; }
+        /* AI Modules Styles */
+        .ai-forecast-module, .ai-reorder-module, .ai-assistant-module, .analytics-module, .reporting-module, .notifications-module, .audit-module { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 28px; padding: 32px; animation: fadeIn 0.4s ease; }
+        .forecast-header, .module-header-custom { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; }
+        .forecast-icon, .module-icon-custom { font-size: 60px; background: linear-gradient(135deg, #8b5cf6, #3b82f6); width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; border-radius: 30px; }
+        .forecast-stats, .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin: 30px 0; }
+        .forecast-card, .stat-card { background: linear-gradient(135deg, #f8fafc, #ffffff); padding: 20px; border-radius: 20px; text-align: center; border: 1px solid #e2e8f0; }
+        .forecast-card .value, .stat-card .value { font-size: 28px; font-weight: 800; color: #3b82f6; }
+        .forecast-card .label, .stat-card .label { font-size: 12px; color: #64748b; margin-top: 8px; }
+        .forecast-list, .recommendation-list, .insight-list { margin-top: 20px; }
+        .forecast-item, .recommendation-item, .insight-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid #e2e8f0; }
         .trend-up { color: #10b981; }
         .trend-down { color: #ef4444; }
         
@@ -878,7 +930,7 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
           .features-grid { grid-template-columns: 1fr; }
           .module-icon { width: 70px; height: 70px; font-size: 40px; }
           .module-title { font-size: 1.3rem; }
-          .forecast-stats { grid-template-columns: repeat(2, 1fr); }
+          .forecast-stats, .stats-grid { grid-template-columns: repeat(2, 1fr); }
           .chatbot-window { width: 340px; right: 16px; bottom: 90px; }
         }
       `}</style>
@@ -911,12 +963,12 @@ const AIDemandForecastModule = () => (
     
     <h3 style={{ marginBottom: '16px', color: '#1e293b' }}>📈 Product Demand Forecast (Next 30 Days)</h3>
     <div className="forecast-list">
-      <div className="forecast-item"><span className="product">Premium Basmati Rice</span><span className="prediction trend-up">↑ 18% demand increase</span><span style={{ fontSize: '12px', color: '#64748b' }}>Confidence: 96%</span></div>
-      <div className="forecast-item"><span className="product">Organic Coconut Oil</span><span className="prediction trend-up">↑ 23% demand increase</span><span style={{ fontSize: '12px', color: '#64748b' }}>Confidence: 92%</span></div>
-      <div className="forecast-item"><span className="product">Ceylon Tea Gift Pack</span><span className="prediction trend-up">↑ 31% demand increase</span><span style={{ fontSize: '12px', color: '#64748b' }}>Confidence: 89%</span></div>
-      <div className="forecast-item"><span className="product">Fresh Milk (1L)</span><span className="prediction trend-up">↑ 8% demand increase</span><span style={{ fontSize: '12px', color: '#64748b' }}>Confidence: 94%</span></div>
-      <div className="forecast-item"><span className="product">Spice Assortment Pack</span><span className="prediction trend-up">↑ 27% demand increase</span><span style={{ fontSize: '12px', color: '#64748b' }}>Confidence: 88%</span></div>
-      <div className="forecast-item"><span className="product">Sugar (1kg)</span><span className="prediction trend-down">↓ 3% demand decrease</span><span style={{ fontSize: '12px', color: '#64748b' }}>Confidence: 91%</span></div>
+      <div className="forecast-item"><span className="product">Premium Basmati Rice</span><span className="trend-up">↑ 18% demand increase</span><span style={{ fontSize: '12px', color: '#64748b' }}>Confidence: 96%</span></div>
+      <div className="forecast-item"><span className="product">Organic Coconut Oil</span><span className="trend-up">↑ 23% demand increase</span><span style={{ fontSize: '12px', color: '#64748b' }}>Confidence: 92%</span></div>
+      <div className="forecast-item"><span className="product">Ceylon Tea Gift Pack</span><span className="trend-up">↑ 31% demand increase</span><span style={{ fontSize: '12px', color: '#64748b' }}>Confidence: 89%</span></div>
+      <div className="forecast-item"><span className="product">Fresh Milk (1L)</span><span className="trend-up">↑ 8% demand increase</span><span style={{ fontSize: '12px', color: '#64748b' }}>Confidence: 94%</span></div>
+      <div className="forecast-item"><span className="product">Spice Assortment Pack</span><span className="trend-up">↑ 27% demand increase</span><span style={{ fontSize: '12px', color: '#64748b' }}>Confidence: 88%</span></div>
+      <div className="forecast-item"><span className="product">Sugar (1kg)</span><span className="trend-down">↓ 3% demand decrease</span><span style={{ fontSize: '12px', color: '#64748b' }}>Confidence: 91%</span></div>
     </div>
     
     <h3 style={{ margin: '24px 0 16px', color: '#1e293b' }}>✨ Key Features</h3>
@@ -937,7 +989,170 @@ const AIDemandForecastModule = () => (
   </div>
 );
 
-// Module Detail Component
+// AI Smart Reordering Module
+const AISmartReorderingModule = () => (
+  <div className="ai-reorder-module">
+    <div className="module-header-custom">
+      <div className="module-icon-custom">📈</div>
+      <div>
+        <h1 style={{ fontSize: '28px', marginBottom: '8px', color: '#1e293b' }}>AI Smart Reordering</h1>
+        <span className="module-page">📄 Page 3 of PDF Document</span>
+      </div>
+    </div>
+    <div className="module-description">
+      <strong>📋 Module Overview:</strong><br />
+      Calculate reorder points automatically. Analyze inventory consumption. Generate purchase recommendations. Trigger low-stock alerts. Improve recommendations using AI.
+    </div>
+    <div className="stats-grid">
+      <div className="stat-card"><div className="value">12</div><div className="label">Items Need Reorder</div></div>
+      <div className="stat-card"><div className="value">94%</div><div className="label">AI Recommendation Accuracy</div></div>
+      <div className="stat-card"><div className="value">$24,500</div><div className="label">Optimal Order Value</div></div>
+      <div className="stat-card"><div className="value">3 Days</div><div className="label">Avg Lead Time</div></div>
+    </div>
+    <h3 style={{ marginBottom: '16px', color: '#1e293b' }}>🛒 Smart Reorder Recommendations</h3>
+    <div className="recommendation-list">
+      <div className="forecast-item"><span className="product">Premium Basmati Rice</span><span className="trend-up">Reorder 500 units</span><span style={{ fontSize: '12px', color: '#64748b' }}>Stock: 50 | AI Confidence: 96%</span></div>
+      <div className="forecast-item"><span className="product">Organic Coconut Oil</span><span className="trend-up">Reorder 200 units</span><span style={{ fontSize: '12px', color: '#64748b' }}>Stock: 23 | AI Confidence: 92%</span></div>
+      <div className="forecast-item"><span className="product">Sugar (1kg)</span><span className="trend-up">Reorder 300 units</span><span style={{ fontSize: '12px', color: '#64748b' }}>Stock: 35 | AI Confidence: 89%</span></div>
+      <div className="forecast-item"><span className="product">Milk Powder</span><span className="trend-up">Reorder 150 units</span><span style={{ fontSize: '12px', color: '#64748b' }}>Stock: 42 | AI Confidence: 94%</span></div>
+    </div>
+    <div className="features-grid" style={{ marginTop: 24 }}>
+      {['Reorder Recommendations Dashboard', 'Stock Risk Indicators', 'AI Suggestion Approval Workflow', 'Reorder Action Tracking', 'Procurement Alerts Integration', 'Supplier Auto-notification'].map(f => (
+        <div key={f} className="feature-card"><span className="feature-icon">✓</span><span className="feature-text">{f}</span></div>
+      ))}
+    </div>
+  </div>
+);
+
+// Business Analytics Module
+const BusinessAnalyticsModule = () => (
+  <div className="analytics-module">
+    <div className="module-header-custom">
+      <div className="module-icon-custom">📉</div>
+      <div>
+        <h1 style={{ fontSize: '28px', marginBottom: '8px', color: '#1e293b' }}>Business Analytics</h1>
+        <span className="module-page">📄 Page 3 of PDF Document</span>
+      </div>
+    </div>
+    <div className="module-description">
+      <strong>📋 Module Overview:</strong><br />
+      Aggregate business data. Calculate business KPIs. Generate analytical insights. Support complex queries. Provide reporting APIs.
+    </div>
+    <div className="stats-grid">
+      <div className="stat-card"><div className="value">$48,250</div><div className="label">Total Revenue</div></div>
+      <div className="stat-card"><div className="value">30.7%</div><div className="label">Profit Margin</div></div>
+      <div className="stat-card"><div className="value">842</div><div className="label">Unique Customers</div></div>
+      <div className="stat-card"><div className="value">4.2x</div><div className="label">Stock Turnover</div></div>
+    </div>
+    <div className="features-grid" style={{ marginTop: 24 }}>
+      {['Advanced Analytics Dashboards', 'Sales & Profit Trends Visualization', 'Branch Performance Comparison', 'Interactive Charts & Graphs', 'Drill-down Analysis', 'Custom KPI Tracking', 'Period-over-period Comparisons', 'Export Analytics Reports'].map(f => (
+        <div key={f} className="feature-card"><span className="feature-icon">✓</span><span className="feature-text">{f}</span></div>
+      ))}
+    </div>
+  </div>
+);
+
+// Reporting Module
+const ReportingModule = () => (
+  <div className="reporting-module">
+    <div className="module-header-custom">
+      <div className="module-icon-custom">📄</div>
+      <div>
+        <h1 style={{ fontSize: '28px', marginBottom: '8px', color: '#1e293b' }}>Reporting Management</h1>
+        <span className="module-page">📄 Page 4 of PDF Document</span>
+      </div>
+    </div>
+    <div className="module-description">
+      <strong>📋 Module Overview:</strong><br />
+      Generate reports dynamically. Export data in multiple formats. Manage scheduled reports. Process large datasets efficiently. Store report history.
+    </div>
+    <div className="features-grid">
+      {['Downloadable Reports (PDF/Excel/CSV)', 'Advanced Report Filters', 'Live Report Previews', 'Scheduled Report Generation', 'Email Report Delivery', 'Custom Report Builder', 'Report Templates Library', 'Historical Report Archive'].map(f => (
+        <div key={f} className="feature-card"><span className="feature-icon">✓</span><span className="feature-text">{f}</span></div>
+      ))}
+    </div>
+  </div>
+);
+
+// Notifications Module
+const NotificationsModule = () => (
+  <div className="notifications-module">
+    <div className="module-header-custom">
+      <div className="module-icon-custom">🔔</div>
+      <div>
+        <h1 style={{ fontSize: '28px', marginBottom: '8px', color: '#1e293b' }}>Notifications & Alerts</h1>
+        <span className="module-page">📄 Page 4 of PDF Document</span>
+      </div>
+    </div>
+    <div className="module-description">
+      <strong>📋 Module Overview:</strong><br />
+      Send email, SMS, and push notifications. Trigger inventory and sales alerts. Manage notification queues. Store notification history. Monitor delivery status.
+    </div>
+    <div className="features-grid">
+      {['Central Notification Center', 'Real-time Alerts & Reminders', 'Email & SMS Integration', 'Push Notifications', 'Custom Alert Rules', 'Notification Templates', 'Delivery Status Tracking', 'Notification History Logs'].map(f => (
+        <div key={f} className="feature-card"><span className="feature-icon">✓</span><span className="feature-text">{f}</span></div>
+      ))}
+    </div>
+  </div>
+);
+
+// Audit Logs Module
+const AuditLogsModule = () => (
+  <div className="audit-module">
+    <div className="module-header-custom">
+      <div className="module-icon-custom">🛡️</div>
+      <div>
+        <h1 style={{ fontSize: '28px', marginBottom: '8px', color: '#1e293b' }}>Audit Logs & Security</h1>
+        <span className="module-page">📄 Page 4 of PDF Document</span>
+      </div>
+    </div>
+    <div className="module-description">
+      <strong>📋 Module Overview:</strong><br />
+      Record all system activities. Monitor suspicious actions. Store audit trails. Implement security policies. Generate compliance reports.
+    </div>
+    <div className="features-grid">
+      {['Complete Activity Logs Display', 'User Login History Tracking', 'Security Monitoring Dashboard', 'Audit Record Filtering & Search', 'Security Reports Generation', 'Compliance Monitoring', 'Suspicious Activity Alerts', 'Data Access Logs'].map(f => (
+        <div key={f} className="feature-card"><span className="feature-icon">✓</span><span className="feature-text">{f}</span></div>
+      ))}
+    </div>
+  </div>
+);
+
+// AI Retail Assistant Module
+const AIRetailAssistantModule = () => (
+  <div className="ai-assistant-module">
+    <div className="module-header-custom">
+      <div className="module-icon-custom">🧠</div>
+      <div>
+        <h1 style={{ fontSize: '28px', marginBottom: '8px', color: '#1e293b' }}>AI Retail Assistant & Recommendation Engine</h1>
+        <span className="module-page">📄 Page 4 of PDF Document</span>
+      </div>
+    </div>
+    <div className="module-description">
+      <strong>📋 Module Overview:</strong><br />
+      Provide intelligent chat-based assistance for retail operations. Generate product recommendations. Answer business queries. Analyze customer behavior. Offer personalized suggestions using machine learning.
+    </div>
+    <div className="stats-grid">
+      <div className="stat-card"><div className="value">24/7</div><div className="label">AI Availability</div></div>
+      <div className="stat-card"><div className="value">89%</div><div className="label">Query Resolution Rate</div></div>
+      <div className="stat-card"><div className="value">2.3s</div><div className="label">Avg Response Time</div></div>
+      <div className="stat-card"><div className="value">15+</div><div className="label">Query Categories</div></div>
+    </div>
+    <h3 style={{ marginBottom: '16px', color: '#1e293b' }}>🤖 AI Assistant Capabilities</h3>
+    <div className="recommendation-list">
+      <div className="forecast-item"><span className="product">💬 Natural Language Queries</span><span>Ask about sales, inventory, forecasts in plain English</span></div>
+      <div className="forecast-item"><span className="product">📊 Real-time Business Insights</span><span>Get instant analytics and performance metrics</span></div>
+      <div className="forecast-item"><span className="product">🎯 Smart Product Recommendations</span><span>AI suggests products based on customer patterns</span></div>
+      <div className="forecast-item"><span className="product">⚠️ Proactive Alerts</span><span>Get notified about low stock, anomalies, opportunities</span></div>
+    </div>
+    <div className="features-grid" style={{ marginTop: 24 }}>
+      {['Natural Language Processing', 'Contextual Conversation Memory', 'Product Recommendation Engine', 'Sales Query Resolution', 'Inventory Status Checks', 'Branch Performance Analysis', 'Demand Forecasting Insights', 'Automated Report Generation'].map(f => (
+        <div key={f} className="feature-card"><span className="feature-icon">✓</span><span className="feature-text">{f}</span></div>
+      ))}
+    </div>
+  </div>
+);
+
 const ModuleDetail = ({ title, icon, page, description, features }) => (
   <div className="module-detail">
     <div className="module-header">
