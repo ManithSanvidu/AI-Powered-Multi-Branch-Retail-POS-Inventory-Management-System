@@ -37,6 +37,9 @@ import CategoryManagementPage from "./pages/products/CategoryManagementPage";
 
 // Branch Pages
 import BranchListPage from "./pages/branches/BranchListPage";
+import AddBranchPage from "./pages/branches/AddBranchPage";
+import EditBranchPage from "./pages/branches/EditBranchPage";
+import BranchDetailsPage from "./pages/branches/BranchDetailsPage";
 
 // Other Pages
 import ReturnsPage from "./pages/returns/ReturnsPage";
@@ -161,7 +164,12 @@ function App() {
                     <Route path="/employees" element={<EmployeesPage />} />
                     <Route path="/returns" element={<ReturnsPage />} />
                     <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
+                    
+                    {/* Branch Routes */}
                     <Route path="/branches" element={<BranchListPage />} />
+                    <Route path="/branches/add" element={<AddBranchPage />} />
+                    <Route path="/branches/edit/:id" element={<EditBranchPage />} />
+                    <Route path="/branches/:id" element={<BranchDetailsPage />} />
 
                     {/* Default Redirect */}
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
