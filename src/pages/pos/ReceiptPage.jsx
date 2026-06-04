@@ -50,10 +50,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, CheckCircle, FileText } from "lucide-react";
 import ReceiptPreview from "../../components/pos/ReceiptPreview";
 
-const ReceiptPage = () => {
+const ReceiptPage = ({ sale: saleProp, onNewSale }) => {
   const navigate  = useNavigate();
   const { state } = useLocation();
-  const sale      = state?.sale;
+  const sale = saleProp || state?.sale;
 
   if (!sale) {
     return (
@@ -64,7 +64,7 @@ const ReceiptPage = () => {
           </div>
           <p className="text-slate-600 font-medium mb-5">No receipt data available.</p>
           <button
-            onClick={() => navigate("/pos")}
+            onClick={() => onNewSale ? onNewSale() : navigate("/pos")}
             className="w-full bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-blue-700 transition"
           >
             Back to POS
@@ -89,7 +89,7 @@ const ReceiptPage = () => {
 
       
       <button
-        onClick={() => navigate("/pos")}
+        onClick={() => onNewSale ? onNewSale() : navigate("/pos")}
         className="mt-6 flex items-center gap-2 bg-slate-800 text-white hover:bg-slate-900 px-6 py-3 rounded-xl font-semibold transition-all shadow-md shadow-slate-900/10 print:hidden text-sm"
       >
         <ArrowLeft size={16} /> Start New Sale
