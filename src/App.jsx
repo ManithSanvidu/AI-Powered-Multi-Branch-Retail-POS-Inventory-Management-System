@@ -49,7 +49,7 @@ import "./App.css";
 
 // Placeholder pages
 const AdminPanel = () => <h1>🔐 Admin Panel</h1>;
-const Unauthorized = () => <h1>⛔ Unauthorized Access</h1>;
+import Unauthorized from "./pages/auth/Unauthorized";
 
 function App() {
   const [returnState, setReturnState] = useState({
@@ -97,7 +97,7 @@ function App() {
                     <Route
                       path="/dashboard"
                       element={
-                        <ProtectedRoute roles={["admin", "manager", "cashier"]}>
+                        <ProtectedRoute roles={["admin", "manager", "cashier","user"]}>
                           <Suspense
                             fallback={
                               <div
