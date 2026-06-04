@@ -29,7 +29,6 @@ const POSPage = lazy(() => import('../pos/POSPage'));
 const CheckoutPage = lazy(() => import('../pos/CheckoutPage'));
 const ReceiptPage = lazy(() => import('../pos/ReceiptPage'));
 const BranchListPage = lazy(() => import('../branches/BranchListPage'));
-const UserListPage = lazy(() => import('../users/UserListPage'));
 
 const ModuleLoading = () => (
   <div
