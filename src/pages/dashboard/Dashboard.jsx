@@ -535,17 +535,14 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
       case 'ai-forecast':
         return <AIDemandForecastModule />;
       case 'user-mgmt':
-<<<<<<< HEAD
   return (
     <Suspense fallback={<ModuleLoading />}>
       <UserListPage />
     </Suspense>
   );
-=======
         return <ModuleDetail title="User Management" icon="👥" page={1} description="CRUD APIs for user management. Store user information securely. Assign and update user roles. Track account status and activity. Validate data before storage." features={['Add/Edit/Remove Users', 'User Profiles & Account Status', 'Search & Filtering', 'Role & Permissions Assignment', 'Profile Updates', 'Activity Tracking']} />;
       //case 'branch-mgmt':
        // return <ModuleDetail title="Branch Management" icon="🏢" page={1} description="Manage branch records and configurations. Link branches with employees and inventory. Store branch-level settings. Generate branch performance statistics. Handle branch-related business logic." features={['Branch Information Display', 'Performance Metrics', 'Branch Creation & Updates', 'Branch-specific Inventory & Sales', 'Branch Search Functionality']} />;
->>>>>>> 8f4cedc (update DashBoard.jsx to link my BranchListPage.jsx)
       case 'branch-mgmt':
   return (
     <Suspense fallback={<ModuleLoading />}>
