@@ -9,14 +9,17 @@
  * Default:  http://localhost:5000
  *
  * Backend endpoints (feature/tharsiga-reporting-backend):
- *   GET  /api/reports/summary
- *   GET  /api/reports/sales
- *   GET  /api/reports/inventory
- *   GET  /api/reports/branch-performance
- *   GET  /api/reports/history
- *   GET  /api/reports/scheduled
- *   POST /api/reports/export/pdf      (placeholder)
- *   POST /api/reports/export/excel    (placeholder)
+ *   GET    /api/reports/summary
+ *   GET    /api/reports/sales
+ *   GET    /api/reports/inventory
+ *   GET    /api/reports/branch-performance
+ *   GET    /api/reports/history            ← database-driven (Report collection)
+ *   GET    /api/reports/scheduled          ← database-driven (ScheduledReport collection)
+ *   POST   /api/reports/scheduled          ← create new schedule + register cron
+ *   PATCH  /api/reports/scheduled/:id      ← toggle active / update
+ *   DELETE /api/reports/scheduled/:id      ← delete + stop cron
+ *   POST   /api/reports/export/pdf
+ *   POST   /api/reports/export/excel
  */
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000';
@@ -292,4 +295,58 @@ export async function exportExcel(payload = {}) {
     console.error('Excel export error:', err);
     return { success: false, error: err.message };
   }
+}
+
+/**
+ * POST /api/reports/scheduled
+ * Create a new persistent scheduled report and register its cron task.
+ * @param {{ title: string, type: string, frequency: string, active: boolean }} payload
+ */
+export async function createSchedule(payload = {}) {
+    const { data, error } = await apiFetch('/api/reports/scheduled', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+
+    if (error || !data?.success) {
+        return { data: null, error: error || 'Failed to create schedule.' };
+    }
+
+    return { data: data.data, error: null };
+}
+
+/**
+ * PATCH /api/reports/scheduled/:id
+ * Toggle active/inactive or update schedule fields. Re-registers cron task on backend.
+ * @param {string} id - MongoDB ObjectId of the schedule
+ * @param {object} updates - Fields to update (e.g. { active: false })
+ */
+export async function updateSchedule(id, updates = {}) {
+    const { data, error } = await apiFetch(`/api/reports/scheduled/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(updates),
+    });
+
+    if (error || !data?.success) {
+        return { data: null, error: error || 'Failed to update schedule.' };
+    }
+
+    return { data: data.data, error: null };
+}
+
+/**
+ * DELETE /api/reports/scheduled/:id
+ * Delete a scheduled report and stop its cron task.
+ * @param {string} id - MongoDB ObjectId of the schedule
+ */
+export async function deleteSchedule(id) {
+    const { data, error } = await apiFetch(`/api/reports/scheduled/${id}`, {
+        method: 'DELETE',
+    });
+
+    if (error || !data?.success) {
+        return { success: false, error: error || 'Failed to delete schedule.' };
+    }
+
+    return { success: true, error: null };
 }
