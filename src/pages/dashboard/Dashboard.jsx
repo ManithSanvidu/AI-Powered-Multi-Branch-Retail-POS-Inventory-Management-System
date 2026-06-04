@@ -18,6 +18,7 @@ const StockTransferPage = lazy(() => import('../stock-transfer/StockTransferPage
 const CustomerListPage = lazy(() => import('../customers/CustomerListPage'));
 const ProductListPage = lazy(() => import('../products/ProductListPage'));
 const CategoryManagementPage = lazy(() => import('../products/CategoryManagementPage'));
+const UserListPage = lazy(() => import('../users/UserListPage'));
 
 const ModuleLoading = () => (
   <div
@@ -481,7 +482,11 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
       case 'ai-forecast':
         return <AIDemandForecastModule />;
       case 'user-mgmt':
-        return <ModuleDetail title="User Management" icon="👥" page={1} description="CRUD APIs for user management. Store user information securely. Assign and update user roles. Track account status and activity. Validate data before storage." features={['Add/Edit/Remove Users', 'User Profiles & Account Status', 'Search & Filtering', 'Role & Permissions Assignment', 'Profile Updates', 'Activity Tracking']} />;
+  return (
+    <Suspense fallback={<ModuleLoading />}>
+      <UserListPage />
+    </Suspense>
+  );
       case 'branch-mgmt':
         return <ModuleDetail title="Branch Management" icon="🏢" page={1} description="Manage branch records and configurations. Link branches with employees and inventory. Store branch-level settings. Generate branch performance statistics. Handle branch-related business logic." features={['Branch Information Display', 'Performance Metrics', 'Branch Creation & Updates', 'Branch-specific Inventory & Sales', 'Branch Search Functionality']} />;
       case 'employee-mgmt':
