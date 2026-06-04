@@ -35,6 +35,9 @@ export const InventoryProvider = ({ children }) => {
       const res = await inventoryService.getInventory(branchId, lowStock);
       if (res.success) {
         setInventory(res.data);
+        if (res.warning) {
+          setError(res.warning);
+        }
       } else {
         throw new Error(res.error || "Failed to load inventory");
       }
@@ -51,6 +54,9 @@ export const InventoryProvider = ({ children }) => {
       const res = await inventoryService.getInventorySummary();
       if (res.success) {
         setSummary(res.data);
+        if (res.warning) {
+          setError(res.warning);
+        }
       } else {
         throw new Error(res.error || "Failed to load inventory summary");
       }
@@ -65,6 +71,9 @@ export const InventoryProvider = ({ children }) => {
       const res = await inventoryService.getLowStockAlerts();
       if (res.success) {
         setAlerts(res.data);
+        if (res.warning) {
+          setError(res.warning);
+        }
       } else {
         throw new Error(res.error || "Failed to load stock alerts");
       }
@@ -80,6 +89,9 @@ export const InventoryProvider = ({ children }) => {
       const res = await inventoryService.getMovementHistory(inventoryId, branchId, startDate, endDate);
       if (res.success) {
         setHistory(res.data);
+        if (res.warning) {
+          setError(res.warning);
+        }
         return res.data;
       } else {
         throw new Error(res.error || "Failed to load movement logs");
