@@ -41,6 +41,7 @@ import BranchListPage from "./pages/branches/BranchListPage";
 
 // Customer Pages
 import CustomerListPage from "./pages/customers/CustomerListPage";
+//import CustomerAddModal from "./pages/customers/CustomerAddModal";
 
 // Other Pages
 import ReturnsPage from "./pages/returns/ReturnsPage";
@@ -169,6 +170,7 @@ function App() {
                     <Route path="/branches" element={<BranchListPage />} />
                     // Customer Routes
                     <Route path="/customers" element={<CustomerListPage />} />
+                    {/* <Route path="/customers-add" element={<CustomerAddModal />} /> */}
                   
 
                     {/* Default Redirect */}
