@@ -253,11 +253,6 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
   };
 
   const showModule = (moduleId) => {
-    if (moduleId === 'reporting') {
-      navigate('/reports');
-      return;
-    }
-
     const productInnerModules = [
       'product-categories',
       'product-add',
