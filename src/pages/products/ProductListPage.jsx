@@ -11,6 +11,7 @@ import {
 } from "../../services/productManagementApi";
 import { getAllCategories } from "../../services/categoryManagementApi";
 import { getAllSuppliers } from "../../services/supplierManagementApi";
+import toast from "react-hot-toast";
 
 function ProductListPage({
   onOpenCategories,
@@ -207,9 +208,11 @@ function ProductListPage({
 
     try {
       await deactivateProduct(id);
+      toast.success("Product deactivated successfully");
       setMessage("Product deactivated successfully");
       fetchProducts();
     } catch (error) {
+      toast.error("Failed to deactivate product");
       setMessage("Failed to deactivate product");
     }
   };
@@ -223,9 +226,11 @@ function ProductListPage({
 
     try {
       await reactivateProduct(id);
+      toast.success("Product reactivated successfully");
       setMessage("Product reactivated successfully");
       fetchProducts();
     } catch (error) {
+      toast.error("Failed to reactivate product");
       setMessage("Failed to reactivate product");
     }
   };
@@ -239,9 +244,11 @@ function ProductListPage({
 
     try {
       await deleteProduct(id);
+      toast.success("Product deleted successfully");
       setMessage("Product deleted successfully");
       fetchProducts();
     } catch (error) {
+      toast.error("Failed to delete product");
       setMessage("Failed to delete product");
     }
   };

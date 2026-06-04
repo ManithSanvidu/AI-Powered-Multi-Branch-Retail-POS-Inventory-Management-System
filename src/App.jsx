@@ -1,5 +1,6 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 
 // Contexts
 import { AuthProvider } from "./context/AuthContext";
@@ -87,6 +88,7 @@ function App() {
 
   return (
     <AuthProvider>
+      <Toaster position="top-right" />
       <EmployeeProvider>
         <ProductProvider>
           <SalesProvider>

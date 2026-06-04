@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { addProduct } from "../../services/productManagementApi";
 import { getAllCategories } from "../../services/categoryManagementApi";
 import { getAllSuppliers } from "../../services/supplierManagementApi";
+import toast from "react-hot-toast";
 
 function AddProductPage() {
   const navigate = useNavigate();
@@ -104,13 +105,16 @@ function AddProductPage() {
 
       await addProduct(productFormData);
 
+      toast.success("Product added successfully");
       setMessage("Product added successfully");
 
       setTimeout(() => {
         navigate("/products");
       }, 800);
     } catch (error) {
-      setMessage(error.response?.data?.message || "Failed to add product");
+      const errorMessage = error.response?.data?.message || "Failed to add product";
+      toast.error(errorMessage);
+      setMessage(errorMessage);
     } finally {
       setLoading(false);
     }
