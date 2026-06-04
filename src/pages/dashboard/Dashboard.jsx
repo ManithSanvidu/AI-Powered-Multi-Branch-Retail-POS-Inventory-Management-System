@@ -6,9 +6,13 @@ import BranchPerformance from '../../components/dashboard/BranchPerformance';
 import InventoryStatus from '../../components/dashboard/InventoryStatus';
 import TopProducts from '../../components/dashboard/TopProducts';
 import LiveFeed from '../../components/dashboard/LiveFeed';
+import SmartRecommendations from '../../components/dashboard/SmartRecommendations';
+import PersonalizedRecommendations from '../../components/dashboard/PersonalizedRecommendations';
 import { useAuth } from '../../context/AuthContext';
 import { socketService } from '../../services/socketService';
 import { useNavigate } from 'react-router-dom';
+import Chatbot from '../../components/ai/Chatbot/Chatbot';
+import AIIntelligenceHub from '../../components/ai/AIIntelligenceHub';
 
 const SuppliersPage = lazy(() => import('../suppliers/SuppliersPage'));
 const EmployeesPage = lazy(() => import('../employees/EmployeesPage'));
@@ -84,6 +88,8 @@ const MODULE_NAV_ITEMS = [
   { id: 'notifications', label: 'Notifications & Alerts', icon: '🔔', page: 4 },
   { id: 'audit-logs', label: 'Audit Logs & Security', icon: '🛡️', page: 4 },
   { id: 'ai-assistant', label: 'AI Retail Assistant & Recommendation', icon: '🧠', page: 4 },
+  // ── AI Intelligence ──
+  { id: 'ai-intelligence', label: 'AI Intelligence', icon: '🧠', page: 5, isAI: true },
 ];
 
 const _getDateRange = (preset) => {
@@ -461,7 +467,21 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
               </div>
             </div>
 
-            <div className="dash-section">
+            <section className="dash-section">
+              <div className="section-header">
+                <div className="section-title-wrapper">
+                  <span className="section-icon">🧠</span>
+                  <h2 className="section-title">AI ML Recommendations</h2>
+                  <span className="section-badge" style={{ background: 'rgba(16,185,129,0.15)', color: '#059669', border: '1px solid rgba(16,185,129,0.3)' }}>Live Models</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                <SmartRecommendations />
+                <PersonalizedRecommendations />
+              </div>
+            </section>
+
+            <section className="dash-section">
               <div className="tp-live-grid">
                 <div className="top-products-wrapper"><div className="section-header"><div className="section-title-wrapper"><span className="section-icon">⭐</span><h2 className="section-title">Top Performing Products</h2></div></div><TopProducts data={dashboardData} /></div>
                 <div className="live-feed-wrapper"><div className="section-header"><div className="section-title-wrapper"><span className="section-icon">🔴</span><h2 className="section-title">Live Activity</h2>{wsConnected && <span className="live-badge">LIVE</span>}</div></div><LiveFeed wsConnected={wsConnected} liveTransaction={liveTransaction} /></div>
@@ -551,6 +571,8 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
         return <NotificationsModule />;
       case 'audit-logs':
         return <AuditLogsModule />;
+      case 'ai-intelligence':
+        return <AIIntelligenceHub />;
       default:
         return <ModuleDetail title="Module Coming Soon" icon="🚀" page={0} description="This module is under development." features={['Full implementation coming in next update']} />;
     }
@@ -579,11 +601,20 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
               {navExpanded && (
                 <>
                   <span className="nav-label">{item.label}</span>
-                  <span className="nav-page">p.{item.page}</span>
+                  {item.isAI 
+                    ? <span style={{ fontSize: '9px', background: 'linear-gradient(135deg,#2563EB,#7C3AED)', color:'white', padding:'2px 6px', borderRadius:'999px', fontWeight:700 }}>AI</span>
+                    : <span className="nav-page">p.{item.page}</span>
+                  }
                 </>
               )}
             </button>
           ))}
+          {/* AI Section Divider */}
+          {navExpanded && (
+            <div style={{ padding: '10px 16px 4px', marginTop: '6px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+              <span style={{ fontSize: '10px', color: '#7C3AED', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>✨ AI Intelligence</span>
+            </div>
+          )}
         </div>
         <div className="nav-footer">
           {navExpanded && (
@@ -626,69 +657,8 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
         {renderModuleContent()}
       </div>
 
-      {/* AI Chatbot Icon - Bottom Right */}
-      <div className="chatbot-icon" onClick={() => setIsChatOpen(!isChatOpen)}>
-        <div className="chatbot-pulse"></div>
-        <span className="chatbot-emoji">🤖</span>
-        <span className="chatbot-label">AI Assistant</span>
-      </div>
-
-      {/* AI Chatbot Window */}
-      {isChatOpen && (
-        <div className="chatbot-window">
-          <div className="chatbot-header">
-            <div className="chatbot-header-info">
-              <span className="chatbot-header-icon">🧠</span>
-              <div>
-                <h3>AI Retail Assistant</h3>
-                <p>Online • Ready to help</p>
-              </div>
-            </div>
-            <button className="chatbot-close" onClick={() => setIsChatOpen(false)}>✕</button>
-          </div>
-          <div className="chatbot-messages">
-            {chatMessages.map(msg => (
-              <div key={msg.id} className={`chat-message ${msg.type}`}>
-                <div className="message-bubble">
-                  {msg.type === 'bot' && <span className="message-avatar">🤖</span>}
-                  <div className="message-text">{msg.text}</div>
-                  {msg.type === 'user' && <span className="message-avatar-user">👤</span>}
-                </div>
-              </div>
-            ))}
-            {isTyping && (
-              <div className="chat-message bot">
-                <div className="message-bubble typing">
-                  <span className="message-avatar">🤖</span>
-                  <div className="typing-indicator">
-                    <span></span><span></span><span></span>
-                  </div>
-                </div>
-              </div>
-            )}
-            <div ref={chatEndRef} />
-          </div>
-          <div className="chatbot-input-area">
-            <input
-              type="text"
-              placeholder="Ask me about sales, inventory, forecasts..."
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="chatbot-input"
-            />
-            <button className="chatbot-send" onClick={sendMessage}>
-              <span>➤</span>
-            </button>
-          </div>
-          <div className="chatbot-suggestions">
-            <button onClick={() => setChatInput("What's our total revenue?")}>💰 Revenue</button>
-            <button onClick={() => setChatInput("Show me low stock alerts")}>⚠️ Low Stock</button>
-            <button onClick={() => setChatInput("Branch performance")}>🏢 Branches</button>
-            <button onClick={() => setChatInput("Demand forecast")}>🔮 Forecast</button>
-          </div>
-        </div>
-      )}
+      {/* Floating AI Chatbot — only on Dashboard & Business Overview */}
+      {visibleModule === 'dashboard' && <Chatbot />}
 
       <style>{`
         .dashboard-page { min-height: 100vh; position: relative; overflow-x: hidden; }
