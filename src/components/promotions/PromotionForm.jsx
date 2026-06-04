@@ -40,17 +40,17 @@ export default function PromotionForm({ initialData, onSubmit, onCancel, loading
   useEffect(() => {
     if (initialData) {
       setFormData({
-        name: initialData.name || "",
-        code: initialData.code || "",
+        name: initialData.title || initialData.name || "",
+        code: initialData.couponCode || initialData.code || "",
         description: initialData.description || "",
-        discountType: initialData.discountType || "percentage",
+        discountType: (initialData.discountType === "PERCENTAGE" || initialData.discountType === "percentage") ? "percentage" : "flat",
         discountValue: initialData.discountValue || 0,
         minPurchaseAmount: initialData.minPurchaseAmount || 0,
         maxDiscountAmount: initialData.maxDiscountAmount || 0,
         startDate: initialData.startDate ? new Date(initialData.startDate).toISOString().split("T")[0] : "",
         endDate: initialData.endDate ? new Date(initialData.endDate).toISOString().split("T")[0] : "",
         isActive: initialData.isActive !== undefined ? initialData.isActive : true,
-        branchRestrictions: initialData.branchRestrictions || [],
+        branchRestrictions: initialData.branches || initialData.branchRestrictions || [],
         usageLimit: initialData.usageLimit || 0,
       });
     }
@@ -104,13 +104,19 @@ export default function PromotionForm({ initialData, onSubmit, onCancel, loading
       return;
     }
 
-    // Convert values to numbers before submitting
+    // Convert values to numbers and format for backend schema
     const payload = {
-      ...formData,
+      title: formData.name,
+      couponCode: formData.code.toUpperCase(),
+      description: formData.description,
+      discountType: formData.discountType === "percentage" ? "PERCENTAGE" : "FIXED",
       discountValue: Number(formData.discountValue),
       minPurchaseAmount: Number(formData.minPurchaseAmount),
-      maxDiscountAmount: Number(formData.maxDiscountAmount),
-      usageLimit: Number(formData.usageLimit),
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+      isActive: formData.isActive,
+      branches: formData.branchRestrictions,
+      usageLimit: Number(formData.usageLimit) > 0 ? Number(formData.usageLimit) : null,
     };
 
     onSubmit(payload);
@@ -371,7 +377,7 @@ export default function PromotionForm({ initialData, onSubmit, onCancel, loading
             className="flex-1 rounded-xl bg-blue-600 py-3 text-xs font-bold text-white shadow-md shadow-blue-100 hover:bg-blue-700 disabled:bg-slate-300 disabled:shadow-none transition flex items-center justify-center gap-1"
           >
             {loading && <RefreshCw size={14} className="animate-spin" />}
-            {formEmployee ? "Save Changes" : (initialData ? "Update Promotion" : "Create Promotion")}
+            {initialData ? "Update Promotion" : "Create Promotion"}
           </button>
         </div>
       </form>
