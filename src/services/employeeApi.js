@@ -1,11 +1,44 @@
-import axios from "axios";
-
 const EMPLOYEE_API_URL = import.meta.env.VITE_RETAIL_POS_EMPLOYEE_API_URL || "http://localhost:5000/api/employees";
 
-const employeeApi = axios.create({
-  baseURL: EMPLOYEE_API_URL,
-  timeout: 5000,
-});
+const employeeApi = {
+  request: async (method, path, body) => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 5000);
+
+    const options = {
+      method,
+      signal: controller.signal,
+      headers: {},
+    };
+
+    if (body !== undefined) {
+      options.headers["Content-Type"] = "application/json";
+      options.body = JSON.stringify(body);
+    }
+
+    try {
+      const response = await fetch(`${EMPLOYEE_API_URL}${path}`, options);
+      const contentType = response.headers.get("content-type") || "";
+      const data = contentType.includes("application/json")
+        ? await response.json()
+        : await response.text();
+
+      if (!response.ok) {
+        const error = new Error(data?.message || data?.error || "Request failed");
+        error.response = { status: response.status, data };
+        throw error;
+      }
+
+      return { data, status: response.status };
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  },
+  get: (path) => employeeApi.request("GET", path),
+  post: (path, body) => employeeApi.request("POST", path, body),
+  put: (path, body) => employeeApi.request("PUT", path, body),
+  delete: (path) => employeeApi.request("DELETE", path),
+};
 
 // Helper to determine if we should fallback to localStorage/mock data
 const handleRequest = async (apiCall, fallbackFn) => {
