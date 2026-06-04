@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import {
   getAllProducts,
   deactivateProduct,
@@ -13,7 +12,12 @@ import {
 import { getAllCategories } from "../../services/categoryManagementApi";
 import { getAllSuppliers } from "../../services/supplierManagementApi";
 
-function ProductListPage({ onOpenCategories }) {
+function ProductListPage({
+  onOpenCategories,
+  onAddProduct,
+  onViewProduct,
+  onEditProduct,
+}) {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
@@ -75,10 +79,10 @@ function ProductListPage({ onOpenCategories }) {
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
 
-    setFilters({
-      ...filters,
+    setFilters((prev) => ({
+      ...prev,
       [name]: value,
-    });
+    }));
   };
 
   const handleSearch = async (e) => {
@@ -127,7 +131,7 @@ function ProductListPage({ onOpenCategories }) {
       setSearchMode("barcode");
 
       const response = await getProductByBarcode(barcode.trim());
-      setProducts([response.data.product]);
+      setProducts(response.data.product ? [response.data.product] : []);
     } catch (error) {
       setProducts([]);
       setMessage(
@@ -258,19 +262,20 @@ function ProductListPage({ onOpenCategories }) {
 
           <div className="flex flex-wrap gap-3">
             <button
-  type="button"
-  onClick={onOpenCategories}
-  className="rounded-lg border border-blue-200 bg-blue-50 px-5 py-2.5 text-center text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
->
-  Manage Categories
-</button>
+              type="button"
+              onClick={onOpenCategories}
+              className="rounded-lg border border-blue-200 bg-blue-50 px-5 py-2.5 text-center text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+            >
+              Manage Categories
+            </button>
 
-            <Link
-              to="/products/add"
+            <button
+              type="button"
+              onClick={onAddProduct}
               className="rounded-lg bg-blue-600 px-5 py-2.5 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
             >
               + Add Product
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -280,7 +285,8 @@ function ProductListPage({ onOpenCategories }) {
               Search & Filter Products
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Search by name, barcode, brand, category, supplier, or price range.
+              Search by name, barcode, brand, category, supplier, or price
+              range.
             </p>
           </div>
 
@@ -580,22 +586,25 @@ function ProductListPage({ onOpenCategories }) {
 
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap gap-2">
-                          <Link
-                            to={`/products/${product._id}`}
+                          <button
+                            type="button"
+                            onClick={() => onViewProduct(product._id)}
                             className="rounded-md border border-blue-200 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-50"
                           >
                             View
-                          </Link>
+                          </button>
 
-                          <Link
-                            to={`/products/edit/${product._id}`}
+                          <button
+                            type="button"
+                            onClick={() => onEditProduct(product._id)}
                             className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                           >
                             Edit
-                          </Link>
+                          </button>
 
                           {product.isActive ? (
                             <button
+                              type="button"
                               onClick={() => handleDeactivate(product._id)}
                               className="rounded-md border border-orange-200 px-3 py-1.5 text-xs font-semibold text-orange-700 hover:bg-orange-50"
                             >
@@ -603,6 +612,7 @@ function ProductListPage({ onOpenCategories }) {
                             </button>
                           ) : (
                             <button
+                              type="button"
                               onClick={() => handleReactivate(product._id)}
                               className="rounded-md border border-green-200 px-3 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-50"
                             >
@@ -611,6 +621,7 @@ function ProductListPage({ onOpenCategories }) {
                           )}
 
                           <button
+                            type="button"
                             onClick={() => handleDelete(product._id)}
                             className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50"
                           >

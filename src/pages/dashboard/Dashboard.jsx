@@ -7,6 +7,7 @@ import InventoryStatus from '../../components/dashboard/InventoryStatus';
 import TopProducts from '../../components/dashboard/TopProducts';
 import LiveFeed from '../../components/dashboard/LiveFeed';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import { socketService } from '../../services/socketService';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,6 +16,7 @@ const SuppliersPage = lazy(() => import('../suppliers/SuppliersPage'));
 const EmployeesPage = lazy(() => import('../employees/EmployeesPage'));
 const ReturnsPage = lazy(() => import('../returns/ReturnsPage'));
 const StockTransferPage = lazy(() => import('../stock-transfer/StockTransferPage'));
+const PurchaseOrdersPage = lazy(() => import('../purchase-orders/PurchaseOrdersPage'));
 const CustomerListPage = lazy(() => import('../customers/CustomerListPage'));
 const ProductListPage = lazy(() => import('../products/ProductListPage'));
 const CategoryManagementPage = lazy(() => import('../products/CategoryManagementPage'));
@@ -33,6 +35,8 @@ const ModuleLoading = () => (
     Loading module…
   </div>
 );
+import { InventoryProvider } from '../../context/InventoryContext';
+import InventoryDashboard from '../inventory/InventoryDashboard';
 
 // Demo data generator
 const generateDemoData = () => ({
@@ -48,6 +52,7 @@ const generateDemoData = () => ({
   top_products: null,
   sales: null,
 });
+
 
 const BRANCHES = [
   { id: 'all', name: 'All Branches', icon: '🏢', image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=100&h=100&fit=crop' },
@@ -104,7 +109,10 @@ const _getDateRange = (preset) => {
 };
 
 const Dashboard = ({ viewRole, returnState, setReturnState }) => {
+
+
   const { user, token, logout } = useAuth();
+  const { notifications = [], removeNotification, clearAll } = useNotification() || {};
   const navigate = useNavigate();
   const role = viewRole || user?.role || 'admin';
 
@@ -123,6 +131,7 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
   const [navExpanded, setNavExpanded] = useState(true);
   const [activeModule, setActiveModule] = useState('dashboard');
   const [visibleModule, setVisibleModule] = useState('dashboard');
+  const [selectedProductId, setSelectedProductId] = useState(null);
 
   // Chatbot state
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -236,9 +245,21 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
   };
 
   const showModule = (moduleId) => {
+  const productInnerModules = [
+    'product-categories',
+    'product-add',
+    'product-view',
+    'product-edit',
+  ];
+
+  if (productInnerModules.includes(moduleId)) {
+    setActiveModule('product-mgmt');
+  } else {
     setActiveModule(moduleId);
-    setVisibleModule(moduleId);
-  };
+  }
+
+  setVisibleModule(moduleId);
+};
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -369,13 +390,30 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
                 <div className="notification-wrapper">
                   <button className="notification-btn" onClick={() => setShowNotifications(!showNotifications)}>
                     <span className="bell-icon">🔔</span>
-                    <span className="notification-dot"></span>
+                    {notifications.length > 0 && <span className="notification-dot" style={{ background: 'var(--danger)', right: '4px', top: '4px', width: '10px', height: '10px' }}></span>}
                   </button>
                   {showNotifications && (
-                    <div className="notification-dropdown">
-                      <div className="notification-header">Notifications</div>
-                      <div className="notification-item"><span className="notif-icon">🔄</span><span>Inventory updated</span><span className="notif-time">2 min ago</span></div>
-                      <div className="notification-item"><span className="notif-icon">💰</span><span>New sale recorded</span><span className="notif-time">15 min ago</span></div>
+                    <div className="notification-dropdown" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                      <div className="notification-header" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Notifications</span>
+                        {notifications.length > 0 && (
+                          <button onClick={clearAll} style={{ background: 'none', border: 'none', color: '#3b82f6', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold' }}>Clear</button>
+                        )}
+                      </div>
+                      {notifications.length === 0 ? (
+                        <div style={{ padding: '20px', textAlign: 'center', color: '#94a3b8', fontSize: '0.9rem' }}>No new notifications</div>
+                      ) : (
+                        notifications.map(n => (
+                          <div key={n.id} className={`notification-item notif-${n.type}`} style={{ alignItems: 'flex-start', gap: '10px', padding: '12px' }}>
+                            <span className="notif-icon" style={{ marginTop: '2px' }}>{n.type === 'warning' ? '⚠️' : n.type === 'success' ? '✅' : 'ℹ️'}</span>
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <span style={{ lineHeight: '1.4', whiteSpace: 'normal', wordBreak: 'break-word' }}>{n.msg}</span>
+                              <span className="notif-time">{n.time}</span>
+                            </div>
+                            <button onClick={(e) => { e.stopPropagation(); removeNotification(n.id); }} style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', fontSize: '1rem' }}>×</button>
+                          </div>
+                        ))
+                      )}
                     </div>
                   )}
                 </div>
@@ -513,7 +551,18 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
       case 'product-mgmt':
         return (
           <Suspense fallback={<ModuleLoading />}>
-            <ProductListPage onOpenCategories={() => showModule('product-categories')} />
+            <ProductListPage
+              onOpenCategories={() => showModule('product-categories')}
+              onAddProduct={() => showModule('product-add')}
+              onViewProduct={(id) => {
+                setSelectedProductId(id);
+                showModule('product-view');
+              }}
+              onEditProduct={(id) => {
+                setSelectedProductId(id);
+                showModule('product-edit');
+              }}
+            />
           </Suspense>
         );
 
@@ -523,34 +572,88 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
             <CategoryManagementPage onBack={() => showModule('product-mgmt')} />
           </Suspense>
         );
+
+      case 'product-add':
+        return (
+          <Suspense fallback={<ModuleLoading />}>
+            <AddProductPage onBack={() => showModule('product-mgmt')} />
+          </Suspense>
+        );
+
+      case 'product-view':
+  if (!selectedProductId) {
+    return (
+      <Suspense fallback={<ModuleLoading />}>
+        <ProductListPage
+          onOpenCategories={() => showModule('product-categories')}
+          onAddProduct={() => showModule('product-add')}
+          onViewProduct={(id) => {
+            setSelectedProductId(id);
+            showModule('product-view');
+          }}
+          onEditProduct={(id) => {
+            setSelectedProductId(id);
+            showModule('product-edit');
+          }}
+        />
+      </Suspense>
+    );
+  }
+
+  return (
+    <Suspense fallback={<ModuleLoading />}>
+      <ProductDetailsPage
+        productId={selectedProductId}
+        onBack={() => showModule('product-mgmt')}
+        onEdit={(id) => {
+          setSelectedProductId(id);
+          showModule('product-edit');
+        }}
+      />
+    </Suspense>
+  );
+
+case 'product-edit':
+  if (!selectedProductId) {
+    return (
+      <Suspense fallback={<ModuleLoading />}>
+        <ProductListPage
+          onOpenCategories={() => showModule('product-categories')}
+          onAddProduct={() => showModule('product-add')}
+          onViewProduct={(id) => {
+            setSelectedProductId(id);
+            showModule('product-view');
+          }}
+          onEditProduct={(id) => {
+            setSelectedProductId(id);
+            showModule('product-edit');
+          }}
+        />
+      </Suspense>
+    );
+  }
+
+  return (
+    <Suspense fallback={<ModuleLoading />}>
+      <EditProductPage
+        productId={selectedProductId}
+        onBack={() => showModule('product-mgmt')}
+      />
+    </Suspense>
+  );
       case 'inventory-mgmt':
-        return <ModuleDetail title="Inventory Management" icon="📊" page={2} description="Track stock quantities in real time. Record stock movements. Calculate stock availability. Generate inventory alerts. Maintain inventory history." features={['Inventory Levels Across Branches', 'Stock Movement History', 'Low Stock Highlighting', 'Inventory Search', 'Inventory Summaries']} />;
+        return (
+          <InventoryProvider>
+            <InventoryDashboard />
+          </InventoryProvider>
+        );
       case 'warehouse-mgmt':
         return <ModuleDetail title="Warehouse Management" icon="🏭" page={2} description="Track warehouse inventory. Manage storage allocations. Record warehouse transactions. Handle warehouse transfers. Generate warehouse statistics." features={['Storage Location Visualization', 'Stock Allocations', 'Warehouse Transfers', 'Capacity Monitoring', 'Warehouse Reports']} />;
       case 'purchase-order':
         return (
-          <>
-            <ModuleDetail title="Purchase Order Management" icon="PO" page={2} description="Process purchase orders. Manage approval workflows. Update inventory upon receipt. Store procurement records. Generate purchasing analytics." features={['Purchase Order Forms', 'Order Status Tracking', 'Supplier-linked Purchases', 'Approval Management', 'Purchase Reports']} />
-            <div style={{ marginTop: '-8px', marginBottom: '24px' }}>
-              <a
-                href="/purchase-orders"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '12px 20px',
-                  borderRadius: '14px',
-                  background: '#2563eb',
-                  color: '#ffffff',
-                  fontWeight: 700,
-                  textDecoration: 'none',
-                  boxShadow: '0 8px 20px rgba(37, 99, 235, 0.25)',
-                }}
-              >
-                Open Purchase Order Workspace
-              </a>
-            </div>
-          </>
+          <Suspense fallback={<ModuleLoading />}>
+            <PurchaseOrdersPage />
+          </Suspense>
         );
       // case 'pos-sales':
       //   return <ModuleDetail title="POS Sales & Billing" icon="🛒" page={3} description="Handle sales transactions. Process payments securely. Update inventory automatically. Store transaction records. Generate sales summaries." features={['Cashier POS Screens', 'Barcode Scanning', 'Shopping Cart Management', 'Digital Receipts', 'Multiple Payment Methods']} />;
