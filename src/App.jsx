@@ -43,6 +43,7 @@ import BranchListPage from "./pages/branches/BranchListPage";
 // Customer Pages
 import CustomerListPage from "./pages/customers/CustomerListPage";
 
+
 // Other Pages
 import ReturnsPage from "./pages/returns/ReturnsPage";
 import PurchaseOrdersPage from "./pages/purchase-orders/PurchaseOrdersPage";
@@ -164,22 +165,14 @@ function App() {
                           <Route path="/products/categories" element={<CategoryManagementPage />} />
                           <Route path="/products/:id" element={<ProductDetailsPage />} />
 
-                          {/* Other Routes */}
-                          <Route path="/employees" element={<EmployeesPage />} />
-                          <Route
-                            path="/reports"
-                            element={
-                              <ProtectedRoute roles={["admin"]}>
-                                <ReportsPage />
-                              </ProtectedRoute>
-                            }
-                          />
-                          <Route path="/returns" element={<ReturnsPage />} />
-                          <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
-                          <Route path="/branches" element={<BranchListPage />} />
-
-                          {/* Customer Routes */}
-                          <Route path="/customers" element={<CustomerListPage />} />
+                    {/* Other Routes */}
+                    <Route path="/employees" element={<EmployeesPage />} />
+                    <Route path="/returns" element={<ReturnsPage />} />
+                    <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
+                    <Route path="/branches" element={<BranchListPage />} />
+                    // Customer Routes
+                    <Route path="/customers" element={<CustomerListPage />} />
+                  
 
                           {/* Default Redirect */}
                           <Route path="*" element={<Navigate to="/dashboard" replace />} />
