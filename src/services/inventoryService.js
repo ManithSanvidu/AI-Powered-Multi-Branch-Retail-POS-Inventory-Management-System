@@ -28,11 +28,16 @@ const handleRequest = async (apiCall, fallbackFn) => {
     return response.data;
   } catch (error) {
     console.warn("Inventory API call failed, falling back to Mock Data:", error.message);
-    // If it's a 401 error, we propagate it to allow AuthContext/Context to handle redirects
-    if (error.response && error.response.status === 401) {
-      throw error;
-    }
-    return { data: fallbackFn(), isMock: true, success: true };
+    const is401 = error.response && error.response.status === 401;
+    const warningMsg = is401 
+      ? "Session expired or invalid token (using mock data)" 
+      : error.message || "Connection failed";
+    return { 
+      data: fallbackFn(), 
+      isMock: true, 
+      success: true, 
+      warning: warningMsg 
+    };
   }
 };
 
