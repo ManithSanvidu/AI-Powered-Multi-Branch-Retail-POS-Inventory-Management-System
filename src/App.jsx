@@ -39,9 +39,14 @@ import CategoryManagementPage from "./pages/products/CategoryManagementPage";
 
 // Branch Pages
 import BranchListPage from "./pages/branches/BranchListPage";
+import AddBranchPage from "./pages/branches/AddBranchPage";
+import EditBranchPage from "./pages/branches/EditBranchPage";
+import BranchDetailsPage from "./pages/branches/BranchDetailsPage";
+
 
 // Customer Pages
 import CustomerListPage from "./pages/customers/CustomerListPage";
+
 
 // Other Pages
 import ReturnsPage from "./pages/returns/ReturnsPage";
@@ -54,7 +59,7 @@ import "./App.css";
 
 // Placeholder pages
 const AdminPanel = () => <h1>🔐 Admin Panel</h1>;
-const Unauthorized = () => <h1>⛔ Unauthorized Access</h1>;
+import Unauthorized from "./pages/auth/Unauthorized";
 
 function App() {
   const [returnState, setReturnState] = useState({
@@ -104,7 +109,7 @@ function App() {
                           <Route
                             path="/dashboard"
                             element={
-                              <ProtectedRoute roles={["admin", "manager", "cashier"]}>
+                              <ProtectedRoute roles={["admin", "manager", "cashier","user"]}>
                                 <Suspense
                                   fallback={
                                     <div
@@ -164,22 +169,18 @@ function App() {
                           <Route path="/products/categories" element={<CategoryManagementPage />} />
                           <Route path="/products/:id" element={<ProductDetailsPage />} />
 
-                          {/* Other Routes */}
-                          <Route path="/employees" element={<EmployeesPage />} />
-                          <Route
-                            path="/reports"
-                            element={
-                              <ProtectedRoute roles={["admin"]}>
-                                <ReportsPage />
-                              </ProtectedRoute>
-                            }
-                          />
-                          <Route path="/returns" element={<ReturnsPage />} />
-                          <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
+                    {/* Other Routes */}
+                    <Route path="/employees" element={<EmployeesPage />} />
+                    <Route path="/returns" element={<ReturnsPage />} />
+                    <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
+                    {/* Branch Routes */}
                           <Route path="/branches" element={<BranchListPage />} />
-
-                          {/* Customer Routes */}
-                          <Route path="/customers" element={<CustomerListPage />} />
+                          <Route path="/branches/add" element={<AddBranchPage />} />
+                          <Route path="/branches/edit/:id" element={<EditBranchPage />} />
+                          <Route path="/branches/:id" element={<BranchDetailsPage />} />
+                    // Customer Routes
+                    <Route path="/customers" element={<CustomerListPage />} />
+                  
 
                           {/* Default Redirect */}
                           <Route path="*" element={<Navigate to="/dashboard" replace />} />

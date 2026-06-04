@@ -24,6 +24,10 @@ const AddProductPage = lazy(() => import('../products/AddProductPage'));
 const EditProductPage = lazy(() => import('../products/EditProductPage'));
 const ProductDetailsPage = lazy(() => import('../products/ProductDetailsPage'));
 const ReportsPage = lazy(() => import('../reports/ReportsPage'));
+const POSPage = lazy(() => import('../pos/POSPage'));
+const CheckoutPage = lazy(() => import('../pos/CheckoutPage'));
+const ReceiptPage = lazy(() => import('../pos/ReceiptPage'));
+const BranchListPage = lazy(() => import('../branches/BranchListPage'));
 
 const ModuleLoading = () => (
   <div
@@ -140,6 +144,8 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
   const [activeModule, setActiveModule] = useState('dashboard');
   const [visibleModule, setVisibleModule] = useState('dashboard');
   const [selectedProductId, setSelectedProductId] = useState(null);
+  const [posView, setPosView] = useState('pos');
+  const [lastSale, setLastSale] = useState(null);
 
   // Chatbot state
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -529,9 +535,15 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
         return <AIDemandForecastModule />;
       case 'user-mgmt':
         return <ModuleDetail title="User Management" icon="👥" page={1} description="CRUD APIs for user management. Store user information securely. Assign and update user roles. Track account status and activity. Validate data before storage." features={['Add/Edit/Remove Users', 'User Profiles & Account Status', 'Search & Filtering', 'Role & Permissions Assignment', 'Profile Updates', 'Activity Tracking']} />;
+      //case 'branch-mgmt':
+       // return <ModuleDetail title="Branch Management" icon="🏢" page={1} description="Manage branch records and configurations. Link branches with employees and inventory. Store branch-level settings. Generate branch performance statistics. Handle branch-related business logic." features={['Branch Information Display', 'Performance Metrics', 'Branch Creation & Updates', 'Branch-specific Inventory & Sales', 'Branch Search Functionality']} />;
       case 'branch-mgmt':
-        return <ModuleDetail title="Branch Management" icon="🏢" page={1} description="Manage branch records and configurations. Link branches with employees and inventory. Store branch-level settings. Generate branch performance statistics. Handle branch-related business logic." features={['Branch Information Display', 'Performance Metrics', 'Branch Creation & Updates', 'Branch-specific Inventory & Sales', 'Branch Search Functionality']} />;
-      case 'employee-mgmt':
+  return (
+    <Suspense fallback={<ModuleLoading />}>
+      <BranchListPage />
+    </Suspense>
+  );
+       case 'employee-mgmt':
         return (
           <Suspense fallback={<ModuleLoading />}>
             <EmployeesPage />
@@ -661,9 +673,38 @@ case 'product-edit':
         );
       // case 'pos-sales':
       //   return <ModuleDetail title="POS Sales & Billing" icon="🛒" page={3} description="Handle sales transactions. Process payments securely. Update inventory automatically. Store transaction records. Generate sales summaries." features={['Cashier POS Screens', 'Barcode Scanning', 'Shopping Cart Management', 'Digital Receipts', 'Multiple Payment Methods']} />;
-      case 'pos-sales':
-        window.location.href = '/pos';
-        return null;
+      // case 'pos-sales':
+      //   navigate('/pos');
+      // return null;
+  //     case 'pos-sales':
+  // return (
+  //   <Suspense fallback={<ModuleLoading />}>
+  //     <POSPage />
+  //   </Suspense>
+  // );
+  case 'pos-sales':
+  if (posView === 'checkout') return (
+    <Suspense fallback={<ModuleLoading />}>
+      <CheckoutPage
+        onBack={() => setPosView('pos')}
+        onComplete={(sale) => { setLastSale(sale); setPosView('receipt'); }}
+      />
+    </Suspense>
+  );
+  if (posView === 'receipt') return (
+    <Suspense fallback={<ModuleLoading />}>
+      <ReceiptPage
+        sale={lastSale}
+        onNewSale={() => { setLastSale(null); setPosView('pos'); }}
+      />
+    </Suspense>
+  );
+  return (
+    <Suspense fallback={<ModuleLoading />}>
+      <POSPage onCheckout={() => setPosView('checkout')} />
+    </Suspense>
+  );
+
       case 'returns-refund':
         return (
           <Suspense fallback={<ModuleLoading />}>
