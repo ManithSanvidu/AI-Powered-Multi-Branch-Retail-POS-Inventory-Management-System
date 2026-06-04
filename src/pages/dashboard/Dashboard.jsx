@@ -20,9 +20,7 @@ const PurchaseOrdersPage = lazy(() => import('../purchase-orders/PurchaseOrdersP
 const CustomerListPage = lazy(() => import('../customers/CustomerListPage'));
 const ProductListPage = lazy(() => import('../products/ProductListPage'));
 const CategoryManagementPage = lazy(() => import('../products/CategoryManagementPage'));
-<<<<<<< HEAD
 const UserListPage = lazy(() => import('../users/UserListPage'));
-=======
 const AddProductPage = lazy(() => import('../products/AddProductPage'));
 const EditProductPage = lazy(() => import('../products/EditProductPage'));
 const ProductDetailsPage = lazy(() => import('../products/ProductDetailsPage'));
@@ -30,7 +28,6 @@ const ReportsPage = lazy(() => import('../reports/ReportsPage'));
 const POSPage = lazy(() => import('../pos/POSPage'));
 const CheckoutPage = lazy(() => import('../pos/CheckoutPage'));
 const ReceiptPage = lazy(() => import('../pos/ReceiptPage'));
->>>>>>> origin/Dev
 
 const ModuleLoading = () => (
   <div
