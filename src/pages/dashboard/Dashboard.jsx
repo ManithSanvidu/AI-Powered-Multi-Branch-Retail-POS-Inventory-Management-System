@@ -9,6 +9,8 @@ import { useAuth } from '../../context/AuthContext';
 import { socketService } from '../../services/socketService';
 import SuppliersPage from '../suppliers/SuppliersPage';
 import EmployeesPage from '../employees/EmployeesPage';
+import { InventoryProvider } from '../../context/InventoryContext';
+import InventoryDashboard from '../inventory/InventoryDashboard';
 
 // Demo data generator
 const generateDemoData = () => ({
@@ -435,7 +437,11 @@ const Dashboard = ({ viewRole }) => {
       case 'product-mgmt':
         return <ModuleDetail title="Product Management" icon="📦" page={2} description="Store product and category information. Manage pricing structures. Handle product CRUD operations. Validate product data. Support barcode integration." features={['Product Catalog', 'Category & Brand Management', 'Product Image Uploads', 'Search & Filtering', 'Pricing & Stock Details', 'Barcode Integration']} />;
       case 'inventory-mgmt':
-        return <ModuleDetail title="Inventory Management" icon="📊" page={2} description="Track stock quantities in real time. Record stock movements. Calculate stock availability. Generate inventory alerts. Maintain inventory history." features={['Inventory Levels Across Branches', 'Stock Movement History', 'Low Stock Highlighting', 'Inventory Search', 'Inventory Summaries']} />;
+        return (
+          <InventoryProvider>
+            <InventoryDashboard />
+          </InventoryProvider>
+        );
       case 'warehouse-mgmt':
         return <ModuleDetail title="Warehouse Management" icon="🏭" page={2} description="Track warehouse inventory. Manage storage allocations. Record warehouse transactions. Handle warehouse transfers. Generate warehouse statistics." features={['Storage Location Visualization', 'Stock Allocations', 'Warehouse Transfers', 'Capacity Monitoring', 'Warehouse Reports']} />;
       case 'purchase-order':
