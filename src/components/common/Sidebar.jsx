@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { FiBox } from "react-icons/fi";
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: '⊞', path: '/dashboard', roles: ['admin', 'manager', 'cashier'] },
@@ -14,6 +15,13 @@ const NAV_ITEMS = [
   { id: 'ai', label: 'AI Forecasting', icon: '🤖', path: '/ai', badge: 'NEW', roles: ['admin', 'manager'] },
   { id: 'settings', label: 'Settings', icon: '⚙️', path: '/settings', roles: ['admin'] },
 ];
+
+<li>
+  <a href="/warehouse" className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+    <FiBox size={20} />
+    <span>Warehouse</span>
+  </a>
+</li>
 
 const Sidebar = ({ activeRoute, onNavigate }) => {
   const { user, logout } = useAuth();

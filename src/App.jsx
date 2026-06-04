@@ -21,6 +21,8 @@ import AddProductPage from './pages/products/AddProductPage';
 import EditProductPage from './pages/products/EditProductPage';
 import ProductDetailsPage from './pages/products/ProductDetailsPage';
 import ProductListPage from './pages/products/ProductListPage';
+import WarehouseList from './pages/warehouse/WarehouseList';
+import WarehouseDetail from './pages/Warehouse/WarehouseDetail';
 
 import './App.css';
 
@@ -44,6 +46,8 @@ function App() {
                   <Route path="/products/edit/:id" element={<EditProductPage />} />
                   <Route path="/products/:id" element={<ProductDetailsPage />} />
                   <Route path="/employees" element={<EmployeesPage />} />
+                  <Route path="/warehouse" element={<WarehouseList />} />
+                  <Route path="/warehouse/:id" element={<WarehouseDetail />} />
                 </Routes>
               </div>
             </Router>
