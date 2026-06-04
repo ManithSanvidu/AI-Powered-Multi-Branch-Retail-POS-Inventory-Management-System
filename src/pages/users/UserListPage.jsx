@@ -37,8 +37,12 @@ export default function UserListPage() {
   const handleSave = async () => {
     if (!form.name || !form.email || (!editUser && !form.password)) { setFormError("Name, Email and Password are required."); return; }
     setSaving(true); setFormError("");
-    try {
-      const payload = { ...form };
+    try {   
+      const payload = { 
+  ...form,
+  firstName: form.name.split(' ')[0],
+  lastName: form.name.split(' ')[1] || '',
+};
       if (editUser && !payload.password) delete payload.password;
       editUser ? await updateUser(editUser._id, payload) : await createUser(payload);
       setShowModal(false); fetchUsers();
