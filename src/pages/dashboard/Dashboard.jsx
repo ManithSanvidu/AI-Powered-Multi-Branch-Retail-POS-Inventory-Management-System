@@ -14,6 +14,7 @@ const SuppliersPage = lazy(() => import('../suppliers/SuppliersPage'));
 const EmployeesPage = lazy(() => import('../employees/EmployeesPage'));
 const ReturnsPage = lazy(() => import('../returns/ReturnsPage'));
 const StockTransferPage = lazy(() => import('../stock-transfer/StockTransferPage'));
+const PurchaseOrdersPage = lazy(() => import('../purchase-orders/PurchaseOrdersPage'));
 
 const ModuleLoading = () => (
   <div
@@ -502,28 +503,9 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
         return <ModuleDetail title="Warehouse Management" icon="🏭" page={2} description="Track warehouse inventory. Manage storage allocations. Record warehouse transactions. Handle warehouse transfers. Generate warehouse statistics." features={['Storage Location Visualization', 'Stock Allocations', 'Warehouse Transfers', 'Capacity Monitoring', 'Warehouse Reports']} />;
       case 'purchase-order':
         return (
-          <>
-            <ModuleDetail title="Purchase Order Management" icon="PO" page={2} description="Process purchase orders. Manage approval workflows. Update inventory upon receipt. Store procurement records. Generate purchasing analytics." features={['Purchase Order Forms', 'Order Status Tracking', 'Supplier-linked Purchases', 'Approval Management', 'Purchase Reports']} />
-            <div style={{ marginTop: '-8px', marginBottom: '24px' }}>
-              <a
-                href="/purchase-orders"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '12px 20px',
-                  borderRadius: '14px',
-                  background: '#2563eb',
-                  color: '#ffffff',
-                  fontWeight: 700,
-                  textDecoration: 'none',
-                  boxShadow: '0 8px 20px rgba(37, 99, 235, 0.25)',
-                }}
-              >
-                Open Purchase Order Workspace
-              </a>
-            </div>
-          </>
+          <Suspense fallback={<ModuleLoading />}>
+            <PurchaseOrdersPage />
+          </Suspense>
         );
       case 'pos-sales':
         return <ModuleDetail title="POS Sales & Billing" icon="🛒" page={3} description="Handle sales transactions. Process payments securely. Update inventory automatically. Store transaction records. Generate sales summaries." features={['Cashier POS Screens', 'Barcode Scanning', 'Shopping Cart Management', 'Digital Receipts', 'Multiple Payment Methods']} />;
