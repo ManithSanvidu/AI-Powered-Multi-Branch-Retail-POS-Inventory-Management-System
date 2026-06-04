@@ -436,7 +436,7 @@ export default function EmployeesPage() {
             <p>Register staff, set schedules, track shift punctuality, and evaluate performance benchmarks.</p>
           </div>
           <button onClick={handleOpenRegister} className="emp-register-btn">
-            + Register Staff Member
+            + Employee Registration
           </button>
         </div>
 
@@ -679,7 +679,7 @@ export default function EmployeesPage() {
 
                 <form onSubmit={handlePerfSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Staff Member</label>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Employee</label>
                     <select
                       value={perfEmpId}
                       onChange={e => setPerfEmpId(e.target.value)}
@@ -797,7 +797,7 @@ export default function EmployeesPage() {
           <div className="relative w-full max-w-md h-full bg-white/95 border-l border-white/20 shadow-2xl p-6 flex flex-col z-10 overflow-y-auto backdrop-blur-2xl">
             <div className="flex justify-between items-center mb-6 border-b border-black/5 pb-3">
               <h3 className="text-base font-bold text-slate-800">
-                {formEmployee ? "Edit Employee Info" : "Register New Staff Member"}
+                {formEmployee ? "Edit Employee Info" : "Employee Registration"}
               </h3>
               <button onClick={() => setIsFormOpen(false)} className="text-slate-400 text-lg hover:text-slate-600">
                 ✕
