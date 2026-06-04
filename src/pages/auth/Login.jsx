@@ -31,7 +31,7 @@ const Login = () => {
       login(data.user, data.token);
       navigate("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
+      setError(err.response?.data?.message || err.response?.data?.error || err.message || "Login failed");
     } finally {
       setLoading(false);
     }
