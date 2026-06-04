@@ -167,7 +167,7 @@ function App() {
                     <Route path="/returns" element={<ReturnsPage />} />
                     <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
                     <Route path="/branches" element={<BranchListPage />} />
-                    // Customer Routes
+                    {/* Customer Routes */}
                     <Route path="/customers" element={<CustomerListPage />} />
                   
 
