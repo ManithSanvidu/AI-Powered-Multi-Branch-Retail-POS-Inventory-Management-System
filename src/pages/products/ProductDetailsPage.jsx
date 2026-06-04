@@ -1,18 +1,24 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
 import { getProductById } from "../../services/productManagementApi";
 
-function ProductDetailsPage() {
-  const { id } = useParams();
-  const navigate = useNavigate();
+function ProductDetailsPage({ productId, onBack, onEdit }) {
+  const id = productId;
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
   const fetchProductDetails = async () => {
+    if (!id) {
+      setMessage("Product ID not found");
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
+      setMessage("");
+
       const response = await getProductById(id);
       setProduct(response.data.product);
     } catch (error) {
@@ -24,6 +30,7 @@ function ProductDetailsPage() {
 
   useEffect(() => {
     fetchProductDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   if (loading) {
@@ -43,7 +50,8 @@ function ProductDetailsPage() {
           <p className="text-red-600">{message || "Product not found"}</p>
 
           <button
-            onClick={() => navigate("/products")}
+            type="button"
+            onClick={onBack}
             className="mt-4 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
           >
             Back to Products
@@ -69,14 +77,16 @@ function ProductDetailsPage() {
 
           <div className="flex gap-3">
             <button
-              onClick={() => navigate(`/products/edit/${product._id}`)}
+              type="button"
+              onClick={() => onEdit(product._id)}
               className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
             >
               Edit Product
             </button>
 
             <button
-              onClick={() => navigate("/products")}
+              type="button"
+              onClick={onBack}
               className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >
               Back

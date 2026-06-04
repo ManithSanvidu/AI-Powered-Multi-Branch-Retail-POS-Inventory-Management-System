@@ -18,6 +18,11 @@ const StockTransferPage = lazy(() => import('../stock-transfer/StockTransferPage
 const CustomerListPage = lazy(() => import('../customers/CustomerListPage'));
 const ProductListPage = lazy(() => import('../products/ProductListPage'));
 const CategoryManagementPage = lazy(() => import('../products/CategoryManagementPage'));
+const AddProductPage = lazy(() => import('../products/AddProductPage'));
+const EditProductPage = lazy(() => import('../products/EditProductPage'));
+const ProductDetailsPage = lazy(() => import('../products/ProductDetailsPage'));
+
+
 
 const ModuleLoading = () => (
   <div
@@ -49,6 +54,7 @@ const generateDemoData = () => ({
   top_products: null,
   sales: null,
 });
+
 
 const BRANCHES = [
   { id: 'all', name: 'All Branches', icon: '🏢', image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=100&h=100&fit=crop' },
@@ -105,6 +111,8 @@ const _getDateRange = (preset) => {
 };
 
 const Dashboard = ({ viewRole, returnState, setReturnState }) => {
+
+
   const { user, token, logout } = useAuth();
   const navigate = useNavigate();
   const role = viewRole || user?.role || 'admin';
@@ -124,6 +132,7 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
   const [navExpanded, setNavExpanded] = useState(true);
   const [activeModule, setActiveModule] = useState('dashboard');
   const [visibleModule, setVisibleModule] = useState('dashboard');
+  const [selectedProductId, setSelectedProductId] = useState(null);
 
   // Chatbot state
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -237,9 +246,21 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
   };
 
   const showModule = (moduleId) => {
+  const productInnerModules = [
+    'product-categories',
+    'product-add',
+    'product-view',
+    'product-edit',
+  ];
+
+  if (productInnerModules.includes(moduleId)) {
+    setActiveModule('product-mgmt');
+  } else {
     setActiveModule(moduleId);
-    setVisibleModule(moduleId);
-  };
+  }
+
+  setVisibleModule(moduleId);
+};
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -510,7 +531,18 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
       case 'product-mgmt':
         return (
           <Suspense fallback={<ModuleLoading />}>
-            <ProductListPage onOpenCategories={() => showModule('product-categories')} />
+            <ProductListPage
+              onOpenCategories={() => showModule('product-categories')}
+              onAddProduct={() => showModule('product-add')}
+              onViewProduct={(id) => {
+                setSelectedProductId(id);
+                showModule('product-view');
+              }}
+              onEditProduct={(id) => {
+                setSelectedProductId(id);
+                showModule('product-edit');
+              }}
+            />
           </Suspense>
         );
 
@@ -520,6 +552,75 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
             <CategoryManagementPage onBack={() => showModule('product-mgmt')} />
           </Suspense>
         );
+
+      case 'product-add':
+        return (
+          <Suspense fallback={<ModuleLoading />}>
+            <AddProductPage onBack={() => showModule('product-mgmt')} />
+          </Suspense>
+        );
+
+      case 'product-view':
+  if (!selectedProductId) {
+    return (
+      <Suspense fallback={<ModuleLoading />}>
+        <ProductListPage
+          onOpenCategories={() => showModule('product-categories')}
+          onAddProduct={() => showModule('product-add')}
+          onViewProduct={(id) => {
+            setSelectedProductId(id);
+            showModule('product-view');
+          }}
+          onEditProduct={(id) => {
+            setSelectedProductId(id);
+            showModule('product-edit');
+          }}
+        />
+      </Suspense>
+    );
+  }
+
+  return (
+    <Suspense fallback={<ModuleLoading />}>
+      <ProductDetailsPage
+        productId={selectedProductId}
+        onBack={() => showModule('product-mgmt')}
+        onEdit={(id) => {
+          setSelectedProductId(id);
+          showModule('product-edit');
+        }}
+      />
+    </Suspense>
+  );
+
+case 'product-edit':
+  if (!selectedProductId) {
+    return (
+      <Suspense fallback={<ModuleLoading />}>
+        <ProductListPage
+          onOpenCategories={() => showModule('product-categories')}
+          onAddProduct={() => showModule('product-add')}
+          onViewProduct={(id) => {
+            setSelectedProductId(id);
+            showModule('product-view');
+          }}
+          onEditProduct={(id) => {
+            setSelectedProductId(id);
+            showModule('product-edit');
+          }}
+        />
+      </Suspense>
+    );
+  }
+
+  return (
+    <Suspense fallback={<ModuleLoading />}>
+      <EditProductPage
+        productId={selectedProductId}
+        onBack={() => showModule('product-mgmt')}
+      />
+    </Suspense>
+  );
       case 'inventory-mgmt':
         return (
           <InventoryProvider>
