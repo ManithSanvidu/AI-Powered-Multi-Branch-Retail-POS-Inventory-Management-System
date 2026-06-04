@@ -7,6 +7,7 @@ import {
   transferFieldClass,
   transferLabelClass,
 } from './StockTransferUI';
+import { cn, stFieldFull, stFieldLabelText } from './stockTransferClasses';
 
 function TransferEditPanel({
   transfer,
@@ -63,9 +64,9 @@ function TransferEditPanel({
           <strong>Rejection reason:</strong> {transfer.rejectReason}
         </p>
       ) : null}
-      <div className="mb-3 grid grid-cols-1 gap-5 sm:grid-cols-2 [&_.full]:sm:col-span-2">
+      <div className="mb-3 grid grid-cols-1 gap-5 sm:grid-cols-2 [&_.col-span-full]:sm:col-span-2">
         <label className={transferLabelClass}>
-          From branch
+          <span className={stFieldLabelText}>From branch</span>
           <select
             className={transferFieldClass}
             value={form.fromBranchId}
@@ -82,7 +83,7 @@ function TransferEditPanel({
           </select>
         </label>
         <label className={transferLabelClass}>
-          To branch
+          <span className={stFieldLabelText}>To branch</span>
           <select
             className={transferFieldClass}
             value={form.toBranchId}
@@ -99,7 +100,7 @@ function TransferEditPanel({
           </select>
         </label>
         <label className={transferLabelClass}>
-          Product
+          <span className={stFieldLabelText}>Product</span>
           <select
             className={transferFieldClass}
             value={form.productId}
@@ -116,7 +117,7 @@ function TransferEditPanel({
           </select>
         </label>
         <label className={transferLabelClass}>
-          Quantity
+          <span className={stFieldLabelText}>Quantity</span>
           <input
             className={transferFieldClass}
             type="number"
@@ -128,8 +129,8 @@ function TransferEditPanel({
             required
           />
         </label>
-        <label className={`${transferLabelClass} full`}>
-          Notes
+        <label className={cn(transferLabelClass, stFieldFull)}>
+          <span className={stFieldLabelText}>Notes</span>
           <textarea
             className={transferFieldClass}
             rows={2}
@@ -137,7 +138,7 @@ function TransferEditPanel({
             onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
           />
         </label>
-        <p className="full text-sm text-slate-500">
+        <p className={cn(stFieldFull, 'text-sm text-slate-500')}>
           Available at source: <strong>{availableQty}</strong>
         </p>
       </div>

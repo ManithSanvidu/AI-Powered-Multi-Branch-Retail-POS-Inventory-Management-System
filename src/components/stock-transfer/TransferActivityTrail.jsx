@@ -15,7 +15,7 @@ function getTrailSteps(transfer) {
         done: true,
         tone: 'danger',
       },
-      { key: 'resubmit', label: 'Manager may edit & resubmit', done: false },
+      { key: 'next', label: 'Manager may create a new request', done: false },
     ];
   }
   if (transfer.status === 'Cancelled') {
