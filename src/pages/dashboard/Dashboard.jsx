@@ -8,10 +8,12 @@ import LiveFeed from '../../components/dashboard/LiveFeed';
 import { useAuth } from '../../context/AuthContext';
 import { socketService } from '../../services/socketService';
 
+
 const SuppliersPage = lazy(() => import('../suppliers/SuppliersPage'));
 const EmployeesPage = lazy(() => import('../employees/EmployeesPage'));
 const ReturnsPage = lazy(() => import('../returns/ReturnsPage'));
 const StockTransferPage = lazy(() => import('../stock-transfer/StockTransferPage'));
+const CustomerListPage = lazy(() => import('../customers/CustomerListPage'));
 
 const ModuleLoading = () => (
   <div
@@ -449,8 +451,15 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
             <EmployeesPage />
           </Suspense>
         );
-      case 'customer-mgmt':
-        return <ModuleDetail title="Customer Management" icon="👤" page={2} description="Manage customer data and transactions. Track loyalty rewards and points. Store customer purchase histories. Generate customer insights. Handle customer-related CRUD operations." features={['Customer Profiles', 'Purchase History', 'Loyalty Points', 'Customer Search & Filtering', 'Customer Analytics']} />;
+      /* case 'customer-mgmt':
+        return <ModuleDetail title="Customer Management" icon="👤" page={2} description="Manage customer data and transactions. Track loyalty rewards and points. Store customer purchase histories. Generate customer insights. Handle customer-related CRUD operations." features={['Customer Profiles', 'Purchase History', 'Loyalty Points', 'Customer Search & Filtering', 'Customer Analytics']} />; */
+
+   case 'customer-mgmt':
+  return (
+    <Suspense fallback={<ModuleLoading />}>
+      <CustomerListPage />
+    </Suspense>
+  );
       case 'supplier-mgmt':
         return (
           <Suspense fallback={<ModuleLoading />}>
