@@ -7,6 +7,15 @@ const supplierApi = axios.create({
   timeout: 5000,
 });
 
+// Attach token
+supplierApi.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 // Helper to determine if we should fallback to localStorage/mock data
 const handleRequest = async (apiCall, fallbackFn) => {
   try {

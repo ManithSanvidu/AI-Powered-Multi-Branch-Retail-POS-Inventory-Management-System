@@ -39,6 +39,36 @@ const normalizeRole = (role) =>
     .replace(/\s+/g, '_')
     .replace(/^super_admin$|^superadmin$|^administrator$/, 'admin');
 
+const getLocalDateString = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getLocalDateStringOffset = (offsetMs) => {
+  const d = new Date(Date.now() + offsetMs);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const sanitizePhoneNumber = (phone) => {
+  const digits = String(phone || '').replace(/\D/g, '');
+  if (digits.length === 9) {
+    return '0' + digits;
+  }
+  if (digits.length === 11 && digits.startsWith('94')) {
+    return '0' + digits.substring(2);
+  }
+  if (digits.length > 10) {
+    return digits.slice(-10);
+  }
+  return digits;
+};
+
 const SuppliersPage = () => {
   const { user } = useAuth();
   const userRole = useMemo(() => normalizeRole(user?.role), [user]);
@@ -83,8 +113,8 @@ const SuppliersPage = () => {
       returnRate: 0.0
     },
     contract: {
-      startDate: new Date().toISOString().substring(0, 10),
-      endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10),
+      startDate: getLocalDateString(),
+      endDate: getLocalDateStringOffset(365 * 24 * 60 * 60 * 1000),
       status: 'Under Negotiation',
       terms: '',
       paymentTerms: 'Net 30',
@@ -218,6 +248,24 @@ const SuppliersPage = () => {
   // Form input handler
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'phone') {
+      // allow only digits and limit to max 10
+      const digitsOnly = value.replace(/\D/g, '').slice(0, 10);
+      setFormData(prev => ({
+        ...prev,
+        phone: digitsOnly
+      }));
+      return;
+    }
+    if (name === 'companyName' || name === 'contactPerson') {
+      // allow only letters and spaces
+      const lettersOnly = value.replace(/[^A-Za-z\s]/g, '');
+      setFormData(prev => ({
+        ...prev,
+        [name]: lettersOnly
+      }));
+      return;
+    }
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
       setFormData(prev => ({
@@ -239,16 +287,59 @@ const SuppliersPage = () => {
 
   const validateForm = () => {
     const errors = {};
-    if (!formData.companyName.trim()) errors.companyName = 'Company name is required';
-    if (!formData.contactPerson.trim()) errors.contactPerson = 'Contact person is required';
-    if (!formData.email.trim()) {
-      errors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = 'Invalid email address';
-    }
-    if (!formData.phone.trim()) errors.phone = 'Phone number is required';
-    if (!formData.address.trim()) errors.address = 'Address is required';
     
+    const companyName = String(formData.companyName || '').trim();
+    const contactPerson = String(formData.contactPerson || '').trim();
+    const email = String(formData.email || '').trim();
+    const phone = String(formData.phone || '').trim();
+    const address = String(formData.address || '').trim();
+    
+    // Company Name: letters and spaces only
+    if (!companyName) {
+      errors.companyName = 'Company name is required';
+    } else if (!/^[A-Za-z\s]+$/.test(companyName)) {
+      errors.companyName = 'Company name must contain letters only';
+    }
+    
+    // Contact Person Name: letters and spaces only
+    if (!contactPerson) {
+      errors.contactPerson = 'Contact person is required';
+    } else if (!/^[A-Za-z\s]+$/.test(contactPerson)) {
+      errors.contactPerson = 'Contact person name must contain letters only';
+    }
+    
+    // Email: @ character is mandatory & matches general format
+    if (!email) {
+      errors.email = 'Email is required';
+    } else if (!email.includes('@')) {
+      errors.email = 'Email address must contain @ character';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.email = 'Invalid email format';
+    }
+    
+    // Phone: exactly 10 digits
+    if (!phone) {
+      errors.phone = 'Phone number is required';
+    } else if (!/^\d+$/.test(phone)) {
+      errors.phone = 'Phone number must contain numbers only';
+    } else if (phone.length !== 10) {
+      errors.phone = 'Phone number must be exactly 10 digits';
+    }
+    
+    // Address: required
+    if (!address) {
+      errors.address = 'Address is required';
+    }
+    
+    // Contract Start Date: prevent past dates (for creation)
+    if (formMode === 'create' && formData.contract && formData.contract.startDate) {
+      const todayStr = getLocalDateString();
+      if (formData.contract.startDate < todayStr) {
+        errors.startDate = 'Contract start date cannot be in the past';
+      }
+    }
+    
+    console.log('Supplier validation result:', { data: formData, errors });
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -270,8 +361,8 @@ const SuppliersPage = () => {
         returnRate: 0.0
       },
       contract: {
-        startDate: new Date().toISOString().substring(0, 10),
-        endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10),
+        startDate: getLocalDateString(),
+        endDate: getLocalDateStringOffset(365 * 24 * 60 * 60 * 1000),
         status: 'Under Negotiation',
         terms: '',
         paymentTerms: 'Net 30',
@@ -289,7 +380,7 @@ const SuppliersPage = () => {
       companyName: supplier.companyName,
       contactPerson: supplier.contactPerson,
       email: supplier.email,
-      phone: supplier.phone,
+      phone: sanitizePhoneNumber(supplier.phone),
       address: supplier.address,
       category: supplier.category,
       status: supplier.status,
@@ -381,6 +472,11 @@ const SuppliersPage = () => {
   // Submit Contract Update
   const handleContractSubmit = async (e) => {
     e.preventDefault();
+    const todayStr = new Date().toISOString().substring(0, 10);
+    if (contractFormData.startDate && contractFormData.startDate < todayStr) {
+      alert("Error: Contract start date cannot be in the past.");
+      return;
+    }
     const id = viewingSupplier.id || viewingSupplier._id;
     try {
       const res = await updateContract(id, contractFormData);
@@ -917,7 +1013,8 @@ const SuppliersPage = () => {
                     value={formData.phone}
                     onChange={handleInputChange}
                     className={formErrors.phone ? 'error' : ''}
-                    placeholder="e.g. +94 77 123 4567"
+                    placeholder="e.g. 0771234567"
+                    maxLength={10}
                   />
                   {formErrors.phone && <span className="error-text">{formErrors.phone}</span>}
                 </div>
@@ -965,7 +1062,10 @@ const SuppliersPage = () => {
                         name="contract.startDate"
                         value={formData.contract.startDate}
                         onChange={handleInputChange}
+                        className={formErrors.startDate ? 'error' : ''}
+                        min={getLocalDateString()}
                       />
+                      {formErrors.startDate && <span className="error-text">{formErrors.startDate}</span>}
                     </div>
 
                     <div className="form-group">
@@ -1105,6 +1205,7 @@ const SuppliersPage = () => {
                     type="date"
                     value={contractFormData.startDate}
                     onChange={e => setContractFormData(prev => ({ ...prev, startDate: e.target.value }))}
+                    min={new Date().toISOString().substring(0, 10)}
                   />
                 </div>
 
