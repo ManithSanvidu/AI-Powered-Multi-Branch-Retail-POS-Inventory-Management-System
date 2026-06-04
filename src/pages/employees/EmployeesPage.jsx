@@ -202,33 +202,22 @@ export default function EmployeesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-1">
-      <div className="mx-auto max-w-7xl">
+    <div className="emp-module-panel">
+      <div className="employees-max-wrapper">
         
         {/* Module Banner */}
-        <div 
-          className="mb-6 flex flex-col justify-between gap-4 bg-white p-6 shadow-sm border border-slate-200 md:flex-row md:items-center"
-          style={{ borderRadius: "24px" }}
-        >
-          <div>
-            <h1 className="text-2xl font-extrabold text-slate-800">
-              👔 Staff & Employee Management
-            </h1>
-            <p className="mt-1 text-xs text-slate-400 font-semibold">
-              Register staff, set schedules, track shift punctuality, and evaluate performance benchmarks.
-            </p>
+        <div className="emp-module-header">
+          <div className="emp-header-info">
+            <h1>👔 Staff & Employee Management</h1>
+            <p>Register staff, set schedules, track shift punctuality, and evaluate performance benchmarks.</p>
           </div>
-
-          <button
-            onClick={handleOpenRegister}
-            className="rounded-xl bg-blue-600 px-5 py-3 text-center text-xs font-bold text-white shadow-md shadow-blue-100 transition-all hover:bg-blue-700 hover:shadow-lg"
-          >
+          <button onClick={handleOpenRegister} className="emp-register-btn">
             + Register Staff Member
           </button>
         </div>
 
         {/* Tab Selection */}
-        <div className="mb-6 flex flex-wrap gap-2 border-b border-slate-200 pb-2">
+        <div className="emp-tabs-container">
           {[
             { id: "roster", label: "👥 Corporate Roster", icon: "👥" },
             { id: "schedules", label: "📅 Shift Planner", icon: "📅" },
@@ -239,7 +228,7 @@ export default function EmployeesPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`rounded-xl px-4 py-2.5 text-xs font-bold transition-all ${activeTab === tab.id ? "bg-blue-600 text-white shadow-md shadow-blue-55" : "bg-white text-slate-500 border border-slate-100 hover:bg-slate-50"}`}
+              className={`emp-tab-button ${activeTab === tab.id ? "active" : ""}`}
             >
               {tab.label}
             </button>
@@ -254,24 +243,22 @@ export default function EmployeesPage() {
             <div className="space-y-5">
               
               {/* Search & Filter Bar */}
-              <div className="grid gap-4 rounded-3xl bg-white p-5 border border-slate-100 shadow-sm sm:grid-cols-4">
-                <div className="sm:col-span-2">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Search Staff</label>
+              <div className="emp-filters-card">
+                <div className="filter-field" style={{ gridColumn: "span 2" }}>
+                  <label>Search Staff</label>
                   <input
                     type="text"
                     placeholder="Search by name, email, or telephone..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs font-medium text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
                 
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Filter Role</label>
+                <div className="filter-field">
+                  <label>Filter Role</label>
                   <select
                     value={selectedRole}
                     onChange={(e) => setSelectedRole(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-blue-500"
                   >
                     <option value="all">All Roles</option>
                     <option value="admin">Administrator</option>
@@ -281,12 +268,11 @@ export default function EmployeesPage() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Filter Branch</label>
+                <div className="filter-field">
+                  <label>Filter Branch</label>
                   <select
                     value={selectedBranch}
                     onChange={(e) => setSelectedBranch(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-blue-500"
                   >
                     <option value="all">All Branches</option>
                     {Object.entries(branchNames).map(([id, name]) => (
@@ -298,11 +284,11 @@ export default function EmployeesPage() {
 
               {/* Roster Cards Grid */}
               {filteredEmployees.length === 0 ? (
-                <div className="rounded-3xl border border-slate-100 bg-white p-12 text-center shadow-sm">
-                  <p className="text-slate-400 text-sm font-semibold">No employees match the specified filters.</p>
+                <div style={{ textAlign: "center", padding: "48px", color: "var(--text-muted)", background: "var(--bg-secondary)", borderRadius: "16px", border: "1px solid var(--border-color)", fontWeight: 600 }}>
+                  No employees match the specified filters.
                 </div>
               ) : (
-                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="emp-grid">
                   {filteredEmployees.map((emp) => (
                     <EmployeeCard
                       key={emp._id}
@@ -567,11 +553,11 @@ export default function EmployeesPage() {
       {isFormOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-end">
           {/* Backdrop */}
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" onClick={() => setIsFormOpen(false)} />
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md" onClick={() => setIsFormOpen(false)} />
 
           {/* Form Drawer */}
-          <div className="relative w-full max-w-md h-full bg-white shadow-2xl p-6 flex flex-col z-10 overflow-y-auto">
-            <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-3">
+          <div className="relative w-full max-w-md h-full bg-white/95 border-l border-white/20 shadow-2xl p-6 flex flex-col z-10 overflow-y-auto backdrop-blur-2xl">
+            <div className="flex justify-between items-center mb-6 border-b border-black/5 pb-3">
               <h3 className="text-base font-bold text-slate-800">
                 {formEmployee ? "✏️ Edit Employee Info" : "👔 Register New Staff Member"}
               </h3>
@@ -709,6 +695,370 @@ export default function EmployeesPage() {
           </div>
         </div>
       )}
+
+      <style>{`
+        /* Scoped styles for Employee Management Module */
+        .emp-module-panel {
+          animation: fadeIn 0.4s ease-out;
+          font-family: var(--font-sans);
+          color: var(--text-primary);
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(15px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .employees-max-wrapper {
+          max-width: 1200px;
+          margin: 0 auto;
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
+          width: 100%;
+        }
+
+        /* Glassmorphism generic style */
+        .emp-glass-card {
+          background: rgba(255, 255, 255, 0.65);
+          backdrop-filter: blur(16px);
+          border: 1px solid rgba(255, 255, 255, 0.4);
+          border-radius: 20px;
+          padding: 24px;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        /* Module Header Banner */
+        .emp-module-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 24px;
+          background: rgba(255, 255, 255, 0.65);
+          backdrop-filter: blur(16px);
+          border: 1px solid rgba(255, 255, 255, 0.45);
+          border-radius: 20px;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+          flex-wrap: wrap;
+          gap: 16px;
+        }
+        .emp-header-info {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          text-align: left;
+        }
+        .emp-header-info h1 {
+          font-size: 1.55rem;
+          font-weight: 850;
+          color: var(--text-primary);
+          letter-spacing: -0.02em;
+          line-height: 1.2;
+          margin: 0;
+        }
+        .emp-header-info p {
+          font-size: 0.82rem;
+          color: var(--text-secondary);
+          font-weight: 550;
+          margin: 0;
+        }
+        .emp-register-btn {
+          background: linear-gradient(135deg, #2563eb, #1d4ed8);
+          color: white;
+          font-weight: 750;
+          padding: 11px 22px;
+          border-radius: 12px;
+          border: none;
+          font-size: 0.82rem;
+          cursor: pointer;
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .emp-register-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+        }
+        .emp-register-btn:active {
+          transform: translateY(0);
+        }
+
+        /* Tab Selectors */
+        .emp-tabs-container {
+          display: flex;
+          gap: 8px;
+          overflow-x: auto;
+          padding: 6px;
+          background: rgba(255, 255, 255, 0.4);
+          backdrop-filter: blur(10px);
+          border-radius: 14px;
+          border: 1px solid rgba(255, 255, 255, 0.25);
+          scrollbar-width: none;
+          width: fit-content;
+          max-width: 100%;
+        }
+        .emp-tabs-container::-webkit-scrollbar {
+          display: none;
+        }
+        .emp-tab-button {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 16px;
+          font-size: 0.8rem;
+          font-weight: 750;
+          border-radius: 10px;
+          border: none;
+          background: transparent;
+          color: var(--text-secondary);
+          cursor: pointer;
+          transition: all 0.2s ease;
+          white-space: nowrap;
+        }
+        .emp-tab-button:hover {
+          background: rgba(255, 255, 255, 0.6);
+          color: var(--text-primary);
+        }
+        .emp-tab-button.active {
+          background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+          color: white;
+          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+
+        /* Filters Card */
+        .emp-filters-card {
+          display: grid;
+          grid-template-columns: 2fr 1fr 1fr;
+          gap: 16px;
+          background: rgba(255, 255, 255, 0.65);
+          backdrop-filter: blur(16px);
+          border: 1px solid rgba(255, 255, 255, 0.45);
+          border-radius: 20px;
+          padding: 20px;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+        }
+        @media (max-width: 768px) {
+          .emp-filters-card {
+            grid-template-columns: 1fr;
+          }
+        }
+        .filter-field {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          text-align: left;
+        }
+        .filter-field label {
+          font-size: 0.68rem;
+          font-weight: 800;
+          color: var(--text-secondary);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+        .emp-module-panel input, .emp-module-panel select, .emp-module-panel textarea {
+          padding: 10px 14px;
+          border-radius: 10px;
+          border: 1.5px solid rgba(0, 0, 0, 0.08);
+          background: rgba(255, 255, 255, 0.7);
+          font-size: 0.82rem;
+          font-weight: 600;
+          color: var(--text-primary);
+          outline: none;
+          transition: all 0.2s ease;
+          width: 100%;
+        }
+        .emp-module-panel input:focus, .emp-module-panel select:focus, .emp-module-panel textarea:focus {
+          border-color: #3b82f6;
+          background: white;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        /* Employee Grid & Cards */
+        .emp-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: 20px;
+        }
+        .emp-card {
+          background: rgba(255, 255, 255, 0.65);
+          backdrop-filter: blur(16px);
+          border: 1px solid rgba(255, 255, 255, 0.45);
+          border-radius: 20px;
+          padding: 20px;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+        }
+        .emp-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+          border-color: rgba(59, 130, 246, 0.3);
+        }
+        .emp-card-header {
+          display: flex;
+          gap: 16px;
+          align-items: center;
+        }
+        .emp-card-avatar {
+          position: relative;
+          flex-shrink: 0;
+        }
+        .emp-card-avatar img {
+          width: 60px;
+          height: 60px;
+          border-radius: 12px;
+          object-fit: cover;
+          border: 2px solid rgba(255, 255, 255, 0.8);
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+        }
+        .emp-status-dot {
+          position: absolute;
+          bottom: -4px;
+          right: -4px;
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          border: 3px solid rgba(255, 255, 255, 0.95);
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .emp-status-dot.active { background: #10b981; }
+        .emp-status-dot.inactive { background: #ef4444; }
+
+        .emp-card-info {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          text-align: left;
+        }
+        .emp-role-tag {
+          display: inline-flex;
+          align-items: center;
+          padding: 3px 8px;
+          font-size: 0.65rem;
+          font-weight: 800;
+          text-transform: uppercase;
+          border-radius: 6px;
+          width: fit-content;
+          letter-spacing: 0.05em;
+        }
+        .emp-role-tag.admin { background: rgba(126, 34, 206, 0.1); color: #7e22ce; border: 1px solid rgba(126, 34, 206, 0.25); }
+        .emp-role-tag.manager { background: rgba(5, 150, 105, 0.1); color: #059669; border: 1px solid rgba(5, 150, 105, 0.25); }
+        .emp-role-tag.cashier { background: rgba(37, 99, 235, 0.1); color: #2563eb; border: 1px solid rgba(37, 99, 235, 0.25); }
+        .emp-role-tag.inventory { background: rgba(217, 119, 6, 0.1); color: #d97706; border: 1px solid rgba(217, 119, 6, 0.25); }
+
+        .emp-card-name {
+          font-size: 0.95rem;
+          font-weight: 800;
+          color: var(--text-primary);
+          margin-top: 2px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .emp-card-details {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+        .emp-card-detail-item {
+          font-size: 0.74rem;
+          color: var(--text-secondary);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .emp-card-footer {
+          border-top: 1px solid rgba(0, 0, 0, 0.05);
+          padding-top: 12px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: auto;
+        }
+        .emp-rating-badge {
+          display: flex;
+          align-items: center;
+          gap: 2px;
+        }
+        .emp-card-actions {
+          display: flex;
+          gap: 8px;
+        }
+        .emp-card-btn {
+          padding: 6px 12px;
+          font-size: 0.72rem;
+          font-weight: 750;
+          border-radius: 8px;
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          background: rgba(255, 255, 255, 0.6);
+          color: var(--text-secondary);
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .emp-card-btn:hover {
+          background: rgba(255, 255, 255, 0.9);
+          color: var(--text-primary);
+          border-color: rgba(0, 0, 0, 0.15);
+          transform: translateY(-1px);
+        }
+        .emp-card-btn.primary {
+          background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+          color: white;
+          border: none;
+          box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+        }
+        .emp-card-btn.primary:hover {
+          box-shadow: 0 6px 14px rgba(37, 99, 235, 0.3);
+          transform: translateY(-1px);
+        }
+
+        /* Scoped override for all white blocks (Scheduler, simulator, logs table etc.) to convert them to glassmorphic panels */
+        .emp-module-panel .bg-white {
+          background: rgba(255, 255, 255, 0.65) !important;
+          backdrop-filter: blur(16px);
+          border: 1px solid rgba(255, 255, 255, 0.45) !important;
+          border-radius: 20px !important;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04) !important;
+        }
+        .emp-module-panel .border-slate-100 {
+          border-color: rgba(255, 255, 255, 0.25) !important;
+        }
+        .emp-module-panel .divide-slate-100 > * + * {
+          border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+        .emp-module-panel .bg-slate-50 {
+          background: rgba(255, 255, 255, 0.45) !important;
+        }
+        .emp-module-panel .bg-slate-50/50 {
+          background: rgba(255, 255, 255, 0.25) !important;
+        }
+        .emp-module-panel table th {
+          background: rgba(255, 255, 255, 0.5) !important;
+          color: var(--text-primary) !important;
+          font-weight: 750 !important;
+          border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+        .emp-module-panel table td {
+          border-color: rgba(255, 255, 255, 0.15) !important;
+        }
+        .emp-module-panel table tr:hover {
+          background: rgba(255, 255, 255, 0.3) !important;
+        }
+      `}</style>
 
     </div>
   );

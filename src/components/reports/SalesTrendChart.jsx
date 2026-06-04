@@ -17,10 +17,14 @@ const formatLKR = (value) => {
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
+    const val = payload[0].value;
+    const formatted = typeof val === 'number'
+      ? `LKR ${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      : String(val);
     return (
       <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-lg">
         <p className="mb-1 text-xs font-semibold text-slate-500">{label} 2026</p>
-        <p className="text-sm font-bold text-blue-600">{formatLKR(payload[0].value)}</p>
+        <p className="text-sm font-bold text-blue-600">{formatted}</p>
       </div>
     );
   }

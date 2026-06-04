@@ -21,10 +21,14 @@ const formatLKR = (value) => {
 const CustomTooltip = ({ active, payload, label, dataList }) => {
   if (active && payload && payload.length && dataList) {
     const d = dataList.find((r) => r.branch === label);
+    const val = payload[0].value;
+    const formatted = typeof val === 'number'
+      ? `LKR ${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      : String(val);
     return (
       <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-lg">
         <p className="mb-1 text-xs font-semibold text-slate-500">{label}</p>
-        <p className="text-sm font-bold text-blue-600">LKR {payload[0].value.toLocaleString()}</p>
+        <p className="text-sm font-bold text-blue-600">{formatted}</p>
         {d && d.growth !== 0 && (
           <p
             className={`mt-0.5 text-xs font-medium ${d.growth >= 0 ? 'text-emerald-600' : 'text-red-500'}`}

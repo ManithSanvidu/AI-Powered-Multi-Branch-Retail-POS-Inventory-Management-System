@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 
 const REPORT_TYPES = [
@@ -11,20 +11,9 @@ const REPORT_TYPES = [
   'Business Summary',
 ];
 
-const BRANCHES = [
-  'All Branches',
-  'Colombo Branch',
-  'Kandy Branch',
-  'Galle Branch',
-  'Jaffna Branch',
-  'Negombo Branch',
-  'Kurunegala Branch',
-  'Matara Branch',
-];
-
 const STATUSES = ['All Statuses', 'Completed', 'Review', 'Scheduled', 'Pending'];
 
-function ReportFilter({ onFilterChange }) {
+function ReportFilter({ onFilterChange, filters = {}, branches = [] }) {
   const [type, setType] = useState('All Types');
   const [branch, setBranch] = useState('All Branches');
   const [status, setStatus] = useState('All Statuses');
@@ -32,6 +21,15 @@ function ReportFilter({ onFilterChange }) {
   const [toDate, setToDate] = useState('');
   const [search, setSearch] = useState('');
   const [expanded, setExpanded] = useState(true);
+
+  useEffect(() => {
+    setType(filters.type || 'All Types');
+    setBranch(filters.branch || 'All Branches');
+    setStatus(filters.status || 'All Statuses');
+    setFromDate(filters.fromDate || '');
+    setToDate(filters.toDate || '');
+    setSearch(filters.search || '');
+  }, [filters]);
 
   const handleReset = () => {
     setType('All Types');
@@ -138,8 +136,11 @@ function ReportFilter({ onFilterChange }) {
                 onChange={(e) => setBranch(e.target.value)}
                 className={selectClass}
               >
-                {BRANCHES.map((b) => (
-                  <option key={b}>{b}</option>
+                <option value="All Branches">All Branches</option>
+                {branches.map((b) => (
+                  <option key={b._id || b.id || b.name} value={b._id || b.id || b.name}>
+                    {b.name}
+                  </option>
                 ))}
               </select>
             </div>
@@ -195,5 +196,4 @@ function ReportFilter({ onFilterChange }) {
     </section>
   );
 }
-
 export default ReportFilter;

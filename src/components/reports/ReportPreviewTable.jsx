@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Download, Eye, FileText, ChevronUp, ChevronDown, Database, AlertCircle } from 'lucide-react';
+import { exportPDF } from '../../services/reportService';
 
 const STATUS_STYLES = {
   Completed: 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200',
@@ -18,6 +19,7 @@ const STATUS_DOT = {
 function ReportPreviewTable({ reports, loading, source }) {
   const [sortField, setSortField] = useState('id');
   const [sortDir, setSortDir] = useState('asc');
+  const [selectedReport, setSelectedReport] = useState(null);
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -94,7 +96,9 @@ function ReportPreviewTable({ reports, loading, source }) {
           ? rawAmount
           : parseFloat(String(rawAmount).replace(/[^0-9.-]+/g, '')) || 0,
       amountStr:
-        typeof rawAmount === 'number' ? `LKR ${rawAmount.toLocaleString()}` : String(rawAmount),
+        typeof rawAmount === 'number'
+          ? `LKR ${rawAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          : String(rawAmount),
       status: r.status || 'Completed',
       raw: r,
     };
@@ -216,16 +220,28 @@ function ReportPreviewTable({ reports, loading, source }) {
                     <div className="flex items-center justify-end gap-2">
                       <button
                         title="View Report"
-                        onClick={() => alert(`Viewing details for report: ${report.id}`)}
-                        className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm transition hover:border-blue-300 hover:text-blue-600 active:scale-95"
+                        onClick={() => setSelectedReport(report)}
+                        className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm transition hover:border-blue-300 hover:text-blue-600 active:scale-95 cursor-pointer"
                       >
                         <Eye size={13} />
                         View
                       </button>
                       <button
                         title="Export Report"
-                        onClick={() => alert(`Exporting report: ${report.id}`)}
-                        className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-blue-700 active:scale-95"
+                        onClick={async () => {
+                          try {
+                            const res = await exportPDF({
+                              reportType: 'Single Invoice',
+                              invoiceNumber: report.id,
+                            });
+                            if (!res.success) {
+                              alert(`PDF export failed: ${res.error || 'Server error'}`);
+                            }
+                          } catch (err) {
+                            alert(`PDF export failed: ${err.message}`);
+                          }
+                        }}
+                        className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-blue-700 active:scale-95 cursor-pointer"
                       >
                         <Download size={13} />
                         Export
@@ -256,8 +272,70 @@ function ReportPreviewTable({ reports, loading, source }) {
           )}
         </div>
       </div>
+
+      {/* Detail Modal */}
+      {selectedReport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl border border-slate-100 bg-white p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <h3 className="text-base font-bold text-slate-900">Report / Invoice Details</h3>
+              <button
+                onClick={() => setSelectedReport(null)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="mt-4 space-y-3.5 text-sm">
+              <div className="flex justify-between py-1 border-b border-slate-50">
+                <span className="text-slate-500 font-medium">Report / Invoice ID</span>
+                <span className="font-mono font-semibold text-blue-600">{selectedReport.id}</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-50">
+                <span className="text-slate-500 font-medium">Branch</span>
+                <span className="font-semibold text-slate-800">{selectedReport.branch}</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-50">
+                <span className="text-slate-500 font-medium">Report Type</span>
+                <span className="text-slate-800 font-semibold">{selectedReport.type}</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-50">
+                <span className="text-slate-500 font-medium">Period / Date</span>
+                <span className="text-slate-800">{selectedReport.period}</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-50">
+                <span className="text-slate-500 font-medium">Amount</span>
+                <span className="font-bold text-slate-800">{selectedReport.amountStr}</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-50">
+                <span className="text-slate-500 font-medium">Status</span>
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_STYLES[selectedReport.status] || STATUS_STYLES.Completed}`}>
+                  {selectedReport.status}
+                </span>
+              </div>
+              {selectedReport.raw.cashier && (
+                <div className="flex justify-between py-1 border-b border-slate-50">
+                  <span className="text-slate-500 font-medium">Cashier</span>
+                  <span className="text-slate-800 font-semibold">
+                    {selectedReport.raw.cashier.firstName} {selectedReport.raw.cashier.lastName}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setSelectedReport(null)}
+                className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
-
 export default ReportPreviewTable;

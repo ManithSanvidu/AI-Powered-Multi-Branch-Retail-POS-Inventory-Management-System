@@ -7,10 +7,8 @@ import {
 } from 'lucide-react';
 
 const formatLKR = (val) => {
-  if (val === undefined || val === null) return 'LKR 0';
-  if (val >= 1000000) return `LKR ${(val / 1000000).toFixed(2)}M`;
-  if (val >= 1000) return `LKR ${(val / 1000).toFixed(1)}K`;
-  return `LKR ${val.toLocaleString()}`;
+  if (val === undefined || val === null) return 'LKR 0.00';
+  return `LKR ${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 const formatNumber = (val) => {
@@ -103,7 +101,7 @@ function ReportSummaryCards({ data, loading }) {
       title: 'Net Revenue',
       value: formatLKR(stats.netRevenue),
       sub: 'After taxes & deductions',
-      trend: 'up',
+      trend: 'neutral',
       icon: TrendingUp,
       accent: 'from-sky-600 to-sky-500',
       bg: 'bg-sky-50',
