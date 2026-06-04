@@ -10,10 +10,12 @@ import { useAuth } from '../../context/AuthContext';
 import { socketService } from '../../services/socketService';
 import { useNavigate } from 'react-router-dom';
 
+
 const SuppliersPage = lazy(() => import('../suppliers/SuppliersPage'));
 const EmployeesPage = lazy(() => import('../employees/EmployeesPage'));
 const ReturnsPage = lazy(() => import('../returns/ReturnsPage'));
 const StockTransferPage = lazy(() => import('../stock-transfer/StockTransferPage'));
+const CustomerListPage = lazy(() => import('../customers/CustomerListPage'));
 
 const ModuleLoading = () => (
   <div
@@ -486,8 +488,15 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
             <EmployeesPage />
           </Suspense>
         );
-      case 'customer-mgmt':
-        return <ModuleDetail title="Customer Management" icon="👤" page={2} description="Manage customer data and transactions. Track loyalty rewards and points. Store customer purchase histories. Generate customer insights. Handle customer-related CRUD operations." features={['Customer Profiles', 'Purchase History', 'Loyalty Points', 'Customer Search & Filtering', 'Customer Analytics']} />;
+      /* case 'customer-mgmt':
+        return <ModuleDetail title="Customer Management" icon="👤" page={2} description="Manage customer data and transactions. Track loyalty rewards and points. Store customer purchase histories. Generate customer insights. Handle customer-related CRUD operations." features={['Customer Profiles', 'Purchase History', 'Loyalty Points', 'Customer Search & Filtering', 'Customer Analytics']} />; */
+
+   case 'customer-mgmt':
+  return (
+    <Suspense fallback={<ModuleLoading />}>
+      <CustomerListPage />
+    </Suspense>
+  );
       case 'supplier-mgmt':
         return (
           <Suspense fallback={<ModuleLoading />}>
@@ -525,8 +534,11 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
             </div>
           </>
         );
+      // case 'pos-sales':
+      //   return <ModuleDetail title="POS Sales & Billing" icon="🛒" page={3} description="Handle sales transactions. Process payments securely. Update inventory automatically. Store transaction records. Generate sales summaries." features={['Cashier POS Screens', 'Barcode Scanning', 'Shopping Cart Management', 'Digital Receipts', 'Multiple Payment Methods']} />;
       case 'pos-sales':
-        return <ModuleDetail title="POS Sales & Billing" icon="🛒" page={3} description="Handle sales transactions. Process payments securely. Update inventory automatically. Store transaction records. Generate sales summaries." features={['Cashier POS Screens', 'Barcode Scanning', 'Shopping Cart Management', 'Digital Receipts', 'Multiple Payment Methods']} />;
+        window.location.href = '/pos';
+        return null;
       case 'returns-refund':
         return (
           <Suspense fallback={<ModuleLoading />}>
