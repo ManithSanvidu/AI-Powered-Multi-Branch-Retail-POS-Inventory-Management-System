@@ -20,7 +20,15 @@ export const BranchProvider = ({ children }) => {
     setLoading(true);
     try {
       const res = await getAllBranches();
-      setBranches(res.data || []);
+      const raw = res.data;
+      const list = Array.isArray(raw)
+        ? raw
+        : Array.isArray(raw?.data)
+          ? raw.data
+          : Array.isArray(raw?.branches)
+            ? raw.branches
+            : [];
+      setBranches(list);
     } catch (err) {
       console.error("Failed to fetch branches:", err);
     } finally {

@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
 import {
   getProductById,
   updateProduct,
 } from "../../services/productManagementApi";
 import { getAllCategories } from "../../services/categoryManagementApi";
 import { getAllSuppliers } from "../../services/supplierManagementApi";
+import toast from "react-hot-toast";
 
-function EditProductPage() {
-  const { id } = useParams();
-  const navigate = useNavigate();
+function EditProductPage({ productId, onBack }) {
+  const id = productId;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -36,8 +35,15 @@ function EditProductPage() {
   const [message, setMessage] = useState("");
 
   const fetchProductAndDropdownData = async () => {
+    if (!id) {
+      setMessage("Product ID not found");
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
+      setMessage("");
 
       const productResponse = await getProductById(id);
       const categoryResponse = await getAllCategories();
@@ -71,21 +77,34 @@ function EditProductPage() {
 
   useEffect(() => {
     fetchProductAndDropdownData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  useEffect(() => {
+    return () => {
+      if (previewImage) {
+        URL.revokeObjectURL(previewImage);
+      }
+    };
+  }, [previewImage]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [name]: value,
-    });
+    }));
   };
 
   const handleImageChange = (e) => {
     const selectedImage = e.target.files[0];
 
     if (selectedImage) {
+      if (previewImage) {
+        URL.revokeObjectURL(previewImage);
+      }
+
       setNewImage(selectedImage);
       setPreviewImage(URL.createObjectURL(selectedImage));
     }
@@ -94,7 +113,12 @@ function EditProductPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.price) {
+    if (!id) {
+      setMessage("Product ID not found");
+      return;
+    }
+
+    if (!formData.name.trim() || !formData.price) {
       setMessage("Product name and price are required");
       return;
     }
@@ -128,13 +152,16 @@ function EditProductPage() {
 
       await updateProduct(id, productFormData);
 
+      toast.success("Product updated successfully");
       setMessage("Product updated successfully");
 
       setTimeout(() => {
-        navigate("/products");
+        onBack();
       }, 800);
     } catch (error) {
-      setMessage(error.response?.data?.message || "Failed to update product");
+      const errorMessage = error.response?.data?.message || "Failed to update product";
+      toast.error(errorMessage);
+      setMessage(errorMessage);
     } finally {
       setUpdating(false);
     }
@@ -150,14 +177,45 @@ function EditProductPage() {
     );
   }
 
+  if (!id) {
+    return (
+      <div className="min-h-screen bg-slate-50 p-6">
+        <div className="mx-auto max-w-5xl rounded-2xl bg-white p-6 shadow-sm">
+          <p className="text-red-600">Product ID not found.</p>
+
+          <button
+            type="button"
+            onClick={onBack}
+            className="mt-4 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+          >
+            Back to Products
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-8">
       <div className="mx-auto max-w-5xl">
-        <div className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
-          <h1 className="text-2xl font-bold text-slate-900">Edit Product</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Update product details, category, supplier, barcode, price, and image.
-          </p>
+        <div className="mb-6 flex flex-col justify-between gap-4 rounded-2xl bg-white p-6 shadow-sm md:flex-row md:items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">
+              Edit Product
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Update product details, category, supplier, barcode, price, and
+              image.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onBack}
+            className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            Back to Products
+          </button>
         </div>
 
         {message && (
@@ -354,7 +412,8 @@ function EditProductPage() {
               />
 
               <p className="mt-3 text-xs text-slate-500">
-                Select a new image only if you want to replace the current image.
+                Select a new image only if you want to replace the current
+                image.
               </p>
             </div>
 
@@ -369,7 +428,7 @@ function EditProductPage() {
 
               <button
                 type="button"
-                onClick={() => navigate("/products")}
+                onClick={onBack}
                 className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >
                 Back to Products

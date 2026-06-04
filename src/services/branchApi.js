@@ -1,10 +1,20 @@
 import axios from "axios";
 
-const BRANCH_API_URL = import.meta.env.VITE_RETAIL_POS_BRANCH_API_URL;
+const API_ROOT = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const BRANCH_API_URL =
+  import.meta.env.VITE_RETAIL_POS_BRANCH_API_URL || `${API_ROOT}/branches`;
 
 const branchApi = axios.create({
   baseURL: BRANCH_API_URL,
   timeout: 60000,
+});
+
+branchApi.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 // Get all branches
