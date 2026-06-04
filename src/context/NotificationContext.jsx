@@ -67,8 +67,9 @@ export const NotificationProvider = ({ children }) => {
 
     // Separate effect to handle joining rooms when the user logs in/out
     useEffect(() => {
-        if (wsConnected && user && user._id && socketInstance) {
-            socketInstance.emit('joinNotifications', user._id);
+        const userId = user?.id || user?._id;
+        if (wsConnected && userId && socketInstance) {
+            socketInstance.emit('joinNotifications', userId);
         }
     }, [user, wsConnected, socketInstance]);
 
