@@ -2,6 +2,7 @@ const apiHost = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const API_ROOT = apiHost.endsWith("/api")
   ? apiHost
   : `${apiHost.replace(/\/$/, "")}/api`;
+
 const PRODUCT_API_URL =
   import.meta.env.VITE_RETAIL_POS_PRODUCT_API_URL || `${API_ROOT}/products`;
 
