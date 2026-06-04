@@ -38,6 +38,8 @@ const ModuleLoading = () => (
     Loading module…
   </div>
 );
+import { InventoryProvider } from '../../context/InventoryContext';
+import InventoryDashboard from '../inventory/InventoryDashboard';
 
 // Demo data generator
 const generateDemoData = () => ({
@@ -639,7 +641,11 @@ case 'product-edit':
     </Suspense>
   );
       case 'inventory-mgmt':
-        return <ModuleDetail title="Inventory Management" icon="📊" page={2} description="Track stock quantities in real time. Record stock movements. Calculate stock availability. Generate inventory alerts. Maintain inventory history." features={['Inventory Levels Across Branches', 'Stock Movement History', 'Low Stock Highlighting', 'Inventory Search', 'Inventory Summaries']} />;
+        return (
+          <InventoryProvider>
+            <InventoryDashboard />
+          </InventoryProvider>
+        );
       case 'warehouse-mgmt':
         return <ModuleDetail title="Warehouse Management" icon="🏭" page={2} description="Track warehouse inventory. Manage storage allocations. Record warehouse transactions. Handle warehouse transfers. Generate warehouse statistics." features={['Storage Location Visualization', 'Stock Allocations', 'Warehouse Transfers', 'Capacity Monitoring', 'Warehouse Reports']} />;
       case 'purchase-order':
