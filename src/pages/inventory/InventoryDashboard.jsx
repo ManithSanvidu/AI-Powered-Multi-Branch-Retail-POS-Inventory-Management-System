@@ -73,8 +73,7 @@ export const InventoryDashboard = () => {
   ];
 
   return (
-    <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "24px", textAlign: "left" }}>
-      <div className="mx-auto w-full max-w-7xl space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6" style={{ paddingBottom: "32px" }}>
 
         {/* ── HERO HEADER ─────────────────────────────────────────── */}
         <motion.div
@@ -356,7 +355,6 @@ export const InventoryDashboard = () => {
             onClose={() => setSelectedItemForHistory(null)}
           />
         )}
-      </div>
     </div>
   );
 };
