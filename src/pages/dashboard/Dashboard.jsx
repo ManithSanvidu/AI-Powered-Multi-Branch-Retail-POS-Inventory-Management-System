@@ -17,6 +17,8 @@ const EmployeesPage = lazy(() => import('../employees/EmployeesPage'));
 const ReturnsPage = lazy(() => import('../returns/ReturnsPage'));
 const StockTransferPage = lazy(() => import('../stock-transfer/StockTransferPage'));
 const CustomerListPage = lazy(() => import('../customers/CustomerListPage'));
+const ProductListPage = lazy(() => import('../products/ProductListPage'));
+const CategoryManagementPage = lazy(() => import('../products/CategoryManagementPage'));
 
 const ModuleLoading = () => (
   <div
@@ -523,7 +525,18 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
           </Suspense>
         );
       case 'product-mgmt':
-        return <ModuleDetail title="Product Management" icon="📦" page={2} description="Store product and category information. Manage pricing structures. Handle product CRUD operations. Validate product data. Support barcode integration." features={['Product Catalog', 'Category & Brand Management', 'Product Image Uploads', 'Search & Filtering', 'Pricing & Stock Details', 'Barcode Integration']} />;
+        return (
+          <Suspense fallback={<ModuleLoading />}>
+            <ProductListPage onOpenCategories={() => showModule('product-categories')} />
+          </Suspense>
+        );
+
+      case 'product-categories':
+        return (
+          <Suspense fallback={<ModuleLoading />}>
+            <CategoryManagementPage onBack={() => showModule('product-mgmt')} />
+          </Suspense>
+        );
       case 'inventory-mgmt':
         return <ModuleDetail title="Inventory Management" icon="📊" page={2} description="Track stock quantities in real time. Record stock movements. Calculate stock availability. Generate inventory alerts. Maintain inventory history." features={['Inventory Levels Across Branches', 'Stock Movement History', 'Low Stock Highlighting', 'Inventory Search', 'Inventory Summaries']} />;
       case 'warehouse-mgmt':

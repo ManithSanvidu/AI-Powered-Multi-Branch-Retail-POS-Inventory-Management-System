@@ -6,7 +6,7 @@ import {
   deleteCategory,
 } from "../../services/categoryManagementApi";
 
-function CategoryManagementPage() {
+function CategoryManagementPage({ onBack }) {
   const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
     name: "",
@@ -118,12 +118,13 @@ function CategoryManagementPage() {
             </p>
           </div>
 
-          <a
-            href="/products"
+          <button
+            type="button"
+            onClick={onBack}
             className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
             Back to Products
-          </a>
+          </button>
         </div>
 
         {message && (
