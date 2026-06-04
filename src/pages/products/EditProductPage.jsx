@@ -5,6 +5,7 @@ import {
 } from "../../services/productManagementApi";
 import { getAllCategories } from "../../services/categoryManagementApi";
 import { getAllSuppliers } from "../../services/supplierManagementApi";
+import toast from "react-hot-toast";
 
 function EditProductPage({ productId, onBack }) {
   const id = productId;
@@ -151,13 +152,16 @@ function EditProductPage({ productId, onBack }) {
 
       await updateProduct(id, productFormData);
 
+      toast.success("Product updated successfully");
       setMessage("Product updated successfully");
 
       setTimeout(() => {
         onBack();
       }, 800);
     } catch (error) {
-      setMessage(error.response?.data?.message || "Failed to update product");
+      const errorMessage = error.response?.data?.message || "Failed to update product";
+      toast.error(errorMessage);
+      setMessage(errorMessage);
     } finally {
       setUpdating(false);
     }
