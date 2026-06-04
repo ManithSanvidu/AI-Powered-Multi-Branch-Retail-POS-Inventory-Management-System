@@ -13,7 +13,7 @@ import {
 import { getAllCategories } from "../../services/categoryManagementApi";
 import { getAllSuppliers } from "../../services/supplierManagementApi";
 
-function ProductListPage() {
+function ProductListPage({ onOpenCategories }) {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
@@ -257,12 +257,13 @@ function ProductListPage() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Link
-              to="/products/categories"
-              className="rounded-lg border border-blue-200 bg-blue-50 px-5 py-2.5 text-center text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
-            >
-              Manage Categories
-            </Link>
+            <button
+  type="button"
+  onClick={onOpenCategories}
+  className="rounded-lg border border-blue-200 bg-blue-50 px-5 py-2.5 text-center text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+>
+  Manage Categories
+</button>
 
             <Link
               to="/products/add"
