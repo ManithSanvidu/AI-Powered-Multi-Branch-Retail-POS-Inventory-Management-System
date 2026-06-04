@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import {
   getAllSuppliers,
   addSupplier,
@@ -32,7 +33,17 @@ const formatDate = (dateString) => {
   }
 };
 
+const normalizeRole = (role) =>
+  String(role || '')
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/^super_admin$|^superadmin$|^administrator$/, 'admin');
+
 const SuppliersPage = () => {
+  const { user } = useAuth();
+  const userRole = useMemo(() => normalizeRole(user?.role), [user]);
+  const isAdminOrManager = useMemo(() => userRole === 'admin' || userRole === 'manager', [userRole]);
+
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -63,7 +74,6 @@ const SuppliersPage = () => {
     phone: '',
     address: '',
     category: 'Grains & Rice',
-    taxId: '',
     status: 'Active',
     rating: 5.0,
     performance: {
@@ -237,7 +247,6 @@ const SuppliersPage = () => {
       errors.email = 'Invalid email address';
     }
     if (!formData.phone.trim()) errors.phone = 'Phone number is required';
-    if (!formData.taxId.trim()) errors.taxId = 'Tax ID is required';
     if (!formData.address.trim()) errors.address = 'Address is required';
     
     setFormErrors(errors);
@@ -252,7 +261,6 @@ const SuppliersPage = () => {
       phone: '',
       address: '',
       category: 'Grains & Rice',
-      taxId: '',
       status: 'Active',
       rating: 5.0,
       performance: {
@@ -284,7 +292,6 @@ const SuppliersPage = () => {
       phone: supplier.phone,
       address: supplier.address,
       category: supplier.category,
-      taxId: supplier.taxId,
       status: supplier.status,
       rating: supplier.rating,
       performance: { ...(supplier.performance || { onTimeDelivery: 95, qualityScore: 95, leadTimeDays: 3, returnRate: 0.0 }) },
@@ -510,9 +517,11 @@ const SuppliersPage = () => {
             </select>
           </div>
 
-          <button className="register-btn" onClick={handleOpenCreateForm}>
-            <span className="plus-icon">+</span> Register Supplier
-          </button>
+          {isAdminOrManager && (
+            <button className="register-btn" onClick={handleOpenCreateForm}>
+              <span className="plus-icon">+</span> Register Supplier
+            </button>
+          )}
         </div>
       </div>
 
@@ -595,24 +604,26 @@ const SuppliersPage = () => {
                     </div>
                   </div>
 
-                  <div className="card-actions">
-                    <button className="edit-icon-btn" onClick={(e) => handleOpenEditForm(supplier, e)} title="Edit Supplier Info">
-                      ✏️ Edit
-                    </button>
-                    <button
-                      className="edit-icon-btn delete-btn"
-                      onClick={(e) => handleDeleteSupplier(supplier.id || supplier._id, e)}
-                      title="Delete Supplier"
-                    >
-                      🗑️ Delete
-                    </button>
-                    <button
-                      className={`status-toggle-btn ${supplier.status === 'Active' ? 'deactivate' : 'activate'}`}
-                      onClick={(e) => handleToggleStatus(supplier.id || supplier._id, supplier.status, e)}
-                    >
-                      {supplier.status === 'Active' ? '⏸️ Suspend' : '▶️ Activate'}
-                    </button>
-                  </div>
+                  {isAdminOrManager && (
+                    <div className="card-actions">
+                      <button className="edit-icon-btn" onClick={(e) => handleOpenEditForm(supplier, e)} title="Edit Supplier Info">
+                        ✏️ Edit
+                      </button>
+                      <button
+                        className="edit-icon-btn delete-btn"
+                        onClick={(e) => handleDeleteSupplier(supplier.id || supplier._id, e)}
+                        title="Delete Supplier"
+                      >
+                        🗑️ Delete
+                      </button>
+                      <button
+                        className={`status-toggle-btn ${supplier.status === 'Active' ? 'deactivate' : 'activate'}`}
+                        onClick={(e) => handleToggleStatus(supplier.id || supplier._id, supplier.status, e)}
+                      >
+                        {supplier.status === 'Active' ? '⏸️ Suspend' : '▶️ Activate'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -727,10 +738,6 @@ const SuppliersPage = () => {
                             <span>Phone Number</span>
                             <strong>{viewingSupplier.phone}</strong>
                           </div>
-                          <div className="grid-item">
-                            <span>Tax Registration ID</span>
-                            <strong>{viewingSupplier.taxId}</strong>
-                          </div>
                           <div className="grid-item full-width">
                             <span>Office Address</span>
                             <strong>{viewingSupplier.address}</strong>
@@ -748,9 +755,11 @@ const SuppliersPage = () => {
                             Contract: {selectedSupplierDetails?.contract?.status || viewingSupplier?.contract?.status || 'Under Negotiation'}
                           </span>
                         </div>
-                        <button className="register-btn contract-edit-btn" onClick={handleOpenContractModal}>
-                          ✏️ Manage Contract
-                        </button>
+                        {isAdminOrManager && (
+                          <button className="register-btn contract-edit-btn" onClick={handleOpenContractModal}>
+                            ✏️ Manage Contract
+                          </button>
+                        )}
                       </div>
 
                       <div className="contract-details-grid">
@@ -786,9 +795,11 @@ const SuppliersPage = () => {
                           <span>PO: <strong>{procurementHistory?.metrics?.purchaseOrderCount || 0}</strong></span>
                           <span>Manual: <strong>{procurementHistory?.metrics?.manualCount || 0}</strong></span>
                         </div>
-                        <button className="register-btn record-txn-btn" onClick={handleOpenTransactionModal}>
-                          + Log Manual Supply
-                        </button>
+                        {isAdminOrManager && (
+                          <button className="register-btn record-txn-btn" onClick={handleOpenTransactionModal}>
+                            + Log Manual Supply
+                          </button>
+                        )}
                       </div>
 
                       <div className="table-responsive">
@@ -883,19 +894,6 @@ const SuppliersPage = () => {
                     placeholder="e.g. Sunil Perera"
                   />
                   {formErrors.contactPerson && <span className="error-text">{formErrors.contactPerson}</span>}
-                </div>
-
-                <div className="form-group">
-                  <label>Tax Registration ID (TIN) <span className="required">*</span></label>
-                  <input
-                    type="text"
-                    name="taxId"
-                    value={formData.taxId}
-                    onChange={handleInputChange}
-                    className={formErrors.taxId ? 'error' : ''}
-                    placeholder="e.g. TX-XXXXX-LK"
-                  />
-                  {formErrors.taxId && <span className="error-text">{formErrors.taxId}</span>}
                 </div>
 
                 <div className="form-group">
