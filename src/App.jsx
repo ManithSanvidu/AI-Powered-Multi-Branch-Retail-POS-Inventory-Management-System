@@ -51,6 +51,9 @@ import BranchDetailsPage from "./pages/branches/BranchDetailsPage";
 import CustomerListPage from "./pages/customers/CustomerListPage";
 
 
+// AI Pages
+import AIAssistantPage from "./pages/ai/AIAssistantPage";
+
 // Other Pages
 import ReturnsPage from "./pages/returns/ReturnsPage";
 import PurchaseOrdersPage from "./pages/purchase-orders/PurchaseOrdersPage";
@@ -177,14 +180,24 @@ function App() {
                     <Route path="/employees" element={<EmployeesPage />} />
                     <Route path="/returns" element={<ReturnsPage />} />
                     <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
+                    {/* AI Assistant Route */}
+                    <Route
+                      path="/ai"
+                      element={
+                        <ProtectedRoute roles={["admin", "manager", "cashier"]}>
+                          <AIAssistantPage />
+                        </ProtectedRoute>
+                      }
+                    />
+
                     {/* Branch Routes */}
-                          <Route path="/branches" element={<BranchListPage />} />
-                          <Route path="/branches/add" element={<AddBranchPage />} />
-                          <Route path="/branches/edit/:id" element={<EditBranchPage />} />
-                          <Route path="/branches/:id" element={<BranchDetailsPage />} />
-                    // Customer Routes
+                    <Route path="/branches" element={<BranchListPage />} />
+                    <Route path="/branches/add" element={<AddBranchPage />} />
+                    <Route path="/branches/edit/:id" element={<EditBranchPage />} />
+                    <Route path="/branches/:id" element={<BranchDetailsPage />} />
+                    
+                    {/* Customer Routes */}
                     <Route path="/customers" element={<CustomerListPage />} />
-                  
 
                           {/* Default Redirect */}
                           <Route path="*" element={<Navigate to="/dashboard" replace />} />
