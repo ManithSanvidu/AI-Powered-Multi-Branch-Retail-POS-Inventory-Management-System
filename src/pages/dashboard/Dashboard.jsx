@@ -488,8 +488,11 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
             </div>
           </>
         );
+      // case 'pos-sales':
+      //   return <ModuleDetail title="POS Sales & Billing" icon="🛒" page={3} description="Handle sales transactions. Process payments securely. Update inventory automatically. Store transaction records. Generate sales summaries." features={['Cashier POS Screens', 'Barcode Scanning', 'Shopping Cart Management', 'Digital Receipts', 'Multiple Payment Methods']} />;
       case 'pos-sales':
-        return <ModuleDetail title="POS Sales & Billing" icon="🛒" page={3} description="Handle sales transactions. Process payments securely. Update inventory automatically. Store transaction records. Generate sales summaries." features={['Cashier POS Screens', 'Barcode Scanning', 'Shopping Cart Management', 'Digital Receipts', 'Multiple Payment Methods']} />;
+        window.location.href = '/pos';
+        return null;
       case 'returns-refund':
         return (
           <Suspense fallback={<ModuleLoading />}>
