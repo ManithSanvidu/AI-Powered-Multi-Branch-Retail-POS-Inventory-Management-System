@@ -12,6 +12,7 @@ import {
   FiPrinter
 } from 'react-icons/fi';
 import ReceiptModal from '../../components/ReceiptModal';
+import { createReturn, updateReturnStatus, getInvoices, getReturns } from '../../services/returnsApi';
 
 const ReturnsPage = ({ returnState, setReturnState }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -86,110 +87,104 @@ const ReturnsPage = ({ returnState, setReturnState }) => {
     return getDaysSincePurchase(invoiceDate) <= 30;
   };
 
-  // Create Return request
-  const handleCreateReturn = () => {
-    const itemsToReturn = [];
-    let refundSubtotal = 0;
+    // Create Return request
+    const handleCreateReturn = () => {
+      const itemsToReturn = [];
+      let refundSubtotal = 0;
 
-    activeInvoice.items.forEach(item => {
-      const qty = returnItems[item.id] || 0;
-      if (qty > 0) {
-        itemsToReturn.push({
-          id: item.id,
-          name: item.name,
-          qty: qty,
-          price: item.price
-        });
-        refundSubtotal += qty * item.price;
+      activeInvoice.items.forEach(item => {
+        const qty = returnItems[item.id] || 0;
+        if (qty > 0) {
+          itemsToReturn.push({
+            id: item.id,
+            name: item.name,
+            qty: qty,
+            price: item.price
+          });
+          refundSubtotal += qty * item.price;
+        }
+      });
+
+      if (itemsToReturn.length === 0) {
+        alert('Please select at least one item to return.');
+        return;
       }
-    });
 
-    if (itemsToReturn.length === 0) {
-      alert('Please select at least one item to return.');
-      return;
-    }
+      // Apply proportional discount
+      // Calculate total original subtotal of invoice
+      const totalOriginalSubtotal = activeInvoice.items.reduce((sum, item) => sum + (item.qty * item.price), 0);
+      const discountProportion = activeInvoice.discountAmount / totalOriginalSubtotal;
+      const proportionalDiscountRefund = refundSubtotal * discountProportion;
 
-    // Apply proportional discount
-    // Calculate total original subtotal of invoice
-    const totalOriginalSubtotal = activeInvoice.items.reduce((sum, item) => sum + (item.qty * item.price), 0);
-    const discountProportion = activeInvoice.discountAmount / totalOriginalSubtotal;
-    const proportionalDiscountRefund = refundSubtotal * discountProportion;
+      // Apply taxes
+      const taxRefund = (refundSubtotal - proportionalDiscountRefund) * activeInvoice.taxRate;
+      const finalRefundAmount = refundSubtotal - proportionalDiscountRefund + taxRefund;
 
-    // Apply taxes
-    const taxRefund = (refundSubtotal - proportionalDiscountRefund) * activeInvoice.taxRate;
-    const finalRefundAmount = refundSubtotal - proportionalDiscountRefund + taxRefund;
+      const newReturn = {
+        invoiceId: activeInvoice.id,
+        customer: activeInvoice.customer,
+        branch: activeInvoice.branch,
+        date: '2026-06-02',
+        amount: parseFloat(finalRefundAmount.toFixed(2)),
+        status: isReturnWindowValid(activeInvoice.date) ? 'Refunded' : 'Pending Approval',
+        reason: returnReason,
+        condition: returnCondition,
+        items: itemsToReturn
+      };
 
-    const newReturnId = `RET-2026-00${returnState.returns.length + 1}`;
-    const newReturn = {
-      id: newReturnId,
-      invoiceId: activeInvoice.id,
-      customer: activeInvoice.customer,
-      branch: activeInvoice.branch,
-      date: '2026-06-02',
-      amount: parseFloat(finalRefundAmount.toFixed(2)),
-      status: isReturnWindowValid(activeInvoice.date) ? 'Refunded' : 'Pending Approval',
-      reason: returnReason,
-      condition: returnCondition,
-      items: itemsToReturn
+      // Call API to create return request on backend
+      createReturn(newReturn)
+        .then((res) => {
+          // Re-fetch all data from backend to ensure state is perfectly synchronized
+          return Promise.all([getInvoices(), getReturns()]);
+        })
+        .then(([invoicesRes, returnsRes]) => {
+          setReturnState({
+            invoices: invoicesRes.data || [],
+            returns: returnsRes.data || []
+          });
+
+          // Trigger modal receipt display with returned data
+          const createdReturn = returnsRes.data.find(ret => ret.invoiceId === newReturn.invoiceId);
+          setReceiptData(createdReturn || newReturn);
+          setIsReceiptOpen(true);
+
+          // Reset lookup form
+          setActiveInvoice(null);
+          setSearchInvoiceId('');
+          setReturnItems({});
+
+          alert(`Return Request created successfully.`);
+          setActiveTab('history');
+        })
+        .catch((err) => {
+          console.error("Error creating return:", err);
+          alert(`Failed to create return: ${err.response?.data?.message || err.message}`);
+        });
     };
 
-    // Update quantities in invoices mock database
-    const updatedInvoices = returnState.invoices.map(inv => {
-      if (inv.id === activeInvoice.id) {
-        return {
-          ...inv,
-          items: inv.items.map(item => {
-            const returned = returnItems[item.id] || 0;
-            return {
-              ...item,
-              returnedQty: item.returnedQty + returned
-            };
-          })
-        };
-      }
-      return inv;
-    });
-
-    // Update state
-    setReturnState({
-      invoices: updatedInvoices,
-      returns: [newReturn, ...returnState.returns]
-    });
-
-    // Trigger modal receipt display
-    setReceiptData(newReturn);
-    setIsReceiptOpen(true);
-
-    // Reset lookup form
-    setActiveInvoice(null);
-    setSearchInvoiceId('');
-    setReturnItems({});
-    
-    // Switch to history or show success
-    alert(`Return Request ${newReturnId} created. Status: ${newReturn.status}`);
-    setActiveTab('history');
-  };
-
   const handleStatusChange = (returnId, newStatus) => {
-    const updatedReturns = returnState.returns.map(ret => {
-      if (ret.id === returnId) {
-        return { ...ret, status: newStatus };
-      }
-      return ret;
-    });
+    updateReturnStatus(returnId, newStatus)
+      .then(() => {
+        return getReturns();
+      })
+      .then((returnsRes) => {
+        setReturnState(prevState => ({
+          ...prevState,
+          returns: returnsRes.data || []
+        }));
 
-    setReturnState({
-      ...returnState,
-      returns: updatedReturns
-    });
-
-    // Update details view
-    if (selectedReturnForDetails && selectedReturnForDetails.id === returnId) {
-      setSelectedReturnForDetails({
-        ...selectedReturnForDetails,
-        status: newStatus
+        // Update details view
+        if (selectedReturnForDetails && selectedReturnForDetails.id === returnId) {
+          setSelectedReturnForDetails({
+            ...selectedReturnForDetails,
+            status: newStatus
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("Error updating return status:", err);
       });
-    }
   };
 
   // Filter returns
@@ -199,7 +194,55 @@ const ReturnsPage = ({ returnState, setReturnState }) => {
   });
 
   return (
-    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', textAlign: 'left' }}>
+    <div className="glass-card returns-theme-override" style={{
+      padding: '32px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '24px',
+      textAlign: 'left',
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      backdropFilter: 'blur(10px)',
+      borderRadius: '24px',
+      border: '1px solid #e2e8f0',
+      marginBottom: '24px'
+    }}>
+      <style>{`
+        .returns-theme-override {
+          --text-primary: #1e293b !important;
+          --text-secondary: #475569 !important;
+          --text-muted: #64748b !important;
+          --bg-primary: #f8fafc !important;
+          --bg-secondary: #ffffff !important;
+          --bg-tertiary: #f1f5f9 !important;
+          --border-color: #e2e8f0 !important;
+          --accent-color: #3b82f6 !important;
+          --accent-hover: #2563eb !important;
+          --accent-light: rgba(59, 130, 246, 0.1) !important;
+          --success-light: rgba(16, 185, 129, 0.1) !important;
+          --warning-light: rgba(245, 158, 11, 0.1) !important;
+          --danger-light: rgba(239, 68, 68, 0.1) !important;
+        }
+        /* Explicitly color headings and bold text dark slate */
+        .returns-theme-override h1:not([style*="color"]),
+        .returns-theme-override h2:not([style*="color"]),
+        .returns-theme-override h3:not([style*="color"]),
+        .returns-theme-override h4:not([style*="color"]),
+        .returns-theme-override h5:not([style*="color"]),
+        .returns-theme-override h6:not([style*="color"]),
+        .returns-theme-override strong:not([style*="color"]),
+        .returns-theme-override b:not([style*="color"]) {
+          color: #1e293b !important;
+        }
+        /* Explicitly color general text elements slate grey */
+        .returns-theme-override span:not([style*="color"]),
+        .returns-theme-override p:not([style*="color"]),
+        .returns-theme-override label:not([style*="color"]),
+        .returns-theme-override td:not([style*="color"]),
+        .returns-theme-override th:not([style*="color"]),
+        .returns-theme-override a:not([style*="color"]) {
+          color: #475569 !important;
+        }
+      `}</style>
       
       {/* Header Info */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -876,3 +919,4 @@ const ReturnsPage = ({ returnState, setReturnState }) => {
 };
 
 export default ReturnsPage;
+
