@@ -25,13 +25,15 @@ export const EmployeeProvider = ({ children }) => {
   const [error, setError] = useState(null);
 
   // Fetch all data from API/Mock database on mount
-  const loadAllData = async () => {
-    setLoading(true);
+  const loadAllData = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
-      const empsRes = await getAllEmployees();
-      const schedsRes = await getSchedules();
-      const attendRes = await getAttendance();
-      const perfRes = await getPerformanceMetrics();
+      const [empsRes, schedsRes, attendRes, perfRes] = await Promise.all([
+        getAllEmployees(),
+        getSchedules(),
+        getAttendance(),
+        getPerformanceMetrics(),
+      ]);
 
       setEmployees(empsRes.data.employees || []);
       setSchedules(schedsRes.data.schedules || []);
@@ -42,12 +44,19 @@ export const EmployeeProvider = ({ children }) => {
       console.error("Failed to load employee module state:", err);
       setError("Failed to load employee management data.");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     loadAllData();
+    
+    // Automatically poll the database every 10 seconds to keep all data lively updated
+    const intervalId = setInterval(() => {
+      loadAllData(true);
+    }, 10000);
+    
+    return () => clearInterval(intervalId);
   }, []);
 
   // Employee action handlers

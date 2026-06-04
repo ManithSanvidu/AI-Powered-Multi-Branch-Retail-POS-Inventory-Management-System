@@ -4,6 +4,7 @@ const BRANCH_API_URL = import.meta.env.VITE_RETAIL_POS_BRANCH_API_URL;
 
 const branchApi = axios.create({
   baseURL: BRANCH_API_URL,
+  timeout: 60000,
 });
 
 // Get all branches

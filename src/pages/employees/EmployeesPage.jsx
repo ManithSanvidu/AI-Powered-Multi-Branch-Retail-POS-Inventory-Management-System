@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useEmployees } from "../../context/EmployeeContext";
+import { useBranches } from "../../context/BranchContext";
 import { EmployeeCard, EmployeeDetailModal } from "../../components/employees/Employee";
 import SchedulePlanner from "../../components/employees/SchedulePlanner";
 import AttendanceSimulator from "../../components/employees/AttendanceSimulator";
@@ -16,6 +17,12 @@ export default function EmployeesPage() {
     logPerformance,
   } = useEmployees();
 
+  const { branches, fetchBranches } = useBranches();
+
+  useEffect(() => {
+    fetchBranches();
+  }, []);
+
   // Active Tab State
   const [activeTab, setActiveTab] = useState("roster");
 
@@ -28,6 +35,7 @@ export default function EmployeesPage() {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formEmployee, setFormEmployee] = useState(null); // If editing
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Performance Form State
   const [perfEmpId, setPerfEmpId] = useState("");
@@ -43,11 +51,192 @@ export default function EmployeesPage() {
     email: "",
     phone: "",
     role: "cashier",
-    branch: "1",
-    salary: 40000,
-    hireDate: new Date().toISOString().split("T")[0],
+    branch: "",
+    salary: "",
+    hireDate: "",
     photo: "",
   });
+
+  const [formErrors, setFormErrors] = useState({});
+
+  const validateField = (name, value) => {
+    let error = "";
+    
+    switch (name) {
+      case "firstName":
+        if (!value || !value.trim()) {
+          error = "First name is required.";
+        } else if (!/^[a-zA-Z\s\-']{2,50}$/.test(value.trim())) {
+          error = "Must be 2-50 characters (letters only).";
+        }
+        break;
+      case "lastName":
+        if (!value || !value.trim()) {
+          error = "Last name is required.";
+        } else if (!/^[a-zA-Z\s\-']{2,50}$/.test(value.trim())) {
+          error = "Must be 2-50 characters (letters only).";
+        }
+        break;
+      case "email":
+        if (!value || !value.trim()) {
+          error = "Email address is required.";
+        } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value.trim())) {
+          error = "Please enter a valid email address.";
+        }
+        break;
+      case "phone":
+        if (!value || !value.trim()) {
+          error = "Phone number is required.";
+        } else {
+          const cleanPhone = value.replace(/[\s\-\(\)]/g, "");
+          if (!/^(?:\+94|0)?7[0-9]{8}$/.test(cleanPhone)) {
+            error = "Enter a valid Sri Lankan mobile number.";
+          }
+        }
+        break;
+      case "salary":
+        if (value === undefined || value === null || value === "" || isNaN(value) || Number(value) <= 0) {
+          error = "Salary must be a positive number above 0.";
+        }
+        break;
+      case "hireDate":
+        if (!value) {
+          error = "Hire date is required.";
+        } else {
+          const inputDate = new Date(value);
+          const minDate = new Date("2000-01-01");
+          const maxDate = new Date();
+          maxDate.setHours(23, 59, 59, 999);
+          if (isNaN(inputDate.getTime()) || inputDate < minDate || inputDate > maxDate) {
+            error = "Date must be between year 2000 and today.";
+          }
+        }
+        break;
+      case "photo":
+        if (value) {
+          if (typeof value === "string" && value.trim()) {
+            const isDataUri = value.trim().startsWith('data:image/');
+            const urlRegex = /^(https?:\/\/|\/?uploads\/).*\.(?:png|jpg|jpeg|gif|webp)/i;
+            if (!isDataUri && !urlRegex.test(value.trim())) {
+              error = "Must be a valid image URL (ending in .png, .jpg, .jpeg, or .webp).";
+            }
+          } else if (value instanceof File) {
+            if (!value.type.startsWith("image/")) {
+              error = "Only image files are allowed.";
+            } else if (value.size > 5 * 1024 * 1024) {
+              error = "Image size must be less than 5MB.";
+            }
+          }
+        }
+        break;
+      default:
+        break;
+    }
+    
+    setFormErrors(prev => ({
+      ...prev,
+      [name]: error ? error : null
+    }));
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    
+    // First Name
+    if (!formData.firstName || !formData.firstName.trim()) {
+      errors.firstName = "First name is required.";
+    } else if (!/^[a-zA-Z\s\-']{2,50}$/.test(formData.firstName.trim())) {
+      errors.firstName = "Must be 2-50 characters (letters only).";
+    }
+    
+    // Last Name
+    if (!formData.lastName || !formData.lastName.trim()) {
+      errors.lastName = "Last name is required.";
+    } else if (!/^[a-zA-Z\s\-']{2,50}$/.test(formData.lastName.trim())) {
+      errors.lastName = "Must be 2-50 characters (letters only).";
+    }
+    
+    // Email
+    if (!formData.email || !formData.email.trim()) {
+      errors.email = "Email address is required.";
+    } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email.trim())) {
+      errors.email = "Please enter a valid email address.";
+    }
+    
+    // Phone
+    if (!formData.phone || !formData.phone.trim()) {
+      errors.phone = "Phone number is required.";
+    } else {
+      const cleanPhone = formData.phone.replace(/[\s\-\(\)]/g, "");
+      if (!/^(?:\+94|0)?7[0-9]{8}$/.test(cleanPhone)) {
+        errors.phone = "Enter a valid Sri Lankan mobile number.";
+      }
+    }
+    
+    // Salary
+    if (formData.salary === undefined || formData.salary === null || formData.salary === "" || isNaN(formData.salary) || Number(formData.salary) <= 0) {
+      errors.salary = "Salary must be a positive number above 0.";
+    }
+    
+    // Hire Date
+    if (!formData.hireDate) {
+      errors.hireDate = "Hire date is required.";
+    } else {
+      const inputDate = new Date(formData.hireDate);
+      const minDate = new Date("2000-01-01");
+      const maxDate = new Date();
+      maxDate.setHours(23, 59, 59, 999);
+      if (isNaN(inputDate.getTime()) || inputDate < minDate || inputDate > maxDate) {
+        errors.hireDate = "Date must be between year 2000 and today.";
+      }
+    }
+    
+    // Profile Photo (Optional)
+    if (formData.photo) {
+      if (typeof formData.photo === "string" && formData.photo.trim()) {
+        const isDataUri = formData.photo.trim().startsWith('data:image/');
+        const urlRegex = /^(https?:\/\/|\/?uploads\/).*\.(?:png|jpg|jpeg|gif|webp)/i;
+        if (!isDataUri && !urlRegex.test(formData.photo.trim())) {
+          errors.photo = "Must be a valid image URL (ending in .png, .jpg, .jpeg, or .webp).";
+        }
+      } else if (formData.photo instanceof File) {
+        if (!formData.photo.type.startsWith("image/")) {
+          errors.photo = "Only image files are allowed.";
+        } else if (formData.photo.size > 5 * 1024 * 1024) {
+          errors.photo = "Image size must be less than 5MB.";
+        }
+      }
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };  const formatPhoneNumber = (value) => {
+    let cleaned = value.replace(/[^\d+]/g, "");
+    if (cleaned.startsWith("+94")) {
+      const parts = [];
+      const code = cleaned.slice(0, 3);
+      const rest = cleaned.slice(3);
+      if (rest.length > 0) parts.push(rest.slice(0, 2));
+      if (rest.length > 2) parts.push(rest.slice(2, 5));
+      if (rest.length > 5) parts.push(rest.slice(5, 9));
+      return `${code} ${parts.join(" ")}`.trim();
+    } else if (cleaned.startsWith("0")) {
+      const parts = [];
+      if (cleaned.length > 0) parts.push(cleaned.slice(0, 3));
+      if (cleaned.length > 3) parts.push(cleaned.slice(3, 6));
+      if (cleaned.length > 6) parts.push(cleaned.slice(6, 10));
+      return parts.join(" ");
+    }
+    return value;
+  };
+
+
+
+  useEffect(() => {
+    if (branches.length > 0 && !formData.branch) {
+      setFormData(prev => ({ ...prev, branch: branches[0]._id }));
+    }
+  }, [branches, formData.branch]);
 
   const branchNames = {
     "1": "Colombo Head Office",
@@ -58,15 +247,17 @@ export default function EmployeesPage() {
 
   const handleOpenRegister = () => {
     setFormEmployee(null);
+    setFormErrors({});
+    setIsSubmitting(false);
     setFormData({
       firstName: "",
       lastName: "",
       email: "",
       phone: "",
       role: "cashier",
-      branch: "1",
-      salary: 40000,
-      hireDate: new Date().toISOString().split("T")[0],
+      branch: branches[0]?._id || "1",
+      salary: "",
+      hireDate: "",
       photo: "",
     });
     setIsFormOpen(true);
@@ -74,15 +265,28 @@ export default function EmployeesPage() {
 
   const handleOpenEdit = (emp) => {
     setFormEmployee(emp);
+    setFormErrors({});
+    setIsSubmitting(false);
+
+    let formattedDate = "";
+    const rawDate = emp.hireDate || emp.joiningDate;
+    if (rawDate) {
+      try {
+        formattedDate = new Date(rawDate).toISOString().substring(0, 10);
+      } catch (e) {
+        formattedDate = String(rawDate).substring(0, 10);
+      }
+    }
+
     setFormData({
-      firstName: emp.firstName,
-      lastName: emp.lastName,
-      email: emp.email,
-      phone: emp.phone,
-      role: emp.role,
-      branch: emp.branch,
-      salary: emp.salary || 40000,
-      hireDate: emp.hireDate || new Date().toISOString().split("T")[0],
+      firstName: emp.firstName || "",
+      lastName: emp.lastName || "",
+      email: emp.email || "",
+      phone: emp.phone || "",
+      role: emp.role || "cashier",
+      branch: emp.branch || "",
+      salary: emp.salary || "",
+      hireDate: formattedDate,
       photo: emp.photo || "",
     });
     setIsFormOpen(true);
@@ -90,15 +294,33 @@ export default function EmployeesPage() {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm() || isSubmitting) return;
+    setIsSubmitting(true);
     try {
+      const submitData = new FormData();
+      submitData.append("firstName", formData.firstName);
+      submitData.append("lastName", formData.lastName);
+      submitData.append("email", formData.email);
+      submitData.append("phone", formData.phone);
+      submitData.append("role", formData.role);
+      submitData.append("branch", formData.branch);
+      submitData.append("salary", formData.salary);
+      submitData.append("hireDate", formData.hireDate);
+      if (formData.photo !== undefined && formData.photo !== null) {
+        submitData.append("photo", formData.photo);
+      }
+
       if (formEmployee) {
-        await updateEmployee(formEmployee._id, formData);
+        await updateEmployee(formEmployee._id, submitData);
       } else {
-        await registerEmployee(formData);
+        await registerEmployee(submitData);
       }
       setIsFormOpen(false);
     } catch (err) {
-      alert("Error saving employee details");
+      const errMsg = err.response?.data?.message || "Error saving employee details";
+      alert(errMsg);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -124,11 +346,13 @@ export default function EmployeesPage() {
 
   // Filters logic
   const filteredEmployees = employees.filter((emp) => {
-    const fullName = `${emp.firstName} ${emp.lastName}`.toLowerCase();
-    const matchesSearch = fullName.includes(searchTerm.toLowerCase()) || 
-                          emp.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          emp.phone.includes(searchTerm);
-    const matchesRole = selectedRole === "all" || emp.role === selectedRole;
+    const cleanSearch = searchTerm.trim().toLowerCase();
+    const empName = emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim();
+    const fullName = empName.toLowerCase();
+    const matchesSearch = fullName.includes(cleanSearch) || 
+                          (emp.email && emp.email.toLowerCase().includes(cleanSearch)) ||
+                          (emp.phone && emp.phone.includes(cleanSearch));
+    const matchesRole = selectedRole === "all" || (emp.role && emp.role.toLowerCase() === selectedRole.toLowerCase());
     const matchesBranch = selectedBranch === "all" || emp.branch === selectedBranch;
     return matchesSearch && matchesRole && matchesBranch;
   });
@@ -208,7 +432,7 @@ export default function EmployeesPage() {
         {/* Module Banner */}
         <div className="emp-module-header">
           <div className="emp-header-info">
-            <h1>👔 Staff & Employee Management</h1>
+            <h1>Employee Management</h1>
             <p>Register staff, set schedules, track shift punctuality, and evaluate performance benchmarks.</p>
           </div>
           <button onClick={handleOpenRegister} className="emp-register-btn">
@@ -219,7 +443,7 @@ export default function EmployeesPage() {
         {/* Tab Selection */}
         <div className="emp-tabs-container">
           {[
-            { id: "roster", label: "👥 Corporate Roster", icon: "👥" },
+            { id: "roster", label: "👥 Employee Directory", icon: "👥" },
             { id: "schedules", label: "📅 Shift Planner", icon: "📅" },
             { id: "attendance", label: "⏱️ Attendance Logs", icon: "⏱️" },
             { id: "performance", label: "📈 Performance Center", icon: "📈" },
@@ -244,13 +468,20 @@ export default function EmployeesPage() {
               
               {/* Search & Filter Bar */}
               <div className="emp-filters-card">
-                <div className="filter-field" style={{ gridColumn: "span 2" }}>
+                <div className="filter-field">
                   <label>Search Staff</label>
                   <input
                     type="text"
                     placeholder="Search by name, email, or telephone..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => {
+                      const rawVal = e.target.value;
+                      if (rawVal.length > 100) return; // Limit search to 100 characters
+                      const sanitized = rawVal
+                        .replace(/[^a-zA-Z0-9\s\.\-\@\_\+\(\)]/g, "") // Block all special characters except name/email/phone symbols
+                        .replace(/^\s+/, ""); // Trim leading whitespace
+                      setSearchTerm(sanitized);
+                    }}
                   />
                 </div>
                 
@@ -264,7 +495,6 @@ export default function EmployeesPage() {
                     <option value="admin">Administrator</option>
                     <option value="manager">Manager</option>
                     <option value="cashier">Cashier</option>
-                    <option value="inventory">Inventory Staff</option>
                   </select>
                 </div>
 
@@ -275,9 +505,15 @@ export default function EmployeesPage() {
                     onChange={(e) => setSelectedBranch(e.target.value)}
                   >
                     <option value="all">All Branches</option>
-                    {Object.entries(branchNames).map(([id, name]) => (
-                      <option key={id} value={id}>{name}</option>
-                    ))}
+                    {branches.length > 0 ? (
+                      branches.map((b) => (
+                        <option key={b._id} value={b._id}>{b.name}</option>
+                      ))
+                    ) : (
+                      Object.entries(branchNames).map(([id, name]) => (
+                        <option key={id} value={id}>{name}</option>
+                      ))
+                    )}
                   </select>
                 </div>
               </div>
@@ -288,15 +524,17 @@ export default function EmployeesPage() {
                   No employees match the specified filters.
                 </div>
               ) : (
-                <div className="emp-grid">
-                  {filteredEmployees.map((emp) => (
-                    <EmployeeCard
-                      key={emp._id}
-                      employee={emp}
-                      onViewDetails={setSelectedEmployee}
-                      onEdit={handleOpenEdit}
-                    />
-                  ))}
+                <div className="emp-grid-container">
+                  <div className="emp-grid">
+                    {filteredEmployees.map((emp) => (
+                      <EmployeeCard
+                        key={emp._id}
+                        employee={emp}
+                        onViewDetails={setSelectedEmployee}
+                        onEdit={handleOpenEdit}
+                      />
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -559,7 +797,7 @@ export default function EmployeesPage() {
           <div className="relative w-full max-w-md h-full bg-white/95 border-l border-white/20 shadow-2xl p-6 flex flex-col z-10 overflow-y-auto backdrop-blur-2xl">
             <div className="flex justify-between items-center mb-6 border-b border-black/5 pb-3">
               <h3 className="text-base font-bold text-slate-800">
-                {formEmployee ? "✏️ Edit Employee Info" : "👔 Register New Staff Member"}
+                {formEmployee ? "Edit Employee Info" : "Register New Staff Member"}
               </h3>
               <button onClick={() => setIsFormOpen(false)} className="text-slate-400 text-lg hover:text-slate-600">
                 ✕
@@ -573,20 +811,34 @@ export default function EmployeesPage() {
                   <input
                     type="text"
                     required
+                    placeholder="e.g., Nimal"
                     value={formData.firstName}
                     onChange={e => setFormData({ ...formData, firstName: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium outline-none focus:border-blue-500"
+                    onBlur={e => validateField("firstName", e.target.value)}
+                    className={`w-full rounded-xl border px-3.5 py-2 text-xs font-medium outline-none ${
+                      formErrors.firstName ? "border-rose-500 focus:border-rose-500" : "border-slate-200 focus:border-blue-500"
+                    }`}
                   />
+                  {formErrors.firstName && (
+                    <p className="text-[10px] text-rose-500 font-semibold mt-1">{formErrors.firstName}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Last Name</label>
                   <input
                     type="text"
                     required
+                    placeholder="e.g., Perera"
                     value={formData.lastName}
                     onChange={e => setFormData({ ...formData, lastName: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium outline-none focus:border-blue-500"
+                    onBlur={e => validateField("lastName", e.target.value)}
+                    className={`w-full rounded-xl border px-3.5 py-2 text-xs font-medium outline-none ${
+                      formErrors.lastName ? "border-rose-500 focus:border-rose-500" : "border-slate-200 focus:border-blue-500"
+                    }`}
                   />
+                  {formErrors.lastName && (
+                    <p className="text-[10px] text-rose-500 font-semibold mt-1">{formErrors.lastName}</p>
+                  )}
                 </div>
               </div>
 
@@ -595,10 +847,17 @@ export default function EmployeesPage() {
                 <input
                   type="email"
                   required
+                  placeholder="e.g., nimal.p@pos.com"
                   value={formData.email}
                   onChange={e => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium outline-none focus:border-blue-500"
+                  onBlur={e => validateField("email", e.target.value)}
+                  className={`w-full rounded-xl border px-3.5 py-2 text-xs font-medium outline-none ${
+                    formErrors.email ? "border-rose-500 focus:border-rose-500" : "border-slate-200 focus:border-blue-500"
+                  }`}
                 />
+                {formErrors.email && (
+                  <p className="text-[10px] text-rose-500 font-semibold mt-1">{formErrors.email}</p>
+                )}
               </div>
 
               <div>
@@ -606,11 +865,17 @@ export default function EmployeesPage() {
                 <input
                   type="tel"
                   required
-                  placeholder="+94 77 123 4567"
+                  placeholder="e.g., +94 77 123 4567"
                   value={formData.phone}
-                  onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium outline-none focus:border-blue-500"
+                  onChange={e => setFormData({ ...formData, phone: formatPhoneNumber(e.target.value) })}
+                  onBlur={e => validateField("phone", e.target.value)}
+                  className={`w-full rounded-xl border px-3.5 py-2 text-xs font-medium outline-none ${
+                    formErrors.phone ? "border-rose-500 focus:border-rose-500" : "border-slate-200 focus:border-blue-500"
+                  }`}
                 />
+                {formErrors.phone && (
+                  <p className="text-[10px] text-rose-500 font-semibold mt-1">{formErrors.phone}</p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -624,7 +889,6 @@ export default function EmployeesPage() {
                     <option value="admin">Administrator</option>
                     <option value="manager">Manager</option>
                     <option value="cashier">Cashier</option>
-                    <option value="inventory">Inventory Staff</option>
                   </select>
                 </div>
                 <div>
@@ -634,9 +898,15 @@ export default function EmployeesPage() {
                     onChange={e => setFormData({ ...formData, branch: e.target.value })}
                     className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-blue-500"
                   >
-                    {Object.entries(branchNames).map(([id, name]) => (
-                      <option key={id} value={id}>{name}</option>
-                    ))}
+                    {branches.length > 0 ? (
+                      branches.map((b) => (
+                        <option key={b._id} value={b._id}>{b.name}</option>
+                      ))
+                    ) : (
+                      Object.entries(branchNames).map(([id, name]) => (
+                        <option key={id} value={id}>{name}</option>
+                      ))
+                    )}
                   </select>
                 </div>
               </div>
@@ -647,47 +917,116 @@ export default function EmployeesPage() {
                   <input
                     type="number"
                     required
+                    min="1"
+                    placeholder="e.g., 40000"
                     value={formData.salary}
-                    onChange={e => setFormData({ ...formData, salary: parseInt(e.target.value) })}
-                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium outline-none focus:border-blue-500"
+                    onKeyDown={e => {
+                      if (e.key === "-" || e.key === "e" || e.key === "E") {
+                        e.preventDefault();
+                      }
+                    }}
+                    onChange={e => {
+                      const rawVal = e.target.value;
+                      if (rawVal === "") {
+                        setFormData({ ...formData, salary: "" });
+                        return;
+                      }
+                      
+                      // Strip leading zeros
+                      const sanitizedVal = rawVal.replace(/^0+/, "");
+                      if (sanitizedVal === "") {
+                        setFormData({ ...formData, salary: "" });
+                        return;
+                      }
+                      
+                      const parsed = parseInt(sanitizedVal);
+                      if (isNaN(parsed) || parsed < 0) {
+                        return;
+                      }
+                      setFormData({ ...formData, salary: parsed });
+                    }}
+                    onBlur={e => validateField("salary", e.target.value)}
+                    className={`w-full rounded-xl border px-3.5 py-2 text-xs font-medium outline-none ${
+                      formErrors.salary ? "border-rose-500 focus:border-rose-500" : "border-slate-200 focus:border-blue-500"
+                    }`}
                   />
+                  {formErrors.salary && (
+                    <p className="text-[10px] text-rose-500 font-semibold mt-1">{formErrors.salary}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Hire Date</label>
                   <input
                     type="date"
                     required
+                    max={new Date().toLocaleDateString('en-CA')}
+                    placeholder="e.g., Select hiring date"
                     value={formData.hireDate}
                     onChange={e => setFormData({ ...formData, hireDate: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium outline-none focus:border-blue-500"
+                    onBlur={e => validateField("hireDate", e.target.value)}
+                    className={`w-full rounded-xl border px-3.5 py-2 text-xs font-medium outline-none ${
+                      formErrors.hireDate ? "border-rose-500 focus:border-rose-500" : "border-slate-200 focus:border-blue-500"
+                    }`}
                   />
+                  {formErrors.hireDate && (
+                    <p className="text-[10px] text-rose-500 font-semibold mt-1">{formErrors.hireDate}</p>
+                  )}
                 </div>
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Profile Photo URL (Optional)</label>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Profile Photo (Optional)</label>
+                {formData.photo && (
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <img 
+                      src={typeof formData.photo === "string" ? formData.photo : URL.createObjectURL(formData.photo)} 
+                      alt="Profile preview" 
+                      className="h-12 w-12 rounded-xl object-cover border border-slate-200" 
+                    />
+                    <span className="text-[10px] text-slate-500 font-semibold">Selected profile image preview</span>
+                  </div>
+                )}
                 <input
-                  type="text"
-                  placeholder="https://example.com/photo.jpg"
-                  value={formData.photo}
-                  onChange={e => setFormData({ ...formData, photo: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium outline-none focus:border-blue-500"
+                  type="file"
+                  accept="image/*"
+                  onChange={e => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      setFormData({ ...formData, photo: file });
+                      validateField("photo", file);
+                    }
+                  }}
+                  className={`w-full rounded-xl border px-3.5 py-2 text-xs font-medium outline-none bg-slate-50 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 ${
+                    formErrors.photo ? "border-rose-500 focus:border-rose-500" : "border-slate-200 focus:border-blue-500"
+                  }`}
                 />
+                {formErrors.photo && (
+                  <p className="text-[10px] text-rose-500 font-semibold mt-1">{formErrors.photo}</p>
+                )}
               </div>
 
               <div className="pt-6 border-t border-slate-100 flex gap-2">
                 <button
                   type="button"
+                  disabled={isSubmitting}
                   onClick={() => setIsFormOpen(false)}
-                  className="flex-1 rounded-xl border border-slate-200 bg-white py-3 text-xs font-bold text-slate-600 hover:bg-slate-50 transition"
+                  className="flex-1 rounded-xl border border-rose-200 bg-rose-50 py-3 text-xs font-bold text-slate-800 hover:bg-rose-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-blue-600 py-3 text-xs font-bold text-white shadow-md shadow-blue-100 hover:bg-blue-700 transition"
+                  disabled={isSubmitting}
+                  className="flex-1 rounded-xl bg-blue-600 py-3 text-xs font-bold text-white shadow-md shadow-blue-100 hover:bg-blue-700 transition disabled:bg-slate-400 disabled:shadow-none disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  {formEmployee ? "Save Changes" : "Register Employee"}
+                  {isSubmitting ? (
+                    <>
+                      <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    formEmployee ? "Save Changes" : "Register Employee"
+                  )}
                 </button>
               </div>
 
@@ -872,7 +1211,7 @@ export default function EmployeesPage() {
         .emp-module-panel input, .emp-module-panel select, .emp-module-panel textarea {
           padding: 10px 14px;
           border-radius: 10px;
-          border: 1.5px solid rgba(0, 0, 0, 0.08);
+          border: 1.5px solid #cbd5e1;
           background: rgba(255, 255, 255, 0.85);
           font-size: 0.82rem;
           font-weight: 600;
@@ -885,6 +1224,27 @@ export default function EmployeesPage() {
           border-color: #3b82f6;
           background: white;
           box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        .emp-grid-container {
+          max-height: 60vh;
+          overflow-y: auto;
+          padding-right: 6px;
+          padding-bottom: 12px;
+        }
+        .emp-grid-container::-webkit-scrollbar {
+          width: 6px;
+        }
+        .emp-grid-container::-webkit-scrollbar-track {
+          background: rgba(0, 0, 0, 0.03);
+          border-radius: 99px;
+        }
+        .emp-grid-container::-webkit-scrollbar-thumb {
+          background: rgba(0, 0, 0, 0.12);
+          border-radius: 99px;
+        }
+        .emp-grid-container::-webkit-scrollbar-thumb:hover {
+          background: rgba(0, 0, 0, 0.24);
         }
 
         /* Employee Grid & Cards */
@@ -906,9 +1266,8 @@ export default function EmployeesPage() {
           gap: 14px;
         }
         .emp-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
-          border-color: rgba(59, 130, 246, 0.3);
+          box-shadow: 0 12px 40px rgba(59, 130, 246, 0.12);
+          border-color: rgba(59, 130, 246, 0.45);
         }
         .emp-card-header {
           display: flex;
@@ -1011,16 +1370,16 @@ export default function EmployeesPage() {
           font-size: 0.72rem;
           font-weight: 750;
           border-radius: 8px;
-          border: 1px solid rgba(0, 0, 0, 0.08);
-          background: rgba(255, 255, 255, 0.6);
-          color: var(--text-secondary);
+          border: 1px solid #bfdbfe;
+          background: #eff6ff;
+          color: #1d4ed8;
           cursor: pointer;
           transition: all 0.2s ease;
         }
         .emp-card-btn:hover {
-          background: rgba(255, 255, 255, 0.9);
-          color: var(--text-primary);
-          border-color: rgba(0, 0, 0, 0.15);
+          background: #dbeafe;
+          color: #1e40af;
+          border-color: #3b82f6;
           transform: translateY(-1px);
         }
         .emp-card-btn.primary {
