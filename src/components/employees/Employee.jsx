@@ -78,11 +78,12 @@ export const EmployeeCard = ({ employee, onViewDetails, onEdit }) => {
 };
 
 export const EmployeeDetailModal = ({ employee, onClose, onEdit }) => {
-  const { updateEmployee, deleteEmployee, attendanceLogs, schedules, performanceMetrics } = useEmployees();
+  const { employees, updateEmployee, deleteEmployee, attendanceLogs, schedules, performanceMetrics } = useEmployees();
   const { branches } = useBranches();
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
-  const { _id, firstName, lastName, role, branch, email, phone, salary, hireDate, joiningDate, status, photo, performanceScore, name } = employee;
+  const freshEmployee = employees.find(e => e._id === employee._id) || employee;
+  const { _id, firstName, lastName, role, branch, email, phone, salary, hireDate, joiningDate, status, photo, performanceScore, name } = freshEmployee;
   const displayHireDate = (hireDate || joiningDate) ? new Date(hireDate || joiningDate).toISOString().split('T')[0] : "N/A";
 
   // Filter logs specific to this employee

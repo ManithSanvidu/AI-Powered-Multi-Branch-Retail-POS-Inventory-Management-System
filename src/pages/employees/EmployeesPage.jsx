@@ -8,6 +8,7 @@ import AttendanceSimulator from "../../components/employees/AttendanceSimulator"
 export default function EmployeesPage() {
   const {
     employees,
+    schedules,
     attendanceLogs,
     performanceMetrics,
     registerEmployee,
@@ -15,9 +16,93 @@ export default function EmployeesPage() {
     loading,
     error,
     logPerformance,
+    loadEmployees,
+    loadSchedules,
+    loadAttendance,
+    loadPerformance,
+    employeesLoading,
+    schedulesLoading,
+    attendanceLoading,
+    performanceLoading,
+    employeesError,
+    schedulesError,
+    attendanceError,
+    performanceError
   } = useEmployees();
 
   const { branches, fetchBranches } = useBranches();
+
+  const getTodayLocalDateStr = () => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  // Attendance Log Filters & Validation State
+  const [attSearchQuery, setAttSearchQuery] = useState("");
+  const [attSearchError, setAttSearchError] = useState("");
+  const [attStatusFilter, setAttStatusFilter] = useState("All");
+  const [attDateFilter, setAttDateFilter] = useState(getTodayLocalDateStr());
+  const [attDateError, setAttDateError] = useState("");
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setAttSearchQuery(value);
+    const specialCharRegex = /[^\w\s\-\.\@]/g;
+    if (specialCharRegex.test(value)) {
+      setAttSearchError("Letters, numbers, spaces, and @ . - allowed");
+    } else {
+      setAttSearchError("");
+    }
+  };
+
+  const handleDateFilterChange = (e) => {
+    const selectedDateStr = e.target.value;
+    setAttDateFilter(selectedDateStr);
+    if (selectedDateStr) {
+      const selectedDate = new Date(selectedDateStr);
+      const today = new Date();
+      selectedDate.setHours(0, 0, 0, 0);
+      today.setHours(0, 0, 0, 0);
+      if (selectedDate > today) {
+        setAttDateError("Future date cannot be selected");
+      } else {
+        setAttDateError("");
+      }
+    } else {
+      setAttDateError("");
+    }
+  };
+
+  // Filter out any logs belonging to deleted employees, then apply search/filter criteria
+  const activeAttendanceLogs = attendanceLogs.filter(log => {
+    const emp = employees.find(e => e._id === log.employeeId);
+    if (!emp) return false;
+
+    // Search query check (Name or Email)
+    if (attSearchQuery.trim()) {
+      const searchLower = attSearchQuery.toLowerCase();
+      const fullName = `${emp.firstName} ${emp.lastName}`.toLowerCase();
+      const email = (emp.email || "").toLowerCase();
+      if (!fullName.includes(searchLower) && !email.includes(searchLower)) {
+        return false;
+      }
+    }
+
+    // Status filter check
+    if (attStatusFilter !== "All" && log.status !== attStatusFilter) {
+      return false;
+    }
+
+    // Date filter check (only if there's no validation error)
+    if (attDateFilter && !attDateError && log.date !== attDateFilter) {
+      return false;
+    }
+
+    return true;
+  });
 
   useEffect(() => {
     fetchBranches();
@@ -25,6 +110,25 @@ export default function EmployeesPage() {
 
   // Active Tab State
   const [activeTab, setActiveTab] = useState("roster");
+
+  // Fetch data dynamically on tab switch
+  useEffect(() => {
+    if (activeTab === "roster") {
+      loadEmployees(employees.length > 0); // silent if already loaded
+    } else if (activeTab === "schedules") {
+      loadSchedules(schedules.length > 0);
+    } else if (activeTab === "attendance") {
+      loadAttendance(attendanceLogs.length > 0);
+    } else if (activeTab === "performance") {
+      loadPerformance(performanceMetrics.length > 0);
+    } else if (activeTab === "reports") {
+      Promise.all([
+        loadEmployees(true),
+        loadAttendance(true),
+        loadPerformance(true)
+      ]);
+    }
+  }, [activeTab]);
 
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState("");
@@ -36,6 +140,7 @@ export default function EmployeesPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formEmployee, setFormEmployee] = useState(null); // If editing
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPerfSubmitting, setIsPerfSubmitting] = useState(false);
 
   // Performance Form State
   const [perfEmpId, setPerfEmpId] = useState("");
@@ -326,7 +431,8 @@ export default function EmployeesPage() {
 
   const handlePerfSubmit = async (e) => {
     e.preventDefault();
-    if (!perfEmpId) return;
+    if (!perfEmpId || isPerfSubmitting) return;
+    setIsPerfSubmitting(true);
     try {
       await logPerformance({
         employeeId: perfEmpId,
@@ -340,7 +446,10 @@ export default function EmployeesPage() {
       // Reset
       setPerfEmpId("");
     } catch (err) {
+      console.error("Performance log submission error:", err);
       alert("Error logging performance details");
+    } finally {
+      setIsPerfSubmitting(false);
     }
   };
 
@@ -395,16 +504,20 @@ export default function EmployeesPage() {
               </tr>
             </thead>
             <tbody>
-              ${employees.map(emp => `
-                <tr>
-                  <td><strong>${emp.firstName} ${emp.lastName}</strong></td>
-                  <td>${emp.email}</td>
-                  <td>${emp.role.toUpperCase()}</td>
-                  <td>${branchNames[emp.branch] || emp.branch}</td>
-                  <td>${emp.performanceScore} ★</td>
-                  <td>${emp.status}</td>
-                </tr>
-              `).join("")}
+              ${employees.map(emp => {
+                const branchObj = branches.find(b => b._id === emp.branch);
+                const displayBranch = branchObj ? branchObj.name : (branchNames[emp.branch] || "Not Assigned");
+                return `
+                  <tr>
+                    <td><strong>${emp.firstName} ${emp.lastName}</strong></td>
+                    <td>${emp.email}</td>
+                    <td>${emp.role.toUpperCase()}</td>
+                    <td>${displayBranch}</td>
+                    <td>${emp.performanceScore} ★</td>
+                    <td>${emp.status}</td>
+                  </tr>
+                `;
+              }).join("")}
             </tbody>
           </table>
         </body>
@@ -413,13 +526,91 @@ export default function EmployeesPage() {
     printWindow.document.close();
     printWindow.print();
   };
+  
+  const triggerExcelExport = () => {
+    const headers = [
+      "Employee Name",
+      "Email",
+      "Role",
+      "Base Salary (Rs.)",
+      "Total Shifts Logged",
+      "Days Present",
+      "Days Late",
+      "Days Absent",
+      "Attendance Rate (%)",
+      "Calculated Payout (Rs.)"
+    ];
 
-  if (loading) {
+    const rows = employees.map(emp => {
+      const empLogs = attendanceLogs.filter(log => log.employeeId === emp._id);
+      const totalLogs = empLogs.length;
+      
+      const presentLogs = empLogs.filter(log => log.status === "Present" || log.status === "PRESENT").length;
+      const lateLogs = empLogs.filter(log => log.status === "Late" || log.status === "LATE").length;
+      const absentLogs = empLogs.filter(log => log.status === "Absent" || log.status === "ABSENT").length;
+      
+      const attendanceRate = totalLogs > 0 
+        ? Math.round(((presentLogs + lateLogs) / totalLogs) * 100)
+        : 100;
+        
+      const baseSalary = emp.salary || 40000;
+      let calculatedPayout = baseSalary;
+      if (totalLogs > 0) {
+        calculatedPayout = Math.round(baseSalary * ((presentLogs + lateLogs) / totalLogs));
+      }
+
+      return [
+        `"${emp.firstName} ${emp.lastName}"`,
+        `"${emp.email}"`,
+        `"${emp.role.toUpperCase()}"`,
+        baseSalary,
+        totalLogs,
+        presentLogs,
+        lateLogs,
+        absentLogs,
+        `"${attendanceRate}%"`,
+        calculatedPayout
+      ];
+    });
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(r => r.join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Operational_Shift_Summary_${new Date().toISOString().substring(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  if (employeesLoading && employees.length === 0) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
         <div className="text-center">
           <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent mx-auto" />
           <p className="mt-4 text-xs font-bold text-slate-500">Retrieving employee database files...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (employeesError && employees.length === 0) {
+    return (
+      <div className="flex h-[60vh] items-center justify-center bg-slate-900/10 backdrop-blur-sm p-4">
+        <div className="text-center bg-white border border-slate-100 rounded-3xl p-8 max-w-md shadow-xl">
+          <div className="text-rose-500 font-black text-3xl mb-3">⚠️ Connection Error</div>
+          <p className="text-xs text-slate-500 font-extrabold mb-5 leading-relaxed">{employeesError}</p>
+          <button
+            onClick={() => loadEmployees(false)}
+            className="w-full rounded-xl bg-blue-600 py-3 text-xs font-bold text-white shadow-md shadow-blue-100 hover:bg-blue-700 transition"
+          >
+            Retry Connection
+          </button>
         </div>
       </div>
     );
@@ -542,11 +733,39 @@ export default function EmployeesPage() {
           )}
 
           {/* TAB 2: SCHEDULES */}
-          {activeTab === "schedules" && <SchedulePlanner />}
+          {activeTab === "schedules" && (
+            schedulesLoading ? (
+              <div className="flex h-[40vh] items-center justify-center bg-white/80 rounded-2xl border border-slate-100 p-8 shadow-sm">
+                <div className="text-center">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent mx-auto" />
+                  <p className="mt-4 text-xs font-bold text-slate-500">Loading shift schedules...</p>
+                </div>
+              </div>
+            ) : schedulesError ? (
+              <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold px-5 py-4 rounded-2xl text-center shadow-sm">
+                ⚠️ {schedulesError}
+              </div>
+            ) : (
+              <SchedulePlanner />
+            )
+          )}
 
           {/* TAB 3: ATTENDANCE */}
           {activeTab === "attendance" && (
-            <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+            attendanceLoading ? (
+              <div className="flex h-[40vh] items-center justify-center bg-white/80 rounded-2xl border border-slate-100 p-8 shadow-sm">
+                <div className="text-center">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent mx-auto" />
+                  <p className="mt-4 text-xs font-bold text-slate-500">Loading attendance records...</p>
+                </div>
+              </div>
+            ) : attendanceError ? (
+              <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold px-5 py-4 rounded-2xl text-center shadow-sm">
+                ⚠️ {attendanceError}
+              </div>
+            ) : (
+              <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+
               
               {/* Left Column: Attendance Stats & Log list */}
               <div className="space-y-6">
@@ -556,22 +775,96 @@ export default function EmployeesPage() {
                   <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm text-center">
                     <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Present Ratio</span>
                     <span className="block text-2xl font-black text-slate-800 mt-1">
-                      {attendanceLogs.length > 0
-                        ? `${Math.round((attendanceLogs.filter(l => l.status === "Present").length / attendanceLogs.length) * 100)}%`
+                      {activeAttendanceLogs.length > 0
+                        ? `${Math.round((activeAttendanceLogs.filter(l => l.status === "Present").length / activeAttendanceLogs.length) * 100)}%`
                         : "100%"}
                     </span>
                   </div>
                   <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm text-center">
                     <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Late Records</span>
                     <span className="block text-2xl font-black text-amber-600 mt-1">
-                      {attendanceLogs.filter(l => l.status === "Late").length}
+                      {activeAttendanceLogs.filter(l => l.status === "Late").length}
                     </span>
                   </div>
                   <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm text-center">
                     <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Total Punchcards</span>
                     <span className="block text-2xl font-black text-blue-600 mt-1">
-                      {attendanceLogs.length}
+                      {activeAttendanceLogs.length}
                     </span>
+                  </div>
+                </div>
+
+                {/* Standalone Filters Card */}
+                <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                  <div className="flex flex-col md:flex-row md:items-end gap-4 w-full">
+                    
+                    {/* Search box */}
+                    <div className="flex flex-col relative flex-1">
+                      <div className="flex justify-between items-center mb-1.5">
+                        <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Search Staff</label>
+                        {attSearchError && (
+                          <span className="text-[9px] font-bold text-rose-500">{attSearchError}</span>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Search by name or email..."
+                        value={attSearchQuery}
+                        onChange={handleSearchChange}
+                        className={`w-full rounded-xl border bg-slate-50 px-3.5 py-2.5 text-xs font-medium outline-none transition focus:ring-2 focus:ring-blue-100 ${attSearchError ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-blue-500"}`}
+                      />
+                    </div>
+
+                    {/* Status dropdown */}
+                    <div className="flex flex-col w-full md:w-48">
+                      <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5 block">Filter Verdict</label>
+                      <select
+                        value={attStatusFilter}
+                        onChange={(e) => setAttStatusFilter(e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-blue-500"
+                      >
+                        <option value="All">All Verdicts</option>
+                        <option value="Present">Present</option>
+                        <option value="Late">Late</option>
+                        <option value="Absent">Absent</option>
+                        <option value="Leave">Leave</option>
+                      </select>
+                    </div>
+
+                    {/* Date filter */}
+                    <div className="flex flex-col relative w-full md:w-48">
+                      <div className="flex justify-between items-center mb-1.5">
+                        <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Filter Date</label>
+                        {attDateError && (
+                          <span className="text-[9px] font-bold text-rose-500">{attDateError}</span>
+                        )}
+                      </div>
+                      <input
+                        type="date"
+                        value={attDateFilter}
+                        onChange={handleDateFilterChange}
+                        max={getTodayLocalDateStr()}
+                        className={`w-full rounded-xl border bg-slate-50 px-3.5 py-2.5 text-xs font-medium outline-none transition focus:ring-2 focus:ring-blue-100 ${attDateError ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-blue-500"}`}
+                      />
+                    </div>
+
+                    {/* Clear button */}
+                    {(attSearchQuery || attStatusFilter !== "All" || attDateFilter) && (
+                      <button
+                        onClick={() => {
+                          setAttSearchQuery("");
+                          setAttStatusFilter("All");
+                          setAttDateFilter("");
+                          setAttDateError("");
+                          setAttSearchError("");
+                        }}
+                        className="w-full md:w-auto rounded-xl border border-blue-100 bg-blue-50 text-blue-600 px-5 py-2.5 text-xs font-bold hover:bg-blue-100 transition whitespace-nowrap"
+                        title="Clear all filters"
+                      >
+                        Clear
+                      </button>
+                    )}
+
                   </div>
                 </div>
 
@@ -580,7 +873,7 @@ export default function EmployeesPage() {
                   <div className="px-5 py-4 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
                     <h3 className="text-sm font-extrabold text-slate-700">Attendance Log History</h3>
                   </div>
-                  <div className="overflow-x-auto max-h-[450px]">
+                  <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
                     <table className="w-full text-left border-collapse text-xs">
                       <thead>
                         <tr className="bg-slate-50 border-b border-slate-100 text-slate-500 font-extrabold uppercase text-[10px]">
@@ -592,12 +885,12 @@ export default function EmployeesPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {attendanceLogs.length === 0 ? (
+                        {activeAttendanceLogs.length === 0 ? (
                           <tr>
                             <td colSpan={5} className="p-8 text-center text-slate-400">No shift logs found.</td>
                           </tr>
                         ) : (
-                          attendanceLogs.map((log) => {
+                          activeAttendanceLogs.map((log) => {
                             const emp = employees.find(e => e._id === log.employeeId) || { firstName: "Deleted", lastName: "Staff", photo: "" };
                             return (
                               <tr key={log._id} className="hover:bg-slate-50/50">
@@ -630,11 +923,25 @@ export default function EmployeesPage() {
               </div>
 
             </div>
-          )}
+          )
+        )}
 
           {/* TAB 4: PERFORMANCE */}
           {activeTab === "performance" && (
-            <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+            performanceLoading ? (
+              <div className="flex h-[40vh] items-center justify-center bg-white/80 rounded-2xl border border-slate-100 p-8 shadow-sm">
+                <div className="text-center">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent mx-auto" />
+                  <p className="mt-4 text-xs font-bold text-slate-500">Loading performance data...</p>
+                </div>
+              </div>
+            ) : performanceError ? (
+              <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold px-5 py-4 rounded-2xl text-center shadow-sm">
+                ⚠️ {performanceError}
+              </div>
+            ) : (
+              <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+
               
               {/* Leaderboard and statistics */}
               <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm space-y-5">
@@ -643,7 +950,7 @@ export default function EmployeesPage() {
                   <p className="text-[10px] text-slate-400 font-semibold">Rankings are evaluated dynamically based on customer reviews and operational reliability.</p>
                 </div>
                 
-                <div className="space-y-3">
+                <div className="space-y-3 overflow-y-auto max-h-[550px] pr-1">
                   {leaderboard.map((emp, index) => {
                     const rankMedal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}th`;
                     return (
@@ -727,27 +1034,37 @@ export default function EmployeesPage() {
 
                   <button
                     type="submit"
-                    disabled={!perfEmpId}
-                    className="w-full rounded-xl bg-blue-600 py-3 text-xs font-bold text-white shadow-md shadow-blue-100 transition hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
+                    disabled={!perfEmpId || isPerfSubmitting}
+                    className="w-full rounded-xl bg-blue-600 py-3 text-xs font-bold text-white shadow-md shadow-blue-100 transition hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    Save Review Metrics
+                    {isPerfSubmitting ? (
+                      <>
+                        <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        <span>Saving Review...</span>
+                      </>
+                    ) : (
+                      "Save Review Metrics"
+                    )}
                   </button>
 
                 </form>
               </div>
 
             </div>
-          )}
+          )
+        )}
 
           {/* TAB 5: REPORTS */}
           {activeTab === "reports" && (
             <div className="grid gap-6 sm:grid-cols-2">
               
               <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm space-y-4">
-                <div className="p-3 bg-blue-50 text-blue-600 rounded-xl w-10 text-center font-bold text-lg">📄</div>
-                <div>
-                  <h3 className="text-sm font-extrabold text-slate-800">Corporate Staff Roster</h3>
-                  <p className="text-[10px] text-slate-400 font-semibold mt-1">Export a master file containing active roles, branches, email directories, and contact info.</p>
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-blue-50 text-blue-600 rounded-xl w-10 text-center font-bold text-lg flex-shrink-0">📄</div>
+                  <div>
+                    <h3 className="text-sm font-extrabold text-slate-800">Staff Master Directory</h3>
+                    <p className="text-[10px] text-slate-400 font-semibold mt-1">Export a master file containing active roles, branches, email directories, and contact info.</p>
+                  </div>
                 </div>
                 <button
                   onClick={triggerPrint}
@@ -758,13 +1075,15 @@ export default function EmployeesPage() {
               </div>
 
               <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm space-y-4">
-                <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl w-10 text-center font-bold text-lg">📊</div>
-                <div>
-                  <h3 className="text-sm font-extrabold text-slate-800">Operational Shift Summary</h3>
-                  <p className="text-[10px] text-slate-400 font-semibold mt-1">Preview a list of monthly attendance rates, tardiness flags, and calculated payroll estimates.</p>
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl w-10 text-center font-bold text-lg flex-shrink-0">📊</div>
+                  <div>
+                    <h3 className="text-sm font-extrabold text-slate-800">Operational Shift Summary</h3>
+                    <p className="text-[10px] text-slate-400 font-semibold mt-1">Preview a list of monthly attendance rates, tardiness flags, and calculated payroll estimates.</p>
+                  </div>
                 </div>
                 <button
-                  onClick={() => alert("Detailed report generated successfully. Ready to export to Excel.")}
+                  onClick={triggerExcelExport}
                   className="rounded-xl border border-emerald-200 text-emerald-600 hover:bg-emerald-50 px-4 py-2.5 text-xs font-bold w-full transition"
                 >
                   Export Metrics to Excel
