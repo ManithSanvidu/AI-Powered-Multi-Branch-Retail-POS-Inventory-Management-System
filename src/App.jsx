@@ -1,60 +1,187 @@
-import React from 'react';
-import {
-  BrowserRouter as Router,
-  Navigate,
-  Route,
-  Routes,
-} from 'react-router-dom';
+import React, { useState, useEffect, Suspense } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
+// Contexts
+import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from './context/CartContext';
 import { EmployeeProvider } from './context/EmployeeContext';
 import { ProductProvider } from './context/ProductContext';
 import { SalesProvider } from './context/SalesContext';
+import { BranchProvider } from "./context/BranchContext";
 
-import Dashboard from './pages/dashboard/Dashboard';
-import EmployeesPage from './pages/employees/EmployeesPage';
+// Components
+import ErrorBoundary from "./components/common/ErrorBoundary";
+import ProtectedRoute from "./routes/ProtectedRoute";
+
+// Auth Pages
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
+import Profile from "./pages/auth/Profile";
+
+// POS / Dashboard Pages
+import Dashboard from "./pages/dashboard/Dashboard";
 import CheckoutPage from './pages/pos/CheckoutPage';
 import POSPage from './pages/pos/POSPage';
 import ReceiptPage from './pages/pos/ReceiptPage';
 import SalesHistoryPage from './pages/pos/SalesHistoryPage';
+
+// Product Pages
+import ProductListPage from './pages/products/ProductListPage';
 import AddProductPage from './pages/products/AddProductPage';
 import EditProductPage from './pages/products/EditProductPage';
 import ProductDetailsPage from './pages/products/ProductDetailsPage';
-import ProductListPage from './pages/products/ProductListPage';
+import CategoryManagementPage from "./pages/products/CategoryManagementPage";
+
+// Warehouse Pages (Oyage Routes)
 import WarehouseList from './pages/warehouse/WarehouseList';
 import WarehouseDetail from './pages/Warehouse/WarehouseDetail';
 
-import './App.css';
+// Other Pages
+import EmployeesPage from './pages/employees/EmployeesPage';
+import BranchListPage from "./pages/branches/BranchListPage";
+import ReturnsPage from "./pages/returns/ReturnsPage";
+import PurchaseOrdersPage from "./pages/purchase-orders/PurchaseOrdersPage";
+
+// Services
+import { getInvoices, getReturns } from "./services/returnsApi";
+
+import "./App.css";
+
+// Placeholder pages
+const AdminPanel = () => <h1>🔐 Admin Panel</h1>;
+const Unauthorized = () => <h1>⛔ Unauthorized Access</h1>;
 
 function App() {
+  const [returnState, setReturnState] = useState({
+    invoices: [],
+    returns: [],
+  });
+
+  useEffect(() => {
+    const fetchReturnsData = async () => {
+      try {
+        const invoicesRes = await getInvoices();
+        const returnsRes = await getReturns();
+
+        setReturnState({
+          invoices: invoicesRes.data || [],
+          returns: returnsRes.data || [],
+        });
+      } catch (error) {
+        console.error("Error fetching returns/invoices from backend:", error);
+      }
+    };
+
+    fetchReturnsData();
+  }, []);
+
   return (
-    <EmployeeProvider>
-      <ProductProvider>
-        <SalesProvider>
-          <CartProvider>
-            <Router>
-              <div className="app-container">
-                <Routes>
-                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/pos" element={<POSPage />} />
-                  <Route path="/checkout" element={<CheckoutPage />} />
-                  <Route path="/receipt" element={<ReceiptPage />} />
-                  <Route path="/history" element={<SalesHistoryPage />} />
-                  <Route path="/products" element={<ProductListPage />} />
-                  <Route path="/products/add" element={<AddProductPage />} />
-                  <Route path="/products/edit/:id" element={<EditProductPage />} />
-                  <Route path="/products/:id" element={<ProductDetailsPage />} />
-                  <Route path="/employees" element={<EmployeesPage />} />
-                  <Route path="/warehouse" element={<WarehouseList />} />
-                  <Route path="/warehouse/:id" element={<WarehouseDetail />} />
-                </Routes>
-              </div>
-            </Router>
-          </CartProvider>
-        </SalesProvider>
-      </ProductProvider>
-    </EmployeeProvider>
+    <AuthProvider>
+      <EmployeeProvider>
+        <ProductProvider>
+          <SalesProvider>
+            <CartProvider>
+              <BranchProvider>
+                <BrowserRouter>
+                  <ErrorBoundary>
+                    <div className="app-container">
+                      <Routes>
+                        {/* Public Auth Routes */}
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
+                        <Route path="/forgot-password" element={<ForgotPassword />} />
+                        <Route path="/reset-password/:token" element={<ResetPassword />} />
+                        <Route path="/unauthorized" element={<Unauthorized />} />
+
+                        {/* Protected Dashboard Route */}
+                        <Route
+                          path="/dashboard"
+                          element={
+                            <ProtectedRoute roles={["admin", "manager", "cashier"]}>
+                              <Suspense
+                                fallback={
+                                  <div
+                                    style={{
+                                      minHeight: '100vh',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      background: 'linear-gradient(180deg, #4facfe 0%, #00f2fe 100%)',
+                                      fontWeight: 600,
+                                      color: '#0f172a',
+                                    }}
+                                  >
+                                    Loading dashboard…
+                                  </div>
+                                }
+                              >
+                                <Dashboard
+                                  returnState={returnState}
+                                  setReturnState={setReturnState}
+                                />
+                              </Suspense>
+                            </ProtectedRoute>
+                          }
+                        />
+
+                        {/* Protected Profile Route */}
+                        <Route
+                          path="/profile"
+                          element={
+                            <ProtectedRoute>
+                              <Profile />
+                            </ProtectedRoute>
+                          }
+                        />
+
+                        {/* Protected Admin Route */}
+                        <Route
+                          path="/admin"
+                          element={
+                            <ProtectedRoute roles={["admin"]}>
+                              <AdminPanel />
+                            </ProtectedRoute>
+                          }
+                        />
+
+                        {/* POS Routes */}
+                        <Route path="/pos" element={<POSPage />} />
+                        <Route path="/checkout" element={<CheckoutPage />} />
+                        <Route path="/receipt" element={<ReceiptPage />} />
+                        <Route path="/history" element={<SalesHistoryPage />} />
+
+                        {/* Product Routes */}
+                        <Route path="/products" element={<ProductListPage />} />
+                        <Route path="/products/add" element={<AddProductPage />} />
+                        <Route path="/products/edit/:id" element={<EditProductPage />} />
+                        <Route path="/products/categories" element={<CategoryManagementPage />} />
+                        <Route path="/products/:id" element={<ProductDetailsPage />} />
+
+                        {/* Warehouse Routes (Oyage Tika) */}
+                        <Route path="/warehouse" element={<WarehouseList />} />
+                        <Route path="/warehouse/:id" element={<WarehouseDetail />} />
+
+                        {/* Other Routes */}
+                        <Route path="/employees" element={<EmployeesPage />} />
+                        <Route path="/returns" element={<ReturnsPage />} />
+                        <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
+                        <Route path="/branches" element={<BranchListPage />} />
+
+                        {/* Default Redirect */}
+                        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                      </Routes>
+                    </div>
+                  </ErrorBoundary>
+                </BrowserRouter>
+              </BranchProvider>
+            </CartProvider>
+          </SalesProvider>
+        </ProductProvider>
+      </EmployeeProvider>
+    </AuthProvider>
   );
 }
 
