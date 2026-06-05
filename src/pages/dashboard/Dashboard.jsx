@@ -35,7 +35,7 @@ const ReceiptPage = lazy(() => import('../pos/ReceiptPage'));
 const BranchListPage = lazy(() => import('../branches/BranchListPage'));
 const PromotionsPage = lazy(() => import('../promotions/PromotionsPage'));
 const UserListPage = lazy(() => import("../users/UserListPage")); 
-
+const AuditSecurityPage = lazy(() => import('../audit/AuditSecurityPage'));
 const ModuleLoading = () => (
   <div
     className="module-detail"
@@ -774,7 +774,11 @@ case 'product-edit':
       case 'notifications':
         return <NotificationsModule />;
       case 'audit-logs':
-        return <AuditLogsModule />;
+        return (
+          <Suspense fallback={<ModuleLoading />}>
+            <AuditSecurityPage />
+          </Suspense>
+        );
       case 'ai-intelligence':
         return <AIIntelligenceHub />;
       default:
