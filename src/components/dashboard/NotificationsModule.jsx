@@ -8,6 +8,7 @@ import {
   getEmailLogs
 } from '../../services/notificationApi';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../context/AuthContext';
 
 const formatDistanceToNow = (date) => {
   const seconds = Math.floor((new Date() - new Date(date)) / 1000);
@@ -25,6 +26,8 @@ const formatDistanceToNow = (date) => {
 };
 
 const NotificationsModule = () => {
+  const { user } = useAuth();
+  const isCashier = user?.role === 'CASHIER' || user?.role === 'cashier';
   const [activeTab, setActiveTab] = useState('history'); // 'history' or 'settings'
   const [notifications, setNotifications] = useState([]);
   const [emailLogs, setEmailLogs] = useState([]);
@@ -46,7 +49,7 @@ const NotificationsModule = () => {
       const [notifRes, prefRes, emailRes] = await Promise.all([
         getNotifications(),
         getPreferences(),
-        getEmailLogs()
+        !isCashier ? getEmailLogs() : Promise.resolve({ data: [] })
       ]);
       setNotifications(notifRes.data || []);
       setEmailLogs(emailRes.data || []);
@@ -153,21 +156,23 @@ const NotificationsModule = () => {
         >
           Alert Settings
         </button>
-        <button 
-          onClick={() => setActiveTab('emails')}
-          style={{
-            padding: '8px 16px',
-            border: 'none',
-            background: activeTab === 'emails' ? '#eff6ff' : 'transparent',
-            color: activeTab === 'emails' ? '#2563eb' : '#64748b',
-            borderRadius: '8px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            transition: 'all 0.2s'
-          }}
-        >
-          Emails
-        </button>
+        {!isCashier && (
+          <button 
+            onClick={() => setActiveTab('emails')}
+            style={{
+              padding: '8px 16px',
+              border: 'none',
+              background: activeTab === 'emails' ? '#eff6ff' : 'transparent',
+              color: activeTab === 'emails' ? '#2563eb' : '#64748b',
+              borderRadius: '8px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            Emails
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -290,7 +295,7 @@ const NotificationsModule = () => {
             </button>
           </div>
         </div>
-      ) : (
+      ) : activeTab === 'emails' && !isCashier ? (
         // EMAILS TAB
         <div>
           {emailLogs.length === 0 ? (
@@ -336,7 +341,7 @@ const NotificationsModule = () => {
             </div>
           )}
         </div>
-      )}
+      ) : null}
     </div>
   );
 };

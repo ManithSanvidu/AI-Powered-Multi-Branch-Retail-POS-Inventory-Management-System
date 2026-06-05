@@ -523,9 +523,11 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
 
             <div className="dash-section">
               <div className="section-header"><div className="section-title-wrapper"><span className="section-icon">📦</span><h2 className="section-title">Inventory Status</h2></div>
-                <div className="inventory-badge"><span className="badge-icon">⚠️</span><span>{dashboardData.low_stock_alerts?.count || 0} Low Stock Alerts</span></div>
+                {role?.toUpperCase() !== 'CASHIER' && (
+                  <div className="inventory-badge"><span className="badge-icon">⚠️</span><span>{dashboardData.low_stock_alerts?.count || 0} Low Stock Alerts</span></div>
+                )}
               </div>
-              <div className="inventory-grid"><InventoryStatus data={dashboardData} />
+              <div className="inventory-grid"><InventoryStatus data={dashboardData} role={role} />
                 <div className="quick-stats"><div className="quick-stat-card"><div className="stat-icon">📈</div><div className="stat-info"><span className="stat-value">94%</span><span className="stat-label">Stock Accuracy</span></div></div>
                   <div className="quick-stat-card"><div className="stat-icon">🚚</div><div className="stat-info"><span className="stat-value">3</span><span className="stat-label">Pending Orders</span></div></div>
                 </div>
