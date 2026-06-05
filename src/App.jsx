@@ -1,5 +1,6 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 
 // Contexts
 import { AuthProvider } from "./context/AuthContext";
@@ -39,10 +40,19 @@ import CategoryManagementPage from "./pages/products/CategoryManagementPage";
 
 // Branch Pages
 import BranchListPage from "./pages/branches/BranchListPage";
+import AddBranchPage from "./pages/branches/AddBranchPage";
+import EditBranchPage from "./pages/branches/EditBranchPage";
+import BranchDetailsPage from "./pages/branches/BranchDetailsPage";
+
+
+
 
 // Customer Pages
 import CustomerListPage from "./pages/customers/CustomerListPage";
 
+
+// AI Pages
+import AIAssistantPage from "./pages/ai/AIAssistantPage";
 
 // Other Pages
 import ReturnsPage from "./pages/returns/ReturnsPage";
@@ -83,6 +93,7 @@ function App() {
 
   return (
     <AuthProvider>
+      <Toaster position="top-right" />
       <EmployeeProvider>
         <ProductProvider>
           <SalesProvider>
@@ -169,10 +180,24 @@ function App() {
                     <Route path="/employees" element={<EmployeesPage />} />
                     <Route path="/returns" element={<ReturnsPage />} />
                     <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
+                    {/* AI Assistant Route */}
+                    <Route
+                      path="/ai"
+                      element={
+                        <ProtectedRoute roles={["admin", "manager", "cashier"]}>
+                          <AIAssistantPage />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* Branch Routes */}
                     <Route path="/branches" element={<BranchListPage />} />
-                    // Customer Routes
+                    <Route path="/branches/add" element={<AddBranchPage />} />
+                    <Route path="/branches/edit/:id" element={<EditBranchPage />} />
+                    <Route path="/branches/:id" element={<BranchDetailsPage />} />
+                    
+                    {/* Customer Routes */}
                     <Route path="/customers" element={<CustomerListPage />} />
-                  
 
                           {/* Default Redirect */}
                           <Route path="*" element={<Navigate to="/dashboard" replace />} />

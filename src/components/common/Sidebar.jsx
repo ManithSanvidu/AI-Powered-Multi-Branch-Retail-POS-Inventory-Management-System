@@ -10,7 +10,7 @@ const NAV_ITEMS = [
   { id: 'employees', label: 'Employees', icon: '👥', path: '/employees', roles: ['admin', 'manager'] },
   { id: 'customers', label: 'Customers', icon: '👤', path: '/customers', roles: ['admin', 'manager', 'cashier'] },
   { id: 'suppliers', label: 'Suppliers', icon: '🚚', path: '/suppliers', roles: ['admin', 'manager'] },
-  { id: 'reports', label: 'Reports', icon: '📊', path: '/reports', roles: ['admin'] },
+  { id: 'reports', label: 'Reports', icon: '📊', path: '/reports', roles: ['admin', 'manager'] },
   { id: 'ai', label: 'AI Forecasting', icon: '🤖', path: '/ai', badge: 'NEW', roles: ['admin', 'manager'] },
   { id: 'settings', label: 'Settings', icon: '⚙️', path: '/settings', roles: ['admin'] },
 ];
