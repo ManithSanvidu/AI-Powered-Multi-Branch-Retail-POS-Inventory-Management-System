@@ -15,6 +15,7 @@ import { CustomerProvider } from "./context/CustomerContext";
 
 import ReportsPage from "./pages/reports/ReportsPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import AuditSecurityPage from "./pages/audit/AuditSecurityPage";
 
 // Auth Pages
 import Login from "./pages/auth/Login";
@@ -142,6 +143,16 @@ function App() {
                               </ProtectedRoute>
                             }
                           />
+
+                          {/* Audit & Security Routes — admin only */}
+                            <Route
+                              path="/audit"
+                              element={
+                                <ProtectedRoute roles={["admin"]}>
+                                  <AuditSecurityPage />
+                                </ProtectedRoute>
+                              }
+                            />
 
                           {/* Protected Profile Route */}
                           <Route
