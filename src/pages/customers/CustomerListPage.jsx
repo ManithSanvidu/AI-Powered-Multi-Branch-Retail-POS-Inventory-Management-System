@@ -1,9 +1,10 @@
 import { useEffect, useState, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useCustomers } from "../../context/CustomerContext";
-import CustomerViewModal from "./CustomerViewModal";
-import CustomerAddModal from "./CustomerAddModal";   // ← NEW
-
+import CustomerViewModal   from "./CustomerViewModal";
+import CustomerAddModal    from "./CustomerAddModal";
+import CustomerEditModal   from "./CustomerEditModal";
+import CustomerDeleteModal from "./CustomerDeleteModal";
 
 function CustomerListPage() {
   const navigate = useNavigate();
@@ -12,20 +13,19 @@ function CustomerListPage() {
     customers,
     loading,
     fetchCustomers,
-    removeCustomer,
     setSelectedCustomer,
     selectedCustomer,
   } = useCustomers();
 
-  const [keyword, setKeyword]         = useState("");
-  const [message, setMessage]         = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [showAddModal, setShowAddModal] = useState(false); // ← NEW
+  const [keyword, setKeyword]           = useState("");
+  const [message, setMessage]           = useState("");
+  const [currentPage, setCurrentPage]   = useState(1);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editTarget, setEditTarget]     = useState(null); // customer obj to edit
+  const [deleteTarget, setDeleteTarget] = useState(null); // customer obj to delete
   const itemsPerPage = 6;
 
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
+  useEffect(() => { fetchCustomers(); }, []);
 
   // ── Frontend search ───────────────────────────────────────────────────────
   const filteredCustomers = useMemo(() => {
@@ -41,15 +41,9 @@ function CustomerListPage() {
 
   useEffect(() => { setCurrentPage(1); }, [keyword]);
 
-  // ── Delete ────────────────────────────────────────────────────────────────
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this customer?")) return;
-    try {
-      await removeCustomer(id);
-      setMessage("Customer deleted successfully");
-    } catch {
-      setMessage("Delete failed");
-    }
+  // ── Flash helper ──────────────────────────────────────────────────────────
+  const flash = (msg) => {
+    setMessage(msg);
     setTimeout(() => setMessage(""), 3000);
   };
 
@@ -85,12 +79,6 @@ function CustomerListPage() {
     return { color: "#047857" };
   };
 
-  // ── Add-modal success callback ────────────────────────────────────────────
-  const handleAddSuccess = (msg) => {
-    setMessage(msg);
-    setTimeout(() => setMessage(""), 3000);
-  };
-
   return (
     <div className="cust-panel">
       <div className="cust-wrapper">
@@ -103,12 +91,7 @@ function CustomerListPage() {
               Manage customers, loyalty points, and purchase analytics across all branches.
             </p>
           </div>
-
-          {/* ── Add Customer button now opens the modal ── */}
-          <button
-            className="cust-add-btn"
-            onClick={() => setShowAddModal(true)}
-          >
+          <button className="cust-add-btn" onClick={() => setShowAddModal(true)}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
@@ -246,19 +229,34 @@ function CustomerListPage() {
                           <td>{c.preferredBranch?.name || "N/A"}</td>
                           <td>
                             <div className="td-actions">
-                              <button onClick={() => setSelectedCustomer(c)} className="icon-btn view" title="View customer">
+                              {/* View */}
+                              <button
+                                onClick={() => setSelectedCustomer(c)}
+                                className="icon-btn view"
+                                title="View customer"
+                              >
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                                   <circle cx="12" cy="12" r="3"/>
                                 </svg>
                               </button>
-                              <Link to={`/customers/edit/${c._id}`} className="icon-btn edit" title="Edit customer">
+                              {/* Edit → opens CustomerEditModal */}
+                              <button
+                                onClick={() => setEditTarget(c)}
+                                className="icon-btn edit"
+                                title="Edit customer"
+                              >
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                                 </svg>
-                              </Link>
-                              <button onClick={() => handleDelete(c._id)} className="icon-btn delete" title="Delete customer">
+                              </button>
+                              {/* Delete → opens CustomerDeleteModal */}
+                              <button
+                                onClick={() => setDeleteTarget(c)}
+                                className="icon-btn delete"
+                                title="Delete customer"
+                              >
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                   <polyline points="3 6 5 6 21 6"/>
                                   <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
@@ -310,11 +308,26 @@ function CustomerListPage() {
         {/* ── Modals ─────────────────────────────────────────────────── */}
         {selectedCustomer && <CustomerViewModal />}
 
-        {/* ── Add Customer modal (new) ── */}
         {showAddModal && (
           <CustomerAddModal
             onClose={() => setShowAddModal(false)}
-            onSuccess={handleAddSuccess}
+            onSuccess={flash}
+          />
+        )}
+
+        {editTarget && (
+          <CustomerEditModal
+            customer={editTarget}
+            onClose={() => setEditTarget(null)}
+            onSuccess={flash}
+          />
+        )}
+
+        {deleteTarget && (
+          <CustomerDeleteModal
+            customer={deleteTarget}
+            onClose={() => setDeleteTarget(null)}
+            onSuccess={flash}
           />
         )}
 
@@ -338,274 +351,108 @@ function CustomerListPage() {
           gap: 20px;
         }
 
-        /* ── Header ── */
+        /* Header */
         .cust-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          flex-wrap: wrap;
-          gap: 14px;
-          padding: 22px 26px;
-          background: rgba(255,255,255,0.65);
-          backdrop-filter: blur(18px);
-          border: 1px solid rgba(255,255,255,0.5);
-          border-radius: 20px;
+          display: flex; justify-content: space-between; align-items: center;
+          flex-wrap: wrap; gap: 14px; padding: 22px 26px;
+          background: rgba(255,255,255,0.65); backdrop-filter: blur(18px);
+          border: 1px solid rgba(255,255,255,0.5); border-radius: 20px;
           box-shadow: 0 8px 32px rgba(0,0,0,0.04);
         }
-        .cust-title {
-          font-size: 1.5rem;
-          font-weight: 850;
-          letter-spacing: -0.02em;
-          color: #0f172a;
-          margin: 0 0 4px;
-          line-height: 1.2;
-        }
-        .cust-subtitle {
-          font-size: 0.8rem;
-          font-weight: 550;
-          color: #64748b;
-          margin: 0;
-        }
+        .cust-title { font-size: 1.5rem; font-weight: 850; letter-spacing: -0.02em; color: #0f172a; margin: 0 0 4px; line-height: 1.2; }
+        .cust-subtitle { font-size: 0.8rem; font-weight: 550; color: #64748b; margin: 0; }
         .cust-add-btn {
           background: linear-gradient(135deg,#1e3a5f,#1e40af);
-          color: #fff;
-          font-weight: 750;
-          padding: 10px 22px;
-          border-radius: 12px;
-          border: none;
-          font-size: 0.82rem;
-          cursor: pointer;
-          text-decoration: none;
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          transition: all 0.22s ease;
-          box-shadow: 0 4px 14px rgba(30,58,95,0.25);
-          white-space: nowrap;
-          font-family: inherit;
+          color: #fff; font-weight: 750; padding: 10px 22px; border-radius: 12px; border: none;
+          font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+          transition: all 0.22s ease; box-shadow: 0 4px 14px rgba(30,58,95,0.25);
+          white-space: nowrap; font-family: inherit;
         }
-        .cust-add-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(30,58,95,0.35);
-          background: linear-gradient(135deg,#1e40af,#1d4ed8);
-        }
+        .cust-add-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(30,58,95,0.35); background: linear-gradient(135deg,#1e40af,#1d4ed8); }
 
-        /* ── Quick nav ── */
-        .cust-actions-bar {
-          display: grid;
-          grid-template-columns: repeat(3,1fr);
-          gap: 12px;
-        }
+        /* Quick nav */
+        .cust-actions-bar { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
         .cust-quick-btn {
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          padding: 16px 20px;
-          background: rgba(255,255,255,0.62);
-          backdrop-filter: blur(14px);
-          border: 1px solid rgba(255,255,255,0.48);
-          border-radius: 16px;
-          cursor: pointer;
-          transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
-          box-shadow: 0 4px 16px rgba(0,0,0,0.03);
-          text-align: left;
-          position: relative;
-          overflow: hidden;
-          font-family: inherit;
+          display: flex; align-items: center; gap: 14px; padding: 16px 20px;
+          background: rgba(255,255,255,0.62); backdrop-filter: blur(14px);
+          border: 1px solid rgba(255,255,255,0.48); border-radius: 16px;
+          cursor: pointer; transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
+          box-shadow: 0 4px 16px rgba(0,0,0,0.03); text-align: left;
+          position: relative; overflow: hidden; font-family: inherit;
         }
-        .cust-quick-btn:hover {
-          background: rgba(255,255,255,0.90);
-          transform: translateY(-3px);
-          box-shadow: 0 10px 28px rgba(0,0,0,0.08);
-          border-color: rgba(37,99,235,0.18);
-        }
+        .cust-quick-btn:hover { background: rgba(255,255,255,0.90); transform: translateY(-3px); box-shadow: 0 10px 28px rgba(0,0,0,0.08); border-color: rgba(37,99,235,0.18); }
         .quick-btn-icon { font-size: 1.6rem; flex-shrink: 0; line-height: 1; }
         .quick-btn-content { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
         .quick-btn-label { font-size: 0.84rem; font-weight: 800; color: #0f172a; }
-        .quick-btn-desc { font-size: 0.7rem; font-weight: 550; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .quick-btn-desc  { font-size: 0.7rem; font-weight: 550; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .quick-btn-arrow { font-size: 0.9rem; color: #cbd5e1; font-weight: 700; flex-shrink: 0; transition: all 0.2s ease; }
         .cust-quick-btn:hover .quick-btn-arrow { color: #2563eb; transform: translateX(3px); }
 
-        /* ── Search ── */
+        /* Search */
         .cust-search-card {
-          padding: 14px 18px;
-          background: rgba(255,255,255,0.65);
-          backdrop-filter: blur(18px);
-          border: 1px solid rgba(255,255,255,0.5);
-          border-radius: 16px;
+          padding: 14px 18px; background: rgba(255,255,255,0.65); backdrop-filter: blur(18px);
+          border: 1px solid rgba(255,255,255,0.5); border-radius: 16px;
           box-shadow: 0 8px 32px rgba(0,0,0,0.04);
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          flex-wrap: wrap;
+          display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
         }
         .cust-search-field {
-          flex: 1;
-          min-width: 200px;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          background: rgba(255,255,255,0.78);
-          border: 1.5px solid rgba(0,0,0,0.07);
-          border-radius: 11px;
-          padding: 0 14px;
-          transition: all 0.2s ease;
+          flex: 1; min-width: 200px; display: flex; align-items: center; gap: 10px;
+          background: rgba(255,255,255,0.78); border: 1.5px solid rgba(0,0,0,0.07);
+          border-radius: 11px; padding: 0 14px; transition: all 0.2s ease;
         }
-        .cust-search-field:focus-within {
-          border-color: #3b82f6;
-          background: #fff;
-          box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
-        }
-        .cust-search-input {
-          flex: 1;
-          border: none;
-          background: transparent;
-          padding: 10px 0;
-          font-size: 0.84rem;
-          font-weight: 600;
-          color: #0f172a;
-          outline: none;
-          font-family: inherit;
-        }
+        .cust-search-field:focus-within { border-color: #3b82f6; background: #fff; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+        .cust-search-input { flex: 1; border: none; background: transparent; padding: 10px 0; font-size: 0.84rem; font-weight: 600; color: #0f172a; outline: none; font-family: inherit; }
         .cust-search-input::placeholder { color: #94a3b8; font-weight: 500; }
-        .cust-search-clear {
-          background: none;
-          border: none;
-          cursor: pointer;
-          color: #94a3b8;
-          padding: 4px;
-          border-radius: 4px;
-          display: flex;
-          align-items: center;
-          transition: color 0.15s;
-          flex-shrink: 0;
-        }
+        .cust-search-clear { background: none; border: none; cursor: pointer; color: #94a3b8; padding: 4px; border-radius: 4px; display: flex; align-items: center; transition: color 0.15s; flex-shrink: 0; }
         .cust-search-clear:hover { color: #ef4444; }
         .cust-search-meta { font-size: 0.75rem; font-weight: 700; color: #64748b; white-space: nowrap; }
 
-        /* ── Flash ── */
+        /* Flash */
         .cust-flash {
-          padding: 11px 18px;
-          border-radius: 12px;
-          background: rgba(236,253,245,0.92);
-          color: #065f46;
-          font-size: 0.82rem;
-          font-weight: 700;
-          border: 1px solid #a7f3d0;
-          backdrop-filter: blur(8px);
-          display: flex;
-          align-items: center;
-          gap: 8px;
+          padding: 11px 18px; border-radius: 12px; background: rgba(236,253,245,0.92);
+          color: #065f46; font-size: 0.82rem; font-weight: 700; border: 1px solid #a7f3d0;
+          backdrop-filter: blur(8px); display: flex; align-items: center; gap: 8px;
         }
 
-        /* ── Table card ── */
+        /* Table card */
         .cust-table-card {
-          background: rgba(255,255,255,0.65);
-          backdrop-filter: blur(18px);
-          border: 1px solid rgba(255,255,255,0.5);
-          border-radius: 20px;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.04);
-          overflow: hidden;
+          background: rgba(255,255,255,0.65); backdrop-filter: blur(18px);
+          border: 1px solid rgba(255,255,255,0.5); border-radius: 20px;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.04); overflow: hidden;
         }
         .cust-table-topbar {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 15px 20px;
-          border-bottom: 1px solid rgba(255,255,255,0.35);
+          display: flex; justify-content: space-between; align-items: center;
+          padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.35);
           background: rgba(255,255,255,0.45);
         }
         .cust-table-title { font-size: 0.88rem; font-weight: 800; color: #0f172a; }
-        .cust-badge-count {
-          font-size: 0.72rem;
-          font-weight: 750;
-          padding: 3px 10px;
-          border-radius: 20px;
-          background: rgba(59,130,246,0.1);
-          color: #2563eb;
-          border: 1px solid rgba(59,130,246,0.18);
-        }
-        .cust-state-center {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
-          padding: 60px 20px;
-          color: #64748b;
-          font-size: 0.85rem;
-          font-weight: 600;
-        }
-        .cust-spinner {
-          width: 30px; height: 30px;
-          border: 3px solid rgba(59,130,246,0.15);
-          border-top-color: #3b82f6;
-          border-radius: 50%;
-          animation: spin 0.75s linear infinite;
-        }
+        .cust-badge-count { font-size: 0.72rem; font-weight: 750; padding: 3px 10px; border-radius: 20px; background: rgba(59,130,246,0.1); color: #2563eb; border: 1px solid rgba(59,130,246,0.18); }
+        .cust-state-center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 60px 20px; color: #64748b; font-size: 0.85rem; font-weight: 600; }
+        .cust-spinner { width: 30px; height: 30px; border: 3px solid rgba(59,130,246,0.15); border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.75s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .cust-scroll { overflow-x: auto; }
         .cust-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
         .cust-table thead tr { background: rgba(255,255,255,0.52); }
-        .cust-table th {
-          padding: 11px 14px;
-          text-align: left;
-          font-size: 0.67rem;
-          font-weight: 800;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          color: #64748b;
-          border-bottom: 1px solid rgba(255,255,255,0.35);
-          white-space: nowrap;
-        }
-        .cust-table td {
-          padding: 10px 14px;
-          border-bottom: 1px solid rgba(255,255,255,0.22);
-          color: #0f172a;
-          vertical-align: middle;
-        }
+        .cust-table th { padding: 11px 14px; text-align: left; font-size: 0.67rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; border-bottom: 1px solid rgba(255,255,255,0.35); white-space: nowrap; }
+        .cust-table td { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.22); color: #0f172a; vertical-align: middle; }
         .cust-tr:hover td { background: rgba(255,255,255,0.38); }
         .cust-table tbody tr:last-child td { border-bottom: none; }
         .td-bold   { font-weight: 700; }
         .td-muted  { color: #64748b; }
         .td-center { text-align: center; }
 
-        .cust-type-pill {
-          display: inline-block;
-          padding: 3px 9px;
-          border-radius: 20px;
-          font-size: 0.63rem;
-          font-weight: 800;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          border-width: 1px;
-          border-style: solid;
-        }
-        .data-chip {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          padding: 3px 9px;
-          border-radius: 20px;
-          font-size: 0.72rem;
-          font-weight: 750;
-        }
+        .cust-type-pill { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 0.63rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; border-width: 1px; border-style: solid; }
+        .data-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: 0.72rem; font-weight: 750; }
         .data-value { font-weight: 750; font-size: 0.8rem; }
 
-        /* ── Icon action buttons ── */
+        /* Icon buttons */
         .td-actions { display: flex; gap: 5px; align-items: center; }
         .icon-btn {
-          width: 30px; height: 30px;
-          border-radius: 8px;
-          border: 1px solid transparent;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          text-decoration: none;
-          transition: all 0.18s ease;
-          flex-shrink: 0;
+          width: 30px; height: 30px; border-radius: 8px; border: 1px solid transparent;
+          display: inline-flex; align-items: center; justify-content: center;
+          cursor: pointer; text-decoration: none; transition: all 0.18s ease; flex-shrink: 0;
+          background: none;
         }
         .icon-btn.view   { background: rgba(59,130,246,0.1);  color: #2563eb; border-color: rgba(59,130,246,0.18); }
         .icon-btn.view:hover   { background: #2563eb; color: #fff; border-color: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(37,99,235,0.28); }
@@ -614,39 +461,13 @@ function CustomerListPage() {
         .icon-btn.delete { background: rgba(239,68,68,0.08);  color: #dc2626; border-color: rgba(239,68,68,0.15); }
         .icon-btn.delete:hover { background: #dc2626; color: #fff; border-color: #dc2626; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(220,38,38,0.28); }
 
-        /* ── Pagination ── */
-        .cust-pagination {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          flex-wrap: wrap;
-          gap: 10px;
-          padding: 13px 20px;
-          border-top: 1px solid rgba(255,255,255,0.28);
-          background: rgba(255,255,255,0.38);
-        }
+        /* Pagination */
+        .cust-pagination { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding: 13px 20px; border-top: 1px solid rgba(255,255,255,0.28); background: rgba(255,255,255,0.38); }
         .pg-info { font-size: 0.74rem; font-weight: 700; color: #64748b; }
         .pg-btns { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
-        .pg-btn {
-          padding: 5px 12px;
-          border-radius: 8px;
-          border: 1px solid rgba(0,0,0,0.08);
-          background: rgba(255,255,255,0.65);
-          font-size: 0.72rem;
-          font-weight: 750;
-          color: #0f172a;
-          cursor: pointer;
-          transition: all 0.18s ease;
-          white-space: nowrap;
-          font-family: inherit;
-        }
+        .pg-btn { padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.08); background: rgba(255,255,255,0.65); font-size: 0.72rem; font-weight: 750; color: #0f172a; cursor: pointer; transition: all 0.18s ease; white-space: nowrap; font-family: inherit; }
         .pg-btn:hover:not(:disabled) { background: #fff; border-color: rgba(0,0,0,0.15); }
-        .pg-btn.active {
-          background: linear-gradient(135deg,#3b82f6,#1d4ed8);
-          color: #fff;
-          border: none;
-          box-shadow: 0 3px 8px rgba(37,99,235,0.2);
-        }
+        .pg-btn.active { background: linear-gradient(135deg,#3b82f6,#1d4ed8); color: #fff; border: none; box-shadow: 0 3px 8px rgba(37,99,235,0.2); }
         .pg-btn:disabled { opacity: 0.35; cursor: not-allowed; }
         .pg-ellipsis { padding: 0 4px; font-size: 0.75rem; color: #94a3b8; font-weight: 700; }
 
