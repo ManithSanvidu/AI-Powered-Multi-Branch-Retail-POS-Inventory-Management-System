@@ -7,6 +7,7 @@ import TopProducts from '../../components/dashboard/TopProducts';
 import LiveFeed from '../../components/dashboard/LiveFeed';
 import { useAuth } from '../../context/AuthContext';
 import { socketService } from '../../services/socketService';
+const WarehouseList = lazy(() => import('../warehouse/WarehouseList'));
 
 const SuppliersPage = lazy(() => import('../suppliers/SuppliersPage'));
 const EmployeesPage = lazy(() => import('../employees/EmployeesPage'));
@@ -462,7 +463,11 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
       case 'inventory-mgmt':
         return <ModuleDetail title="Inventory Management" icon="📊" page={2} description="Track stock quantities in real time. Record stock movements. Calculate stock availability. Generate inventory alerts. Maintain inventory history." features={['Inventory Levels Across Branches', 'Stock Movement History', 'Low Stock Highlighting', 'Inventory Search', 'Inventory Summaries']} />;
       case 'warehouse-mgmt':
-        return <ModuleDetail title="Warehouse Management" icon="🏭" page={2} description="Track warehouse inventory. Manage storage allocations. Record warehouse transactions. Handle warehouse transfers. Generate warehouse statistics." features={['Storage Location Visualization', 'Stock Allocations', 'Warehouse Transfers', 'Capacity Monitoring', 'Warehouse Reports']} />;
+        return (
+          <Suspense fallback={<ModuleLoading />}>
+            <WarehouseList />
+          </Suspense>
+        );
       case 'purchase-order':
         return (
           <>

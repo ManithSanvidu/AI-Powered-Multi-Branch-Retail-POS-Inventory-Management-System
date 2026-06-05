@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { FiBox } from "react-icons/fi";
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: '⊞', path: '/dashboard', roles: ['admin', 'manager', 'cashier'] },
   { id: 'pos', label: 'Point of Sale', icon: '🛒', path: '/pos', roles: ['admin', 'manager', 'cashier'] },
   { id: 'inventory', label: 'Inventory', icon: '📦', path: '/inventory', roles: ['admin', 'manager'] },
   { id: 'products', label: 'Products', icon: '🏷️', path: '/products', roles: ['admin', 'manager'] },
+  { id: 'warehouse', label: 'Warehouse', icon: '🏭', path: '/warehouse', roles: ['admin', 'manager'] },
   { id: 'branches', label: 'Branches', icon: '🏢', path: '/branches', roles: ['admin'] },
   { id: 'employees', label: 'Employees', icon: '👥', path: '/employees', roles: ['admin', 'manager'] },
   { id: 'customers', label: 'Customers', icon: '👤', path: '/customers', roles: ['admin', 'manager', 'cashier'] },
@@ -16,18 +16,20 @@ const NAV_ITEMS = [
   { id: 'settings', label: 'Settings', icon: '⚙️', path: '/settings', roles: ['admin'] },
 ];
 
-<li>
-  <a href="/warehouse" className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
-    <FiBox size={20} />
-    <span>Warehouse</span>
-  </a>
-</li>
-
 const Sidebar = ({ activeRoute, onNavigate }) => {
   const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
 
   const filtered = NAV_ITEMS.filter(item => item.roles.includes(user?.role));
+
+  // 🔥 Force Navigation Function
+  const handleForceNavigation = (item) => {
+    if (onNavigate) {
+      onNavigate(item.id); 
+    }
+    // Kelinma URL eka change karanawa browser ekenma!
+    window.location.href = item.path; 
+  };
 
   return (
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
@@ -56,11 +58,11 @@ const Sidebar = ({ activeRoute, onNavigate }) => {
       {!collapsed && (
         <div className="sidebar-user-info">
           <div className="user-avatar-sm">
-            {user?.name?.charAt(0)}
+            {user?.name?.charAt(0) || 'U'}
           </div>
           <div>
-            <div className="user-name-sm">{user?.name}</div>
-            <span className={`role-badge role-${user?.role}`}>{user?.role}</span>
+            <div className="user-name-sm">{user?.name || 'User'}</div>
+            <span className={`role-badge role-${user?.role || 'admin'}`}>{user?.role || 'Admin'}</span>
           </div>
         </div>
       )}
@@ -72,7 +74,7 @@ const Sidebar = ({ activeRoute, onNavigate }) => {
           <button
             key={item.id}
             className={`nav-item ${activeRoute === item.id ? 'active' : ''}`}
-            onClick={() => onNavigate(item.id)}
+            onClick={() => handleForceNavigation(item)} // 🔥 Use Force Navigation
             title={collapsed ? item.label : ''}
           >
             <span className="nav-icon">{item.icon}</span>
@@ -171,6 +173,8 @@ const Sidebar = ({ activeRoute, onNavigate }) => {
           position: relative;
           margin-bottom: 2px;
           white-space: nowrap;
+          border: none;
+          cursor: pointer;
         }
         .nav-item:hover { background: rgba(255,255,255,.07); color: white; }
         .nav-item.active { background: var(--blue-600); color: white; box-shadow: 0 4px 12px rgba(37,99,235,.4); }
@@ -192,6 +196,8 @@ const Sidebar = ({ activeRoute, onNavigate }) => {
           transition: all var(--transition);
           font-size: .875rem;
           white-space: nowrap;
+          border: none;
+          cursor: pointer;
         }
         .logout-btn:hover { background: rgba(239,68,68,.15); color: #fca5a5; }
       `}</style>
