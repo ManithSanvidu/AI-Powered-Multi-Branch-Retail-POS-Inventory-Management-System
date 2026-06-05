@@ -4,7 +4,8 @@ import {
   markAsRead,
   markAllAsRead,
   getPreferences,
-  updatePreferences
+  updatePreferences,
+  getEmailLogs
 } from '../../services/notificationApi';
 import toast from 'react-hot-toast';
 
@@ -26,6 +27,7 @@ const formatDistanceToNow = (date) => {
 const NotificationsModule = () => {
   const [activeTab, setActiveTab] = useState('history'); // 'history' or 'settings'
   const [notifications, setNotifications] = useState([]);
+  const [emailLogs, setEmailLogs] = useState([]);
   const [preferences, setPreferences] = useState({
     emailEnabled: true,
     smsEnabled: false,
@@ -41,11 +43,13 @@ const NotificationsModule = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [notifRes, prefRes] = await Promise.all([
+      const [notifRes, prefRes, emailRes] = await Promise.all([
         getNotifications(),
-        getPreferences()
+        getPreferences(),
+        getEmailLogs()
       ]);
       setNotifications(notifRes.data || []);
+      setEmailLogs(emailRes.data || []);
       if (prefRes.data) {
         setPreferences({
           emailEnabled: prefRes.data.emailEnabled,
@@ -149,6 +153,21 @@ const NotificationsModule = () => {
         >
           Alert Settings
         </button>
+        <button 
+          onClick={() => setActiveTab('emails')}
+          style={{
+            padding: '8px 16px',
+            border: 'none',
+            background: activeTab === 'emails' ? '#eff6ff' : 'transparent',
+            color: activeTab === 'emails' ? '#2563eb' : '#64748b',
+            borderRadius: '8px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            transition: 'all 0.2s'
+          }}
+        >
+          Emails
+        </button>
       </div>
 
       {loading ? (
@@ -210,7 +229,7 @@ const NotificationsModule = () => {
             </div>
           )}
         </div>
-      ) : (
+      ) : activeTab === 'settings' ? (
         // SETTINGS TAB
         <div style={{ maxWidth: '600px' }}>
           <div style={{ marginBottom: '24px' }}>
@@ -270,6 +289,52 @@ const NotificationsModule = () => {
               {savingPrefs ? 'Saving...' : 'Save Preferences'}
             </button>
           </div>
+        </div>
+      ) : (
+        // EMAILS TAB
+        <div>
+          {emailLogs.length === 0 ? (
+            <div style={{ padding: '40px', textAlign: 'center', background: '#f8fafc', borderRadius: '12px', color: '#64748b' }}>
+              No email logs found.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '600px', overflowY: 'auto', paddingRight: '8px' }}>
+              {emailLogs.map(log => (
+                <div 
+                  key={log._id} 
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'flex-start', 
+                    padding: '16px', 
+                    background: '#f8fafc', 
+                    borderRadius: '12px',
+                    border: '1px solid #e2e8f0',
+                  }}
+                >
+                  <div style={{ fontSize: '24px', marginRight: '16px', marginTop: '2px' }}>
+                    {log.status === 'Sent' ? '📧' : '❌'}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                      <h4 style={{ margin: 0, fontSize: '16px', color: '#1e293b', fontWeight: '600' }}>To: {log.recipient}</h4>
+                      <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                        {log.createdAt ? formatDistanceToNow(new Date(log.createdAt)) : 'Unknown time'}
+                      </span>
+                    </div>
+                    <p style={{ margin: '4px 0 8px 0', color: '#475569', fontSize: '14px', fontWeight: '500' }}>Subject: {log.subject}</p>
+                    <div style={{ background: 'white', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '13px', color: '#64748b', whiteSpace: 'pre-wrap' }}>
+                      {log.text}
+                    </div>
+                    {log.status === 'Failed' && (
+                      <div style={{ marginTop: '8px', color: '#ef4444', fontSize: '13px', fontWeight: '500' }}>
+                        Error: {log.errorMessage}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -53,3 +53,5 @@ export const getPreferences = () => request("GET", "/preferences");
 
 export const updatePreferences = (preferences) =>
   request("PUT", "/preferences", preferences);
+
+export const getEmailLogs = () => request("GET", "/emails");
