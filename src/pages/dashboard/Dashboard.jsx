@@ -788,7 +788,7 @@ case 'product-edit':
   };
 
   return (
-    <div className="dashboard-page">
+    <div className={`dashboard-page theme-${sunPhase}`}>
       {/* Floating Navigation Menu */}
       <div className={`floating-nav ${navExpanded ? 'expanded' : 'collapsed'}`}>
         <button className="nav-toggle" onClick={() => setNavExpanded(!navExpanded)}>
@@ -870,7 +870,79 @@ case 'product-edit':
       {visibleModule === 'dashboard' && <Chatbot />}
 
       <style>{`
-        .dashboard-page { min-height: 100vh; position: relative; overflow-x: hidden; }
+        :root {
+          /* Default Theme (Morning) */
+          --bg-primary: #f0f9ff;
+          --bg-secondary: #ffffff;
+          --bg-tertiary: #f1f5f9;
+          --text-primary: #0f172a;
+          --text-secondary: #475569;
+          --text-muted: #94a3b8;
+          --border-color: #e2e8f0;
+          --accent-color: #3b82f6;
+          --accent-light: #eff6ff;
+          --success-color: #10b981;
+          --success-light: #ecfdf5;
+          --warning-color: #f59e0b;
+          --warning-light: #fffbeb;
+          --danger-color: #ef4444;
+          --danger-light: #fef2f2;
+          --info-color: #06b6d4;
+          --info-light: #ecfeff;
+        }
+
+        .dashboard-page.theme-sunrise {
+          --bg-primary: #fff8eb;
+          --bg-secondary: #ffffff;
+          --bg-tertiary: #fff1e6;
+          --text-primary: #451a03;
+          --text-secondary: #78350f;
+          --text-muted: #b45309;
+          --border-color: #ffedd5;
+        }
+
+        .dashboard-page.theme-morning {
+          --bg-primary: #f0f9ff;
+          --bg-secondary: #ffffff;
+          --bg-tertiary: #f1f5f9;
+          --text-primary: #0f172a;
+          --text-secondary: #475569;
+          --text-muted: #94a3b8;
+          --border-color: #e2e8f0;
+        }
+
+        .dashboard-page.theme-afternoon {
+          --bg-primary: #f8fafc;
+          --bg-secondary: #ffffff;
+          --bg-tertiary: #f1f5f9;
+          --text-primary: #0f172a;
+          --text-secondary: #334155;
+          --text-muted: #64748b;
+          --border-color: #e2e8f0;
+        }
+
+        .dashboard-page.theme-sunset {
+          --bg-primary: #fff1f2;
+          --bg-secondary: #ffffff;
+          --bg-tertiary: #fff1f2;
+          --text-primary: #4c0519;
+          --text-secondary: #881337;
+          --text-muted: #be123c;
+          --border-color: #fecdd3;
+        }
+
+        .dashboard-page.theme-night {
+          --bg-primary: #0f172a;
+          --bg-secondary: #1e293b;
+          --bg-tertiary: #334155;
+          --text-primary: #f8fafc;
+          --text-secondary: #cbd5e1;
+          --text-muted: #94a3b8;
+          --border-color: #334155;
+          --accent-light: rgba(59, 130, 246, 0.1);
+        }
+
+        .dashboard-page { min-height: 100vh; position: relative; overflow-x: hidden; color: var(--text-primary); }
         .sky-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; overflow: hidden; transition: background 0.5s ease; }
         .sun { position: absolute; border-radius: 50%; transition: all 0.5s ease; }
         .sun.sunrise { bottom: 10%; right: 15%; width: 80px; height: 80px; animation: sunriseAnim 20s ease-in-out infinite; }
