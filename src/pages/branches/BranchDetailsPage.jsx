@@ -80,7 +80,11 @@ export default function BranchDetailsPage() {
             </div>
             <div>
               <p className="text-gray-600 text-sm">Manager</p>
-              <p className="text-lg font-semibold">{branch.manager || "N/A"}</p>
+              <p className="text-lg font-semibold">
+                {typeof branch.manager === "object"
+                ? branch.manager?.name || branch.manager?.email || "N/A"
+                : branch.manager || "N/A"}
+              </p>
             </div>
             <div>
               <p className="text-gray-600 text-sm">Status</p>
@@ -119,7 +123,12 @@ export default function BranchDetailsPage() {
                   <p><strong>Code:</strong> {branch.code || "N/A"}</p>
                   <p><strong>City:</strong> {branch.city || "N/A"}</p>
                   <p><strong>Contact:</strong> {branch.contactNumber || "N/A"}</p>
-                  <p><strong>Manager:</strong> {branch.manager || "N/A"}</p>
+                  <p>
+                     <strong>Manager:</strong>{" "}
+                     {typeof branch.manager === "object"
+                     ? branch.manager?.name || branch.manager?.email || "N/A"
+                     : branch.manager || "N/A"}
+                  </p>
                   <p><strong>Address:</strong> {branch.address || "N/A"}</p>
                   <p><strong>Status:</strong> {branch.isActive ? "Active" : "Inactive"}</p>
                 </div>
