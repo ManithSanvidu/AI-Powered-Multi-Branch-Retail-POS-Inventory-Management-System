@@ -64,6 +64,7 @@
 // };
 
 // export default POSPage;
+
 import { History, ShoppingBag } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
@@ -72,7 +73,7 @@ import BarcodeScanner from "../../components/pos/BarcodeScanner";
 import ProductList    from "../../components/pos/ProductList";
 import Cart           from "../../components/pos/Cart";
 
-const POSPage = () => {
+const POSPage = ({ onCheckout }) => {
   const navigate = useNavigate();
   const {
     cart, addToCart, increaseQty, decreaseQty, removeItem, clearCart,
@@ -134,6 +135,7 @@ const POSPage = () => {
               decreaseQty={decreaseQty}
               removeItem={removeItem}
               onClearCart={clearCart}
+              onCheckout={onCheckout}
             />
           </div>
         </div>

@@ -161,11 +161,17 @@ import { useCart } from "../../context/CartContext";
 import { useSales } from "../../context/SalesContext";
 import { createSale } from "../../services/salesApi";
 import PaymentMethod from "../../components/pos/PaymentMethod";
+import { useAuth } from "../../context/AuthContext";
+import { validateCoupon } from "../../services/promotionApi";
+import { toast } from "react-hot-toast";
+import { Tag, Check, Trash } from "lucide-react";
 
-const CheckoutPage = () => {
+const CheckoutPage = ({ onBack, onComplete }) => {
   const navigate = useNavigate();
-  const { cart, subtotal, discount, taxAmount, total, buildCheckoutPayload, clearCart } = useCart();
+  const { cart, subtotal, discount, setDiscount, taxAmount, total, buildCheckoutPayload, clearCart } = useCart();
   const { addSale } = useSales();
+  const { user } = useAuth();
+  const branchId = user?.branchId ?? user?.branch?._id ?? user?.branch;
 
   const [paymentMethod, setPaymentMethod] = useState("CASH");
   const [cashReceived, setCashReceived]   = useState("");
@@ -173,7 +179,55 @@ const CheckoutPage = () => {
   const [loading, setLoading]             = useState(false);
   const [error, setError]                 = useState("");
 
-  if (cart.length === 0) { navigate("/pos"); return null; }
+  const [couponCode, setCouponCode] = useState("");
+  const [isValidating, setIsValidating] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponError, setCouponError] = useState("");
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setIsValidating(true);
+    setCouponError("");
+    try {
+      const response = await validateCoupon({
+        couponCode: couponCode.trim(),
+        cartTotal: subtotal,
+        branchId,
+      });
+
+      if (response.data && response.data.valid) {
+        const { discountAmount, promotionTitle } = response.data;
+        setDiscount(discountAmount);
+        setAppliedCoupon({
+          code: couponCode.trim().toUpperCase(),
+          title: promotionTitle,
+          amount: discountAmount,
+        });
+        toast.success(`Coupon "${couponCode.trim().toUpperCase()}" applied successfully!`);
+      } else {
+        setCouponError(response.data?.message || "Invalid coupon code.");
+        setDiscount(0);
+        setAppliedCoupon(null);
+      }
+    } catch (err) {
+      console.error("Error validating coupon:", err);
+      setCouponError(err.response?.data?.message || "Failed to validate coupon.");
+      setDiscount(0);
+      setAppliedCoupon(null);
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setDiscount(0);
+    setAppliedCoupon(null);
+    setCouponCode("");
+    setCouponError("");
+    toast.success("Coupon removed.");
+  };
+
+  if (cart.length === 0) { onBack ? onBack() : navigate("/pos"); return null; }
 
   const change     = paymentMethod === "CASH" && cashReceived ? parseFloat(cashReceived) - total : 0;
   const canConfirm = paymentMethod !== "CASH" || (cashReceived && parseFloat(cashReceived) >= total);
@@ -186,7 +240,7 @@ const CheckoutPage = () => {
       const sale    = res.data.data;
       addSale(sale);
       clearCart();
-      navigate("/receipt", { state: { sale } });
+      if (onComplete) { onComplete(sale); } else { navigate("/receipt", { state: { sale } }); }
     } catch (err) {
       setError(err.response?.data?.message || "Payment failed. Please try again.");
     } finally {
@@ -195,22 +249,18 @@ const CheckoutPage = () => {
   };
 
   return (
-    // POS Page එකට දාපු ලස්සන Vibrant Gradient එකම මෙතනටත් දැම්මා
     <div className="min-h-screen bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600 flex flex-col justify-start items-center py-10 px-4 antialiased relative overflow-hidden">
       
-      {/* Decorative Sun Glow */}
       <div className="absolute top-10 right-1/4 w-36 h-36 bg-yellow-400 rounded-full blur-2xl opacity-50 pointer-events-none" />
 
       <div className="w-full max-w-xl z-10">
-        {/* Back Button with glass effect hover */}
         <button
-          onClick={() => navigate("/pos")}
+          onClick={() => onBack ? onBack() : navigate("/pos")}
           className="flex items-center gap-2 text-white/90 hover:text-white bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 rounded-xl mb-6 text-xs font-bold uppercase tracking-wider backdrop-blur-md transition-all duration-200"
         >
           <ArrowLeft size={14} strokeWidth={2.5} /> Back to POS
         </button>
 
-        {/* Premium Semi-Transparent Glass Card */}
         <div className="backdrop-blur-xl bg-white/90 border border-white/40 rounded-3xl shadow-2xl p-6 md:p-8">
           <div className="flex items-center gap-2 mb-6">
             <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-blue-500/20">
@@ -283,6 +333,55 @@ const CheckoutPage = () => {
               placeholder="Leave blank for walk-in customer"
               className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-semibold outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 placeholder:text-slate-400"
             />
+          </div>
+
+          {/* Coupon Code Section */}
+          <div className="mb-5">
+            <label className="flex items-center gap-1.5 text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">
+              <Tag size={13} className="text-slate-400" /> Promo / Coupon Code
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+                disabled={appliedCoupon || isValidating}
+                placeholder="e.g. SUMMER25"
+                className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-wider outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 placeholder:text-slate-400 disabled:bg-slate-100 disabled:text-slate-500"
+              />
+              {appliedCoupon ? (
+                <button
+                  type="button"
+                  onClick={handleRemoveCoupon}
+                  className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/50 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer"
+                >
+                  <Trash size={14} /> Remove
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleApplyCoupon}
+                  disabled={!couponCode.trim() || isValidating}
+                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 shadow-sm cursor-pointer"
+                >
+                  {isValidating ? "Applying..." : "Apply"}
+                </button>
+              )}
+            </div>
+            {couponError && (
+              <p className="mt-1.5 text-[10px] font-bold text-rose-500 flex items-center gap-1">
+                <span>⚠️</span> {couponError}
+              </p>
+            )}
+            {appliedCoupon && (
+              <div className="mt-2.5 p-3 bg-emerald-50 border border-emerald-200/50 rounded-xl text-[10px] font-bold text-emerald-700 flex items-center justify-between animate-fade-in">
+                <span className="flex items-center gap-1">
+                  <Check size={13} strokeWidth={3} className="text-emerald-500" />
+                  <span>Promo applied: "{appliedCoupon.code}" ({appliedCoupon.title})</span>
+                </span>
+                <span className="text-xs font-black">- Rs.{appliedCoupon.amount.toLocaleString()}</span>
+              </div>
+            )}
           </div>
 
           {/* Payment Method Selector Grid */}

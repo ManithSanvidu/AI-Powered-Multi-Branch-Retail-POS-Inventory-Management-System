@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+
 :root {
   --white: #ffffff;
   --blue-50: #eff6ff;
@@ -25,6 +26,8 @@
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
   --shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   --transition: 0.2s ease;
+  --sidebar-w: 260px;
+  --topbar-h: 70px;
 }
 
 html,
