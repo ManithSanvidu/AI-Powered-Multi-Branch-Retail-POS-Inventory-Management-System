@@ -42,6 +42,14 @@ export default function BranchDetailsPage() {
   if (loading) return <div className="text-center p-8 text-lg">Loading...</div>;
   if (!branch) return <div className="text-center p-8 text-lg">Branch not found</div>;
 
+  // get manager name to display (this part use to solve the issue of manager's email showing instead of name)
+  const getManagerName = (manager) => {
+    if (!manager) return "N/A";
+    if (typeof manager === "string") return manager;
+    if (manager.displayName) return manager.displayName;
+    return `${manager.firstName || ""} ${manager.lastName || ""}`.trim() || manager.email || "N/A";
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
       <div className="max-w-6xl mx-auto">
@@ -80,7 +88,7 @@ export default function BranchDetailsPage() {
             </div>
             <div>
               <p className="text-gray-600 text-sm">Manager</p>
-              <p className="text-lg font-semibold">{branch.manager || "N/A"}</p>
+              <p className="text-lg font-semibold">{getManagerName(branch.manager)}</p>
             </div>
             <div>
               <p className="text-gray-600 text-sm">Status</p>
@@ -119,7 +127,7 @@ export default function BranchDetailsPage() {
                   <p><strong>Code:</strong> {branch.code || "N/A"}</p>
                   <p><strong>City:</strong> {branch.city || "N/A"}</p>
                   <p><strong>Contact:</strong> {branch.contactNumber || "N/A"}</p>
-                  <p><strong>Manager:</strong> {branch.manager || "N/A"}</p>
+                  <p><strong>Manager:</strong> {getManagerName(branch.manager)}</p>
                   <p><strong>Address:</strong> {branch.address || "N/A"}</p>
                   <p><strong>Status:</strong> {branch.isActive ? "Active" : "Inactive"}</p>
                 </div>
