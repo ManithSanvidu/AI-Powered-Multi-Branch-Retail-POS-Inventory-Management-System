@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useBranches } from "../../context/BranchContext";
+import AddBranchModal from "./AddBranchModal";
+import EditBranchModal from "./EditBranchModal";
 
 function BranchListPage() {
   const {
@@ -12,7 +14,9 @@ function BranchListPage() {
   } = useBranches();
 
   const [message, setMessage] = useState("");
-  const [keyword, setKeyword] = useState("");
+const [keyword, setKeyword] = useState("");
+const [showAddModal, setShowAddModal] = useState(false);
+const [editTarget, setEditTarget] = useState(null);
 
   useEffect(() => {
     fetchBranches();
@@ -47,11 +51,13 @@ function BranchListPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
+    <>
+    <div className="rounded-[28px] p-6 min-h-[calc(100vh-100px)] shadow-lg text-slate-800"
+  style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.3)" }}>
       <div className="mx-auto max-w-7xl">
 
         {/* Header */}
-        <div className="mb-6 flex justify-between rounded-2xl bg-white p-6 shadow-sm">
+        <div className="mb-6 flex justify-between rounded-2xl p-6 shadow-sm" style={{ background: "rgba(255,255,255,0.6)", backdropFilter: "blur(10px)" }}>
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Branch Management</h1>
             <p className="text-sm text-slate-700">
@@ -59,16 +65,16 @@ function BranchListPage() {
             </p>
           </div>
 
-          <Link
-            to="/branches/add"
-            className="bg-blue-600 text-white px-5 py-2 rounded-lg"
-          >
-            + Add Branch
-          </Link>
+          <button
+  onClick={() => setShowAddModal(true)}
+  className="bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold text-sm hover:bg-blue-700 transition"
+>
+  + Add Branch
+</button>
         </div>
 
         {/* Search */}
-        <div className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
+        <div className="mb-6 rounded-2xl p-6 shadow-sm" style={{ background: "rgba(255,255,255,0.6)", backdropFilter: "blur(10px)" }}>
           <form onSubmit={handleSearch} className="flex gap-3">
             <input
               value={keyword}
@@ -99,7 +105,7 @@ function BranchListPage() {
         )}
 
         {/* Table */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: "rgba(255,255,255,0.6)", backdropFilter: "blur(10px)" }}>
           <div className="p-4 border-b">
             <h2 className="font-semibold text-gray-800">
               Branch List ({branches.length})
@@ -147,12 +153,9 @@ function BranchListPage() {
                         View
                       </Link>
 
-                      <Link
-                        to={`/branches/edit/${b._id}`}
-                        className="text-slate-600"
-                      >
-                        Edit
-                      </Link>
+                      <button onClick={() => setEditTarget(b._id)} className="text-slate-600">
+  Edit
+</button>
 
                       <button
                         onClick={() => handleDelete(b._id)}
@@ -170,6 +173,23 @@ function BranchListPage() {
 
       </div>
     </div>
+
+    {showAddModal && (
+      <AddBranchModal
+        onClose={() => setShowAddModal(false)}
+        onSuccess={(msg) => { setMessage(msg); fetchBranches(); }}
+      />
+    )}
+
+    {editTarget && (
+      <EditBranchModal
+        branchId={editTarget}
+        onClose={() => setEditTarget(null)}
+        onSuccess={(msg) => { setMessage(msg); fetchBranches(); }}
+      />
+    )}
+
+  </>
   );
 }
 
