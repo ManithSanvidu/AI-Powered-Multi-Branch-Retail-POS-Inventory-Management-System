@@ -47,11 +47,12 @@ function BranchListPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
+    <div className="rounded-[28px] p-6 min-h-[calc(100vh-100px)] shadow-lg text-slate-800"
+  style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.3)" }}>
       <div className="mx-auto max-w-7xl">
 
         {/* Header */}
-        <div className="mb-6 flex justify-between rounded-2xl bg-white p-6 shadow-sm">
+        <div className="mb-6 flex justify-between rounded-2xl p-6 shadow-sm" style={{ background: "rgba(255,255,255,0.6)", backdropFilter: "blur(10px)" }}>
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Branch Management</h1>
             <p className="text-sm text-slate-700">
@@ -68,7 +69,7 @@ function BranchListPage() {
         </div>
 
         {/* Search */}
-        <div className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
+        <div className="mb-6 rounded-2xl p-6 shadow-sm" style={{ background: "rgba(255,255,255,0.6)", backdropFilter: "blur(10px)" }}>
           <form onSubmit={handleSearch} className="flex gap-3">
             <input
               value={keyword}
@@ -99,7 +100,7 @@ function BranchListPage() {
         )}
 
         {/* Table */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: "rgba(255,255,255,0.6)", backdropFilter: "blur(10px)" }}>
           <div className="p-4 border-b">
             <h2 className="font-semibold text-gray-800">
               Branch List ({branches.length})

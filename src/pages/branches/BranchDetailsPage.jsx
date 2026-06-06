@@ -51,71 +51,80 @@ export default function BranchDetailsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="rounded-[28px] p-6 min-h-[calc(100vh-100px)] shadow-lg text-slate-800"
+      style={{ background: "linear-gradient(135deg, #dbeafe 0%, #eff6ff 50%, #e0e7ff 100%)" }}>
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h1 className="text-4xl font-bold text-gray-800">{branch.name}</h1>
-              <p className="text-gray-600 text-lg">{branch.city}</p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => navigate(`/branches/edit/${id}`)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => navigate("/branches")}
-                className="bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500"
-              >
-                Back
-              </button>
-            </div>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+         <div>
+             <div className="flex items-center gap-2 mb-2">
+               <span className="text-2xl">🏪</span>
+               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Branch Management</span>
+             </div>
+             <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">{branch.name}</h1>
+             <p className="text-slate-500 text-xs mt-1 font-medium">{branch.city}</p>
           </div>
+          <div className="flex gap-2">
+             <button
+             onClick={() => navigate(`/branches/edit/${id}`)}
+             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-3 px-5 rounded-xl transition duration-200 shadow-md shadow-blue-100"
+             >
+              Edit
+             </button>
+             <button
+             onClick={() => navigate("/branches")}
+             className="flex items-center gap-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs py-3 px-5 rounded-xl transition duration-200"
+             >
+               Back
+             </button>
+          </div>
+       </div>
 
           {/* Quick Info */}
-          <div className="grid grid-cols-4 gap-4">
-            <div>
-              <p className="text-gray-600 text-sm">Code</p>
-              <p className="text-lg font-semibold">{branch.code || "N/A"}</p>
-            </div>
-            <div>
-              <p className="text-gray-600 text-sm">Contact</p>
-              <p className="text-lg font-semibold">{branch.contactNumber || "N/A"}</p>
-            </div>
-            <div>
-              <p className="text-gray-600 text-sm">Manager</p>
-              <p className="text-lg font-semibold">{getManagerName(branch.manager)}</p>
-            </div>
-            <div>
-              <p className="text-gray-600 text-sm">Status</p>
-              <p className={`text-lg font-semibold ${branch.isActive ? "text-green-600" : "text-red-600"}`}>
-                {branch.isActive ? "Active" : "Inactive"}
-              </p>
-            </div>
-          </div>
-        </div>
+          <div className="grid grid-cols-4 gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm mb-8">
+  <div>
+    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Code</p>
+    <p className="text-sm font-extrabold text-slate-800 mt-1">{branch.code || "N/A"}</p>
+  </div>
+  <div>
+    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Contact</p>
+    <p className="text-sm font-extrabold text-slate-800 mt-1">{branch.contactNumber || "N/A"}</p>
+  </div>
+  <div>
+    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Manager</p>
+    <p className="text-sm font-extrabold text-slate-800 mt-1">{getManagerName(branch.manager)}</p>
+  </div>
+  <div>
+    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Status</p>
+    <span className={`inline-block mt-1 px-3 py-1 rounded-full text-xs font-bold ${branch.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+      {branch.isActive ? "Active" : "Inactive"}
+    </span>
+  </div>
+</div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          <div className="flex border-b">
-            {["info", "inventory", "sales", "employees", "performance"].map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-3 font-semibold transition ${
-                  activeTab === tab
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            ))}
-          </div>
+        <div>
+  <div className="flex gap-1 bg-white border border-slate-200 rounded-xl p-1 w-fit mb-6">
+    {[
+      { id: "info",        label: "Info",        icon: "🏪" },
+      { id: "inventory",   label: "Inventory",   icon: "📦" },
+      { id: "sales",       label: "Sales",       icon: "💰" },
+      { id: "employees",   label: "Employees",   icon: "👥" },
+      { id: "performance", label: "Performance", icon: "📊" },
+    ].map(tab => (
+      <button
+        key={tab.id}
+        onClick={() => setActiveTab(tab.id)}
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition whitespace-nowrap
+          ${activeTab === tab.id
+            ? "bg-blue-600 text-white shadow font-bold"
+            : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+          }`}
+      >
+        <span>{tab.icon}</span>
+        <span>{tab.label}</span>
+      </button>
+    ))}
+  </div>
 
           <div className="p-6">
             {/* Info Tab */}
@@ -136,32 +145,42 @@ export default function BranchDetailsPage() {
 
             {/* Inventory Tab */}
             {activeTab === "inventory" && (
-              <div>
-                <h2 className="text-2xl font-bold mb-4">Inventory</h2>
-                {inventory.length > 0 ? (
-                  <table className="w-full border-collapse">
-                    <thead className="bg-gray-100">
-                      <tr>
-                        <th className="border p-2 text-left">Product</th>
-                        <th className="border p-2 text-left">Quantity</th>
-                        <th className="border p-2 text-left">Price</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {inventory.map((item, idx) => (
-                        <tr key={idx} className="hover:bg-gray-50">
-                          <td className="border p-2">{item.product?.name || "Unknown"}</td>
-                          <td className="border p-2">{item.quantity}</td>
-                          <td className="border p-2">${item.product?.price ?? "N/A"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <p className="text-gray-600">No inventory data</p>
-                )}
-              </div>
-            )}
+  <div>
+    <div className="flex flex-col gap-1 mb-4">
+      <h2 className="text-base font-extrabold text-slate-800">Inventory</h2>
+      <p className="text-xs text-slate-400 font-medium">Stock levels for this branch</p>
+    </div>
+    {inventory.length > 0 ? (
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-slate-100">
+              <th className="text-left px-4 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Product</th>
+              <th className="text-left px-4 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Quantity</th>
+              <th className="text-left px-4 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            {inventory.map((item, idx) => (
+              <tr key={idx} className="border-b border-slate-50 hover:bg-slate-50 transition">
+                <td className="px-4 py-3 text-sm font-semibold text-slate-800">{item.product?.name || "Unknown Product"}</td>
+                <td className="px-4 py-3">
+                  <span className="bg-blue-50 text-blue-700 text-xs font-bold px-2 py-1 rounded-lg">{item.quantity}</span>
+                </td>
+                <td className="px-4 py-3 text-sm font-semibold text-slate-700">${item.product?.price ?? "N/A"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : (
+      <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center shadow-sm">
+        <div className="text-4xl mb-3">📦</div>
+        <p className="text-slate-500 font-bold text-sm">No inventory data for this branch</p>
+      </div>
+    )}
+  </div>
+)}
 
             {/* Sales Tab */}
             {activeTab === "sales" && (
@@ -242,6 +261,5 @@ export default function BranchDetailsPage() {
           </div>
         </div>
       </div>
-    </div>
   );
 }
