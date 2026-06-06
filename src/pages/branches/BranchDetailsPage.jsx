@@ -150,9 +150,9 @@ export default function BranchDetailsPage() {
                     <tbody>
                       {inventory.map((item, idx) => (
                         <tr key={idx} className="hover:bg-gray-50">
-                          <td className="border p-2">{item.productName || item.name}</td>
+                          <td className="border p-2">{item.product?.name || "Unknown"}</td>
                           <td className="border p-2">{item.quantity}</td>
-                          <td className="border p-2">${item.price}</td>
+                          <td className="border p-2">${item.product?.price ?? "N/A"}</td>
                         </tr>
                       ))}
                     </tbody>
