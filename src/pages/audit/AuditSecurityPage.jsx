@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import AuditStatsCards from '../../components/audit/AuditStatsCards';
 import AuditFilterBar from '../../components/audit/AuditFilterBar';
 import AuditLogsTable from '../../components/audit/AuditLogsTable';
-import LoginHistoryTable from '../../components/audit/AuditStatsCards';
+import LoginHistoryTable from '../../modal/LoginHistoryTable';
 import SecurityMonitor from '../../modal/SecurityMonitor';
 import SecurityReportGenerator from '../../viewer/SecurityReportGenerator';
 import {
@@ -42,7 +42,7 @@ const AuditSecurityPage = () => {
   const [loginLoading, setLoginLoading]   = useState(false);
 
   // Security Events
-  const [secEvents, setSecEvents]         = useState([]);
+  const [secEvents, setSecEvents]         = useState(null); // 💡 Fix: මුලින්ම null තියන්න (loading සහ empty වෙන් කරගන්න)
   const [secLoading, setSecLoading]       = useState(false);
 
   // Reports
@@ -55,7 +55,6 @@ const AuditSecurityPage = () => {
       const res = await getAuditStats();
       setStats(res.data);
     } catch (err) {
-      // Use demo data when API unavailable
       setStats({
         totalEvents: 12847,
         loginAttempts: 3241,
@@ -105,8 +104,11 @@ const AuditSecurityPage = () => {
     setSecLoading(true);
     try {
       const res = await getSecurityEvents({ page: 1, limit: 50 });
-      setSecEvents(res.data?.events || res.data || []);
-    } catch {
+      // 💡 Response එක ඇතුලේ .data හෝ .events තියෙනවා නම් ඒක Extract කරලා ගන්නවා
+      const rawData = res.data?.events || res.data || res.events || [];
+      setSecEvents(rawData);
+    } catch (err) {
+      console.error(err);
       setSecEvents([]);
     } finally {
       setSecLoading(false);
@@ -176,10 +178,8 @@ const AuditSecurityPage = () => {
     toast.success('Preparing export…');
   };
 
-  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="audit-page">
-      {/* Page Header */}
       <div className="audit-page-header">
         <div className="audit-header-left">
           <div className="audit-header-icon">🛡️</div>
@@ -193,10 +193,8 @@ const AuditSecurityPage = () => {
         </button>
       </div>
 
-      {/* Stats */}
       <AuditStatsCards stats={stats} loading={statsLoading} />
 
-      {/* Tabs */}
       <div className="audit-tabs">
         {TABS.map(tab => (
           <button
@@ -210,7 +208,6 @@ const AuditSecurityPage = () => {
         ))}
       </div>
 
-      {/* Tab Content */}
       <div className="audit-tab-content">
         {activeTab === 'activity' && (
           <div className="tab-pane">
@@ -274,81 +271,18 @@ const AuditSecurityPage = () => {
       </div>
 
       <style>{`
-        .audit-page {
-          padding: 8px 4px 48px;
-          display: flex;
-          flex-direction: column;
-          gap: 22px;
-          max-width: 1400px;
-          width: 100%;
-        }
-
-        /* Header */
-        .audit-page-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          flex-wrap: wrap;
-          gap: 14px;
-        }
+        .audit-page { padding: 8px 4px 48px; display: flex; flex-direction: column; gap: 22px; max-width: 1400px; width: 100%; }
+        .audit-page-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
         .audit-header-left { display: flex; align-items: center; gap: 14px; }
-        .audit-header-icon {
-          width: 50px; height: 50px;
-          background: linear-gradient(135deg, #1e3a5f, #2563eb);
-          border-radius: 14px;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 1.5rem;
-          box-shadow: 0 4px 14px rgba(37,99,235,.3);
-          flex-shrink: 0;
-        }
-        .audit-title {
-          font-size: 1.5rem; font-weight: 800; color: #0f172a;
-          margin: 0; line-height: 1;
-        }
+        .audit-header-icon { width: 50px; height: 50px; background: linear-gradient(135deg, #1e3a5f, #2563eb); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 14px rgba(37,99,235,.3); flex-shrink: 0; }
+        .audit-title { font-size: 1.5rem; font-weight: 800; color: #0f172a; margin: 0; line-height: 1; }
         .audit-subtitle { font-size: .84rem; color: #64748b; margin: 4px 0 0; }
-        .export-all-btn {
-          padding: 10px 20px;
-          border: 1.5px solid #e2e8f0;
-          border-radius: 10px;
-          font-size: .875rem; font-weight: 600;
-          color: #475569; background: white;
-          display: flex; align-items: center; gap: 7px;
-          transition: all .15s;
-          white-space: nowrap;
-          cursor: pointer;
-        }
+        .export-all-btn { padding: 10px 20px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: .875rem; font-weight: 600; color: #475569; background: white; display: flex; align-items: center; gap: 7px; transition: all .15s; white-space: nowrap; cursor: pointer; }
         .export-all-btn:hover { background: #f8fafc; border-color: #cbd5e1; }
-
-        /* Tabs */
-        .audit-tabs {
-          display: flex;
-          gap: 4px;
-          background: white;
-          border: 1.5px solid #e2e8f0;
-          border-radius: 12px;
-          padding: 5px;
-          width: fit-content;
-        }
-        .audit-tab {
-          display: flex; align-items: center; gap: 7px;
-          padding: 9px 18px;
-          border-radius: 8px;
-          font-size: .875rem; font-weight: 500;
-          color: #64748b;
-          transition: all .15s;
-          white-space: nowrap;
-          background: transparent;
-          border: none;
-          cursor: pointer;
-        }
+        .audit-tabs { display: flex; gap: 4px; background: white; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 5px; width: fit-content; }
+        .audit-tab { display: flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: 8px; font-size: .875rem; font-weight: 500; color: #64748b; transition: all .15s; white-space: nowrap; background: transparent; border: none; cursor: pointer; }
         .audit-tab:hover { background: #f8fafc; color: #374151; }
-        .audit-tab.active {
-          background: #1e3a5f; color: white;
-          font-weight: 700;
-          box-shadow: 0 2px 8px rgba(30,58,95,.3);
-        }
-
-        /* Tab Content */
+        .audit-tab.active { background: #1e3a5f; color: white; font-weight: 700; box-shadow: 0 2px 8px rgba(30,58,95,.3); }
         .tab-pane { display: flex; flex-direction: column; gap: 16px; }
         .tab-section-header { display: flex; flex-direction: column; gap: 3px; }
         .tab-section-title { font-size: 1.05rem; font-weight: 800; color: #0f172a; margin: 0; }
