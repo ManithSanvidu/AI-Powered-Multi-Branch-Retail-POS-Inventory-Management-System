@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useInventory } from '../../context/InventoryContext';
+import StockAlertPanel from '../../components/inventory/StockAlertPanel';
 import {
   getAllSuppliers,
   addSupplier,
@@ -9,7 +10,8 @@ import {
   updateContract,
   addTransaction,
   getProcurementHistory,
-  getDetailedPerformance
+  getDetailedPerformance,
+  updateTransactionStatus
 } from '../../services/supplierApi';
 
 const CATEGORIES = [
@@ -111,6 +113,16 @@ const SuppliersPage = () => {
   const [selectedSupplierDetails, setSelectedSupplierDetails] = useState(null);
   const [procurementHistory, setProcurementHistory] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
+
+  // Global Alert Restock Modal states
+  const [clickedAlert, setClickedAlert] = useState(null);
+  const [selectedRestockSupplierId, setSelectedRestockSupplierId] = useState('');
+  const [restockFormData, setRestockFormData] = useState({
+    id: '',
+    itemsCount: 50,
+    amount: 5000,
+    status: 'Pending'
+  });
 
   // Form modal state
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -544,6 +556,68 @@ const SuppliersPage = () => {
     setIsTransactionModalOpen(true);
   };
 
+  // Handle click on global low stock alert item
+  const handleAlertClick = (alert) => {
+    const category = mapProductToCategory(alert.product?.name);
+    // Find active suppliers in this category
+    const matchingSuppliers = suppliers.filter(s => s.category === category && s.status === 'Active');
+    
+    // Auto-select first matching supplier if available
+    if (matchingSuppliers.length > 0) {
+      setSelectedRestockSupplierId(matchingSuppliers[0].id || matchingSuppliers[0]._id);
+    } else {
+      setSelectedRestockSupplierId('');
+    }
+
+    const reorderLevel = alert.product?.reorderLevel || 50;
+    const currentQty = alert.quantity || 0;
+    const suggestedUnits = Math.max(reorderLevel * 2 - currentQty, 50);
+    const costPrice = alert.product?.costPrice || 100;
+    const computedCost = suggestedUnits * costPrice;
+
+    setRestockFormData({
+      id: `TXN-${Math.floor(100 + Math.random() * 900)}`,
+      itemsCount: suggestedUnits,
+      amount: computedCost,
+      status: 'Pending'
+    });
+    setClickedAlert(alert);
+  };
+
+  // Submit global alert restock order
+  const handleRestockSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedRestockSupplierId) {
+      alert("Please select a supplier.");
+      return;
+    }
+    try {
+      const res = await addTransaction(selectedRestockSupplierId, {
+        id: restockFormData.id,
+        date: new Date().toISOString().substring(0, 10),
+        itemsCount: restockFormData.itemsCount,
+        amount: restockFormData.amount,
+        status: restockFormData.status
+      });
+
+      if (res.success) {
+        setClickedAlert(null);
+        if (viewingSupplier && (viewingSupplier.id === selectedRestockSupplierId || viewingSupplier._id === selectedRestockSupplierId)) {
+          loadSupplierDetails(selectedRestockSupplierId);
+        }
+        loadSuppliers();
+        if (refreshAll) {
+          refreshAll("", false);
+        }
+      } else {
+        alert("Error: " + res.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to place restock order.");
+    }
+  };
+
   // Submit Transaction Log
   const handleTransactionSubmit = async (e) => {
     e.preventDefault();
@@ -560,6 +634,23 @@ const SuppliersPage = () => {
     } catch (err) {
       console.error(err);
       alert("Failed to record manual transaction.");
+    }
+  };
+
+  // Change transaction status from Timeline
+  const handleStatusChange = async (transactionId, newStatus) => {
+    const supplierId = viewingSupplier.id || viewingSupplier._id;
+    try {
+      const res = await updateTransactionStatus(supplierId, transactionId, newStatus);
+      if (res.success) {
+        loadSupplierDetails(supplierId);
+        loadSuppliers();
+      } else {
+        alert("Error: " + res.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update transaction status.");
     }
   };
 
@@ -610,6 +701,9 @@ const SuppliersPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Stock Alerts Panel */}
+      <StockAlertPanel alerts={alerts} onAlertClick={handleAlertClick} />
 
       {/* Control Panel: Filters, Search, Registration */}
       <div className="controls-panel bg-glass">
@@ -997,9 +1091,34 @@ const SuppliersPage = () => {
                                     </span>
                                   </td>
                                   <td>
-                                    <span className={`status-pill ${tx.status.toLowerCase()}`}>
-                                      {tx.status}
-                                    </span>
+                                    {isAdminOrManager ? (
+                                      <select
+                                        value={tx.status}
+                                        onChange={(e) => handleStatusChange(tx.id, e.target.value)}
+                                        className={`status-pill ${tx.status.toLowerCase()}`}
+                                        style={{
+                                          border: 'none',
+                                          cursor: 'pointer',
+                                          outline: 'none',
+                                          padding: '3px 16px 3px 8px',
+                                          backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E")',
+                                          backgroundRepeat: 'no-repeat',
+                                          backgroundPosition: 'right 4px center',
+                                          backgroundSize: '8px',
+                                          appearance: 'none',
+                                          WebkitAppearance: 'none',
+                                          MozAppearance: 'none'
+                                        }}
+                                      >
+                                        <option value="Pending" style={{ background: '#ffffff', color: '#1e293b' }}>Pending</option>
+                                        <option value="Delivered" style={{ background: '#ffffff', color: '#1e293b' }}>Delivered</option>
+                                        <option value="Cancelled" style={{ background: '#ffffff', color: '#1e293b' }}>Cancelled</option>
+                                      </select>
+                                    ) : (
+                                      <span className={`status-pill ${tx.status.toLowerCase()}`}>
+                                        {tx.status}
+                                      </span>
+                                    )}
                                   </td>
                                 </tr>
                               ))
@@ -1485,6 +1604,117 @@ const SuppliersPage = () => {
                 </button>
                 <button type="submit" className="submit-btn">
                   Record Supply
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Alert Restock Modal */}
+      {clickedAlert && (
+        <div className="modal-backdrop">
+          <div className="modal-content bg-glass">
+            <div className="modal-header">
+              <h3>⚡ Quick Restock: {clickedAlert.product?.name}</h3>
+              <button className="close-btn" onClick={() => setClickedAlert(null)}>✕</button>
+            </div>
+
+            <form onSubmit={handleRestockSubmit}>
+              <div className="form-grid">
+                <div className="form-group full-width">
+                  <label>Select Supplier for Category: &ldquo;{mapProductToCategory(clickedAlert.product?.name)}&rdquo;</label>
+                  <select
+                    value={selectedRestockSupplierId}
+                    onChange={e => setSelectedRestockSupplierId(e.target.value)}
+                    required
+                  >
+                    <option value="">-- Select Supplier --</option>
+                    {suppliers
+                      .filter(s => s.status === 'Active')
+                      .map(s => {
+                        const isMatch = s.category === mapProductToCategory(clickedAlert.product?.name);
+                        return (
+                          <option key={s.id || s._id} value={s.id || s._id}>
+                            {s.companyName} {isMatch ? '⭐ (Matches Category)' : `(${s.category})`} (Rating: {s.rating || '5.0'} ★)
+                          </option>
+                        );
+                      })
+                    }
+                  </select>
+                  {suppliers.filter(s => s.status === 'Active').length === 0 && (
+                    <span className="error-text">⚠️ No active suppliers registered in the system.</span>
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label>Order Reference ID</label>
+                  <input
+                    type="text"
+                    value={restockFormData.id}
+                    onChange={e => setRestockFormData(prev => ({ ...prev, id: e.target.value }))}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Branch Location</label>
+                  <input
+                    type="text"
+                    value={clickedAlert.branch?.name || "Global"}
+                    disabled
+                    style={{ background: 'rgba(0, 0, 0, 0.05)', color: '#64748b' }}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Order Quantity (units)</label>
+                  <input
+                    type="number"
+                    value={restockFormData.itemsCount}
+                    onChange={e => setRestockFormData(prev => ({ ...prev, itemsCount: parseInt(e.target.value) || 0 }))}
+                    min="1"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Estimated Cost (Rs.)</label>
+                  <input
+                    type="number"
+                    value={restockFormData.amount}
+                    onChange={e => setRestockFormData(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
+                    min="1"
+                    required
+                  />
+                </div>
+
+                <div className="form-group full-width">
+                  <label>Order Status</label>
+                  <select
+                    value={restockFormData.status}
+                    onChange={e => setRestockFormData(prev => ({ ...prev, status: e.target.value }))}
+                  >
+                    <option value="Pending">Pending (Not received yet)</option>
+                    <option value="Delivered">Delivered (Restock immediately)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-actions">
+                <button type="button" className="cancel-btn" onClick={() => setClickedAlert(null)}>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="submit-btn"
+                  disabled={!selectedRestockSupplierId}
+                  style={{
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)'
+                  }}
+                >
+                  ⚡ Record Restock Order
                 </button>
               </div>
             </form>
