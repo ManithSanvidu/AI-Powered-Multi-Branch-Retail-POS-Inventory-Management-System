@@ -35,6 +35,7 @@ const ReceiptPage = lazy(() => import('../pos/ReceiptPage'));
 const BranchListPage = lazy(() => import('../branches/BranchListPage'));
 const PromotionsPage = lazy(() => import('../promotions/PromotionsPage'));
 const UserListPage = lazy(() => import("../users/UserListPage")); 
+const SalesHistoryPage = lazy(() => import('../pos/SalesHistoryPage'));
 
 const ModuleLoading = () => (
   <div
@@ -737,9 +738,14 @@ case 'product-edit':
       />
     </Suspense>
   );
+  if (posView === 'history') return (
+  <Suspense fallback={<ModuleLoading />}>
+    <SalesHistoryPage onBack={() => setPosView('pos')} />
+  </Suspense>
+);
   return (
     <Suspense fallback={<ModuleLoading />}>
-      <POSPage onCheckout={() => setPosView('checkout')} />
+      <POSPage onCheckout={() => setPosView('checkout')} onViewHistory={() => setPosView('history')} />
     </Suspense>
   );
 
