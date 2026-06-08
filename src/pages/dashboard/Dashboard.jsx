@@ -600,7 +600,9 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
       case 'supplier-mgmt':
         return (
           <Suspense fallback={<ModuleLoading />}>
-            <SuppliersPage />
+            <InventoryProvider>
+              <SuppliersPage />
+            </InventoryProvider>
           </Suspense>
         );
       case 'product-mgmt':
