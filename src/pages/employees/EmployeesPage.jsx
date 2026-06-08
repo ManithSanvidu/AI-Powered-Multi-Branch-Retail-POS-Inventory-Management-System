@@ -3,7 +3,7 @@ import { useEmployees } from "../../context/EmployeeContext";
 import { useBranches } from "../../context/BranchContext";
 import { EmployeeCard, EmployeeDetailModal } from "../../components/employees/Employee";
 import SchedulePlanner from "../../components/employees/SchedulePlanner";
-import AttendanceSimulator from "../../components/employees/AttendanceSimulator";
+import { useAuth } from "../../context/AuthContext";
 
 export default function EmployeesPage() {
   const {
@@ -31,6 +31,7 @@ export default function EmployeesPage() {
   } = useEmployees();
 
   const { branches, fetchBranches } = useBranches();
+  const { user } = useAuth();
 
   const getTodayLocalDateStr = () => {
     const today = new Date();
@@ -209,11 +210,8 @@ export default function EmployeesPage() {
           error = "Hire date is required.";
         } else {
           const inputDate = new Date(value);
-          const minDate = new Date("2000-01-01");
-          const maxDate = new Date();
-          maxDate.setHours(23, 59, 59, 999);
-          if (isNaN(inputDate.getTime()) || inputDate < minDate || inputDate > maxDate) {
-            error = "Date must be between year 2000 and today.";
+          if (isNaN(inputDate.getTime())) {
+            error = "Please enter a valid date.";
           }
         }
         break;
@@ -288,11 +286,8 @@ export default function EmployeesPage() {
       errors.hireDate = "Hire date is required.";
     } else {
       const inputDate = new Date(formData.hireDate);
-      const minDate = new Date("2000-01-01");
-      const maxDate = new Date();
-      maxDate.setHours(23, 59, 59, 999);
-      if (isNaN(inputDate.getTime()) || inputDate < minDate || inputDate > maxDate) {
-        errors.hireDate = "Date must be between year 2000 and today.";
+      if (isNaN(inputDate.getTime())) {
+        errors.hireDate = "Please enter a valid date.";
       }
     }
     
@@ -764,167 +759,219 @@ export default function EmployeesPage() {
                 ⚠️ {attendanceError}
               </div>
             ) : (
-              <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+              (() => {
+                const currentEmployee = employees.find(e => e.email?.toLowerCase() === user?.email?.toLowerCase());
+                const todayStr = getTodayLocalDateStr();
+                const myTodayLog = currentEmployee 
+                  ? attendanceLogs.find(log => log.employeeId === currentEmployee._id && log.date === todayStr)
+                  : null;
 
-              
-              {/* Left Column: Attendance Stats & Log list */}
-              <div className="space-y-6">
-                
-                {/* Stats row */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm text-center">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Present Ratio</span>
-                    <span className="block text-2xl font-black text-slate-800 mt-1">
-                      {activeAttendanceLogs.length > 0
-                        ? `${Math.round((activeAttendanceLogs.filter(l => l.status === "Present").length / activeAttendanceLogs.length) * 100)}%`
-                        : "100%"}
-                    </span>
-                  </div>
-                  <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm text-center">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Late Records</span>
-                    <span className="block text-2xl font-black text-amber-600 mt-1">
-                      {activeAttendanceLogs.filter(l => l.status === "Late").length}
-                    </span>
-                  </div>
-                  <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm text-center">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Total Punchcards</span>
-                    <span className="block text-2xl font-black text-blue-600 mt-1">
-                      {activeAttendanceLogs.length}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Standalone Filters Card */}
-                <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-                  <div className="flex flex-col md:flex-row md:items-end gap-4 w-full">
+                return (
+                  <div className={currentEmployee ? "grid gap-6 lg:grid-cols-[1fr_360px]" : ""}>
                     
-                    {/* Search box */}
-                    <div className="flex flex-col relative flex-1">
-                      <div className="flex justify-between items-center mb-1.5">
-                        <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Search Staff</label>
-                        {attSearchError && (
-                          <span className="text-[9px] font-bold text-rose-500">{attSearchError}</span>
-                        )}
+                    {/* Left Column: Attendance Stats & Log list */}
+                    <div className="space-y-6">
+                      
+                      {/* Stats row */}
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm text-center">
+                          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Present Ratio</span>
+                          <span className="block text-2xl font-black text-slate-800 mt-1">
+                            {activeAttendanceLogs.length > 0
+                              ? `${Math.round((activeAttendanceLogs.filter(l => l.status === "Present").length / activeAttendanceLogs.length) * 100)}%`
+                              : "100%"}
+                          </span>
+                        </div>
+                        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm text-center">
+                          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Late Records</span>
+                          <span className="block text-2xl font-black text-amber-600 mt-1">
+                            {activeAttendanceLogs.filter(l => l.status === "Late").length}
+                          </span>
+                        </div>
+                        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm text-center">
+                          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Total Punchcards</span>
+                          <span className="block text-2xl font-black text-blue-600 mt-1">
+                            {activeAttendanceLogs.length}
+                          </span>
+                        </div>
                       </div>
-                      <input
-                        type="text"
-                        placeholder="Search by name or email..."
-                        value={attSearchQuery}
-                        onChange={handleSearchChange}
-                        className={`w-full rounded-xl border bg-slate-50 px-3.5 py-2.5 text-xs font-medium outline-none transition focus:ring-2 focus:ring-blue-100 ${attSearchError ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-blue-500"}`}
-                      />
-                    </div>
 
-                    {/* Status dropdown */}
-                    <div className="flex flex-col w-full md:w-48">
-                      <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5 block">Filter Verdict</label>
-                      <select
-                        value={attStatusFilter}
-                        onChange={(e) => setAttStatusFilter(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-blue-500"
-                      >
-                        <option value="All">All Verdicts</option>
-                        <option value="Present">Present</option>
-                        <option value="Late">Late</option>
-                        <option value="Absent">Absent</option>
-                        <option value="Leave">Leave</option>
-                      </select>
-                    </div>
+                      {/* Standalone Filters Card */}
+                      <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                        <div className="flex flex-col md:flex-row md:items-end gap-4 w-full">
+                          
+                          {/* Search box */}
+                          <div className="flex flex-col relative flex-1">
+                            <div className="flex justify-between items-center mb-1.5">
+                              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Search Staff</label>
+                              {attSearchError && (
+                                <span className="text-[9px] font-bold text-rose-500">{attSearchError}</span>
+                              )}
+                            </div>
+                            <input
+                              type="text"
+                              placeholder="Search by name or email..."
+                              value={attSearchQuery}
+                              onChange={handleSearchChange}
+                              className={`w-full rounded-xl border bg-slate-50 px-3.5 py-2.5 text-xs font-medium outline-none transition focus:ring-2 focus:ring-blue-100 ${attSearchError ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-blue-500"}`}
+                            />
+                          </div>
 
-                    {/* Date filter */}
-                    <div className="flex flex-col relative w-full md:w-48">
-                      <div className="flex justify-between items-center mb-1.5">
-                        <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Filter Date</label>
-                        {attDateError && (
-                          <span className="text-[9px] font-bold text-rose-500">{attDateError}</span>
-                        )}
+                          {/* Status dropdown */}
+                          <div className="flex flex-col w-full md:w-48">
+                            <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5 block">Filter Verdict</label>
+                            <select
+                              value={attStatusFilter}
+                              onChange={(e) => setAttStatusFilter(e.target.value)}
+                              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-blue-500"
+                            >
+                              <option value="All">All Verdicts</option>
+                              <option value="Present">Present</option>
+                              <option value="Late">Late</option>
+                              <option value="Absent">Absent</option>
+                              <option value="Leave">Leave</option>
+                            </select>
+                          </div>
+
+                          {/* Date filter */}
+                          <div className="flex flex-col relative w-full md:w-48">
+                            <div className="flex justify-between items-center mb-1.5">
+                              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Filter Date</label>
+                              {attDateError && (
+                                <span className="text-[9px] font-bold text-rose-500">{attDateError}</span>
+                              )}
+                            </div>
+                            <input
+                              type="date"
+                              value={attDateFilter}
+                              onChange={handleDateFilterChange}
+                              max={getTodayLocalDateStr()}
+                              className={`w-full rounded-xl border bg-slate-50 px-3.5 py-2.5 text-xs font-medium outline-none transition focus:ring-2 focus:ring-blue-100 ${attDateError ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-blue-500"}`}
+                            />
+                          </div>
+
+                          {/* Clear button */}
+                          {(attSearchQuery || attStatusFilter !== "All" || attDateFilter) && (
+                            <button
+                              onClick={() => {
+                                setAttSearchQuery("");
+                                setAttStatusFilter("All");
+                                setAttDateFilter("");
+                                setAttDateError("");
+                                setAttSearchError("");
+                              }}
+                              className="w-full md:w-auto rounded-xl border border-blue-100 bg-blue-50 text-blue-600 px-5 py-2.5 text-xs font-bold hover:bg-blue-100 transition whitespace-nowrap"
+                              title="Clear all filters"
+                            >
+                              Clear
+                            </button>
+                          )}
+
+                        </div>
                       </div>
-                      <input
-                        type="date"
-                        value={attDateFilter}
-                        onChange={handleDateFilterChange}
-                        max={getTodayLocalDateStr()}
-                        className={`w-full rounded-xl border bg-slate-50 px-3.5 py-2.5 text-xs font-medium outline-none transition focus:ring-2 focus:ring-blue-100 ${attDateError ? "border-rose-400 focus:border-rose-500" : "border-slate-200 focus:border-blue-500"}`}
-                      />
+
+                      {/* Table logs */}
+                      <div className="rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden">
+                        <div className="px-5 py-4 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                          <h3 className="text-sm font-extrabold text-slate-700">Attendance Log History</h3>
+                        </div>
+                        <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
+                          <table className="w-full text-left border-collapse text-xs">
+                            <thead>
+                              <tr className="bg-slate-50 border-b border-slate-100 text-slate-500 font-extrabold uppercase text-[10px]">
+                                <th className="px-5 py-3">Employee</th>
+                                <th className="px-4 py-3">Date</th>
+                                <th className="px-4 py-3">Clock In</th>
+                                <th className="px-4 py-3">Clock Out</th>
+                                <th className="px-5 py-3">Verdict</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {activeAttendanceLogs.length === 0 ? (
+                                <tr>
+                                  <td colSpan={5} className="p-8 text-center text-slate-400">No shift logs found.</td>
+                                </tr>
+                              ) : (
+                                activeAttendanceLogs.map((log) => {
+                                  const emp = employees.find(e => e._id === log.employeeId) || { firstName: "Deleted", lastName: "Staff", photo: "" };
+                                  return (
+                                    <tr key={log._id} className="hover:bg-slate-50/50">
+                                      <td className="px-5 py-3.5 flex items-center gap-2.5">
+                                        <img src={emp.photo} alt={emp.firstName} className="h-6 w-6 rounded-md object-cover" />
+                                        <span className="font-bold text-slate-700">{emp.firstName} {emp.lastName}</span>
+                                      </td>
+                                      <td className="px-4 py-3.5 font-medium text-slate-500">{log.date}</td>
+                                      <td className="px-4 py-3.5 font-bold text-emerald-600">{log.clockIn}</td>
+                                      <td className="px-4 py-3.5 font-bold text-slate-600">{log.clockOut || "On Shift"}</td>
+                                      <td className="px-5 py-3.5">
+                                        <span className={`px-2.5 py-0.5 rounded-full font-extrabold text-[9px] uppercase border ${log.status === "Present" ? "bg-green-50 text-green-700 border-green-200" : "bg-amber-50 text-amber-700 border-amber-200"}`}>
+                                          {log.status}
+                                        </span>
+                                      </td>
+                                    </tr>
+                                  );
+                                })
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
                     </div>
 
-                    {/* Clear button */}
-                    {(attSearchQuery || attStatusFilter !== "All" || attDateFilter) && (
-                      <button
-                        onClick={() => {
-                          setAttSearchQuery("");
-                          setAttStatusFilter("All");
-                          setAttDateFilter("");
-                          setAttDateError("");
-                          setAttSearchError("");
-                        }}
-                        className="w-full md:w-auto rounded-xl border border-blue-100 bg-blue-50 text-blue-600 px-5 py-2.5 text-xs font-bold hover:bg-blue-100 transition whitespace-nowrap"
-                        title="Clear all filters"
-                      >
-                        Clear
-                      </button>
+                    {/* Right Column: Personal Shift Details Card (Only if user is a registered employee) */}
+                    {currentEmployee && (
+                      <div>
+                        <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm space-y-4 text-left">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">My Shift Status</h3>
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase border ${
+                              currentEmployee.workingStatus === "Clocked In" 
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
+                                : "bg-slate-50 text-slate-600 border-slate-200"
+                            }`}>
+                              {currentEmployee.workingStatus || "Off Duty"}
+                            </span>
+                          </div>
+                          
+                          <div className="divide-y divide-slate-100 text-xs">
+                            <div className="py-2.5 flex justify-between items-center">
+                              <span className="text-slate-400 font-bold">Shift Date</span>
+                              <span className="font-extrabold text-slate-700">{todayStr}</span>
+                            </div>
+                            <div className="py-2.5 flex justify-between items-center">
+                              <span className="text-slate-400 font-bold">Punch In (Login)</span>
+                              <span className="font-extrabold text-emerald-600">
+                                {myTodayLog?.clockIn || "Not Clocked In"}
+                              </span>
+                            </div>
+                            <div className="py-2.5 flex justify-between items-center">
+                              <span className="text-slate-400 font-bold">Punch Out (Logout)</span>
+                              <span className="font-extrabold text-slate-600">
+                                {myTodayLog?.clockOut || (myTodayLog?.clockIn ? "Active on Shift" : "Not Clocked Out")}
+                              </span>
+                            </div>
+                            <div className="py-2.5 flex justify-between items-center">
+                              <span className="text-slate-400 font-bold">Shift Verdict</span>
+                              <span className="font-extrabold text-blue-600">
+                                {myTodayLog?.status || "Pending Punch"}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <p className="text-[10px] text-slate-400 font-semibold leading-relaxed mt-2">
+                            ℹ️ Your shift logs are recorded automatically when you log in and log out of the system.
+                          </p>
+                        </div>
+                      </div>
                     )}
 
                   </div>
-                </div>
-
-                {/* Table logs */}
-                <div className="rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden">
-                  <div className="px-5 py-4 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-                    <h3 className="text-sm font-extrabold text-slate-700">Attendance Log History</h3>
-                  </div>
-                  <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
-                    <table className="w-full text-left border-collapse text-xs">
-                      <thead>
-                        <tr className="bg-slate-50 border-b border-slate-100 text-slate-500 font-extrabold uppercase text-[10px]">
-                          <th className="px-5 py-3">Employee</th>
-                          <th className="px-4 py-3">Date</th>
-                          <th className="px-4 py-3">Clock In</th>
-                          <th className="px-4 py-3">Clock Out</th>
-                          <th className="px-5 py-3">Verdict</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {activeAttendanceLogs.length === 0 ? (
-                          <tr>
-                            <td colSpan={5} className="p-8 text-center text-slate-400">No shift logs found.</td>
-                          </tr>
-                        ) : (
-                          activeAttendanceLogs.map((log) => {
-                            const emp = employees.find(e => e._id === log.employeeId) || { firstName: "Deleted", lastName: "Staff", photo: "" };
-                            return (
-                              <tr key={log._id} className="hover:bg-slate-50/50">
-                                <td className="px-5 py-3.5 flex items-center gap-2.5">
-                                  <img src={emp.photo} alt={emp.firstName} className="h-6 w-6 rounded-md object-cover" />
-                                  <span className="font-bold text-slate-700">{emp.firstName} {emp.lastName}</span>
-                                </td>
-                                <td className="px-4 py-3.5 font-medium text-slate-500">{log.date}</td>
-                                <td className="px-4 py-3.5 font-bold text-emerald-600">{log.clockIn}</td>
-                                <td className="px-4 py-3.5 font-bold text-slate-600">{log.clockOut || "On Shift"}</td>
-                                <td className="px-5 py-3.5">
-                                  <span className={`px-2.5 py-0.5 rounded-full font-extrabold text-[9px] uppercase border ${log.status === "Present" ? "bg-green-50 text-green-700 border-green-200" : "bg-amber-50 text-amber-700 border-amber-200"}`}>
-                                    {log.status}
-                                  </span>
-                                </td>
-                              </tr>
-                            );
-                          })
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-              </div>
-
-              {/* Right Column: Attendance Simulator Widget */}
-              <div>
-                <AttendanceSimulator />
-              </div>
-
-            </div>
+                );
+              })()
+            )
           )
-        )}
+        }
 
           {/* TAB 4: PERFORMANCE */}
           {activeTab === "performance" && (
@@ -1278,7 +1325,6 @@ export default function EmployeesPage() {
                   <input
                     type="date"
                     required
-                    max={new Date().toLocaleDateString('en-CA')}
                     placeholder="e.g., Select hiring date"
                     value={formData.hireDate}
                     onChange={e => setFormData({ ...formData, hireDate: e.target.value })}
@@ -1508,6 +1554,20 @@ export default function EmployeesPage() {
           border-radius: 20px;
           padding: 20px;
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        }
+        @media (max-width: 1150px) {
+          .emp-tabs-container {
+            flex-direction: column;
+            width: 100% !important;
+            max-width: 100%;
+            gap: 6px;
+            box-sizing: border-box;
+          }
+          .emp-tab-button {
+            width: 100% !important;
+            justify-content: center;
+            padding: 11px 16px;
+          }
         }
         @media (max-width: 768px) {
           .emp-filters-card {

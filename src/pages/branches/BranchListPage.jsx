@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useBranches } from "../../context/BranchContext";
+import AddBranchModal from "./AddBranchModal";
+import EditBranchModal from "./EditBranchModal";
 
 function BranchListPage() {
   const {
@@ -12,7 +14,9 @@ function BranchListPage() {
   } = useBranches();
 
   const [message, setMessage] = useState("");
-  const [keyword, setKeyword] = useState("");
+const [keyword, setKeyword] = useState("");
+const [showAddModal, setShowAddModal] = useState(false);
+const [editTarget, setEditTarget] = useState(null);
 
   useEffect(() => {
     fetchBranches();
@@ -47,34 +51,36 @@ function BranchListPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
+    <>
+    <div className="rounded-[28px] p-6 min-h-[calc(100vh-100px)] shadow-lg text-slate-800"
+  style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.3)" }}>
       <div className="mx-auto max-w-7xl">
 
         {/* Header */}
-        <div className="mb-6 flex justify-between rounded-2xl bg-white p-6 shadow-sm">
+        <div className="mb-6 flex justify-between rounded-2xl p-6 shadow-sm" style={{ background: "rgba(255,255,255,0.6)", backdropFilter: "blur(10px)" }}>
           <div>
-            <h1 className="text-2xl font-bold">Branch Management</h1>
-            <p className="text-sm text-slate-500">
+            <h1 className="text-2xl font-bold text-gray-800">Branch Management</h1>
+            <p className="text-sm text-slate-700">
               Manage all branches
             </p>
           </div>
 
-          <Link
-            to="/branches/add"
-            className="bg-blue-600 text-white px-5 py-2 rounded-lg"
-          >
-            + Add Branch
-          </Link>
+          <button
+  onClick={() => setShowAddModal(true)}
+  className="bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold text-sm hover:bg-blue-700 transition"
+>
+  + Add Branch
+</button>
         </div>
 
         {/* Search */}
-        <div className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
+        <div className="mb-6 rounded-2xl p-6 shadow-sm" style={{ background: "rgba(255,255,255,0.6)", backdropFilter: "blur(10px)" }}>
           <form onSubmit={handleSearch} className="flex gap-3">
             <input
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               placeholder="Search branch..."
-              className="border px-4 py-2 rounded-lg w-full"
+              className="border px-4 py-2 rounded-lg w-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
 
             <button className="bg-blue-600 text-white px-4 rounded-lg">
@@ -99,9 +105,9 @@ function BranchListPage() {
         )}
 
         {/* Table */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="rounded-2xl shadow-sm overflow-hidden" style={{ background: "rgba(255,255,255,0.6)", backdropFilter: "blur(10px)" }}>
           <div className="p-4 border-b">
-            <h2 className="font-semibold">
+            <h2 className="font-semibold text-gray-800">
               Branch List ({branches.length})
             </h2>
           </div>
@@ -114,22 +120,22 @@ function BranchListPage() {
             <table className="w-full text-left">
               <thead className="bg-slate-100">
                 <tr>
-                  <th className="p-3">Name</th>
-                  <th className="p-3">Code</th>
-                  <th className="p-3">City</th>
-                  <th className="p-3">Contact</th>
-                  <th className="p-3">Status</th>
-                  <th className="p-3">Actions</th>
+                  <th className="p-3 text-gray-800">Name</th>
+                  <th className="p-3 text-gray-800">Code</th>
+                  <th className="p-3 text-gray-800">City</th>
+                  <th className="p-3 text-gray-800">Contact</th>
+                  <th className="p-3 text-gray-800">Status</th>
+                  <th className="p-3 text-gray-800">Actions</th>
                 </tr>
               </thead>
 
               <tbody>
                 {branches.map((b) => (
                   <tr key={b._id} className="border-t">
-                    <td className="p-3">{b.name}</td>
-                    <td className="p-3">{b.code || "N/A"}</td>
-                    <td className="p-3">{b.city || "N/A"}</td>
-                    <td className="p-3">{b.contactNumber || "N/A"}</td>
+                    <td className="p-3 text-gray-800">{b.name}</td>
+                    <td className="p-3 text-gray-800">{b.code || "N/A"}</td>
+                    <td className="p-3 text-gray-800">{b.city || "N/A"}</td>
+                    <td className="p-3 text-gray-800">{b.contactNumber || "N/A"}</td>
 
                     <td className="p-3">
                       {b.isActive ? (
@@ -147,12 +153,9 @@ function BranchListPage() {
                         View
                       </Link>
 
-                      <Link
-                        to={`/branches/edit/${b._id}`}
-                        className="text-slate-600"
-                      >
-                        Edit
-                      </Link>
+                      <button onClick={() => setEditTarget(b._id)} className="text-slate-600">
+  Edit
+</button>
 
                       <button
                         onClick={() => handleDelete(b._id)}
@@ -170,6 +173,23 @@ function BranchListPage() {
 
       </div>
     </div>
+
+    {showAddModal && (
+      <AddBranchModal
+        onClose={() => setShowAddModal(false)}
+        onSuccess={(msg) => { setMessage(msg); fetchBranches(); }}
+      />
+    )}
+
+    {editTarget && (
+      <EditBranchModal
+        branchId={editTarget}
+        onClose={() => setEditTarget(null)}
+        onSuccess={(msg) => { setMessage(msg); fetchBranches(); }}
+      />
+    )}
+
+  </>
   );
 }
 
