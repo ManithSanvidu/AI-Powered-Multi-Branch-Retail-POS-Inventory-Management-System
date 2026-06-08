@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useInventory } from '../../context/InventoryContext';
 import {
   getAllSuppliers,
   addSupplier,
@@ -73,6 +74,26 @@ const SuppliersPage = () => {
   const { user } = useAuth();
   const userRole = useMemo(() => normalizeRole(user?.role), [user]);
   const isAdminOrManager = useMemo(() => userRole === 'admin' || userRole === 'manager', [userRole]);
+
+  const { alerts = [], refreshAll } = useInventory();
+
+  const mapProductToCategory = (productName) => {
+    const name = String(productName || '').toLowerCase();
+    if (name.includes('rice') || name.includes('coconut oil') || name.includes('grains')) return 'Grains & Rice';
+    if (name.includes('tea') || name.includes('beverage') || name.includes('coffee')) return 'Beverages';
+    if (name.includes('milk') || name.includes('dairy') || name.includes('cheese') || name.includes('butter')) return 'Dairy Products';
+    if (name.includes('spice') || name.includes('condiment') || name.includes('curry') || name.includes('cardamom') || name.includes('cinnamon')) return 'Spices & Condiments';
+    if (name.includes('pack') || name.includes('carton') || name.includes('bag')) return 'Packaging Materials';
+    if (name.includes('vegetable') || name.includes('fruit') || name.includes('fresh')) return 'Fresh Produce';
+    if (name.includes('meat') || name.includes('fish') || name.includes('seafood') || name.includes('chicken')) return 'Meat & Seafood';
+    return 'Other';
+  };
+
+  useEffect(() => {
+    if (refreshAll) {
+      refreshAll("", false);
+    }
+  }, [refreshAll]);
 
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -505,6 +526,24 @@ const SuppliersPage = () => {
     setIsTransactionModalOpen(true);
   };
 
+  // Quick Restock helper to prepopulate transaction modal
+  const handleQuickRestock = (alert, supplier) => {
+    const reorderLevel = alert.product?.reorderLevel || 50;
+    const currentQty = alert.quantity || 0;
+    const suggestedUnits = Math.max(reorderLevel * 2 - currentQty, 50);
+    const costPrice = alert.product?.costPrice || 100;
+    const computedCost = suggestedUnits * costPrice;
+
+    setTransactionFormData({
+      id: `TXN-${Math.floor(100 + Math.random() * 900)}`,
+      date: new Date().toISOString().substring(0, 10),
+      itemsCount: suggestedUnits,
+      amount: computedCost,
+      status: 'Pending'
+    });
+    setIsTransactionModalOpen(true);
+  };
+
   // Submit Transaction Log
   const handleTransactionSubmit = async (e) => {
     e.preventDefault();
@@ -649,79 +688,92 @@ const SuppliersPage = () => {
             </div>
           ) : (
             <div className="suppliers-grid">
-              {sortedSuppliers.map(supplier => (
-                <div
-                  key={supplier.id || supplier._id}
-                  className={`supplier-item-card bg-glass hover-scale ${viewingSupplier?.id === (supplier.id || supplier._id) || viewingSupplier?._id === (supplier.id || supplier._id) ? 'selected' : ''}`}
-                  onClick={() => {
-                    setViewingSupplier(supplier);
-                    setActiveDetailTab('performance');
-                  }}
-                >
-                  <div className="card-top">
-                    <div className="supplier-icon-placeholder">🏢</div>
-                    <div className="title-area">
-                      <span className="supplier-id">{supplier.id || supplier._id}</span>
-                      <h4 className="supplier-name">{supplier.companyName}</h4>
-                      <span className="category-badge">{supplier.category}</span>
-                    </div>
-                    <span className={`status-pill ${supplier.status.toLowerCase().replace(' ', '-')}`}>
-                      {supplier.status}
-                    </span>
-                  </div>
-
-                  <div className="card-info">
-                    <div className="info-row">
-                      <span>👤 Contact:</span>
-                      <strong>{supplier.contactPerson}</strong>
-                    </div>
-                    <div className="info-row">
-                      <span>📞 Phone:</span>
-                      <span>{supplier.phone}</span>
-                    </div>
-                    <div className="info-row">
-                      <span>⭐ Rating:</span>
-                      <div className="star-rating">
-                        <span className="stars">★</span> {(supplier.rating || 5.0).toFixed(1)}
+              {sortedSuppliers.map(supplier => {
+                const supplierAlerts = alerts.filter(
+                  alert => mapProductToCategory(alert.product?.name) === supplier.category
+                );
+                const hasAlerts = supplierAlerts.length > 0;
+                return (
+                  <div
+                    key={supplier.id || supplier._id}
+                    className={`supplier-item-card bg-glass hover-scale ${hasAlerts ? 'card-has-alerts' : ''} ${viewingSupplier?.id === (supplier.id || supplier._id) || viewingSupplier?._id === (supplier.id || supplier._id) ? 'selected' : ''}`}
+                    onClick={() => {
+                      setViewingSupplier(supplier);
+                      setActiveDetailTab(hasAlerts ? 'alerts' : 'performance');
+                    }}
+                  >
+                    <div className="card-top">
+                      <div className="supplier-icon-placeholder">🏢</div>
+                      <div className="title-area">
+                        <span className="supplier-id">{supplier.id || supplier._id}</span>
+                        <h4 className="supplier-name">{supplier.companyName}</h4>
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <span className="category-badge">{supplier.category}</span>
+                          {hasAlerts && (
+                            <span className="alert-badge pulsing-alert">
+                              ⚠️ {supplierAlerts.length} Shortage{supplierAlerts.length > 1 ? 's' : ''}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="card-mini-metrics">
-                    <div className="mini-stat">
-                      <span className="label">Delivery</span>
-                      <span className={`value ${supplier.performance?.onTimeDelivery >= 90 ? 'good' : supplier.performance?.onTimeDelivery >= 80 ? 'warn' : 'bad'}`}>
-                        {supplier.performance?.onTimeDelivery || 95}%
+                      <span className={`status-pill ${supplier.status.toLowerCase().replace(' ', '-')}`}>
+                        {supplier.status}
                       </span>
                     </div>
-                    <div className="mini-stat">
-                      <span className="label">Spend</span>
-                      <span className="value">Rs. {(supplier.totalSpend || 0).toLocaleString()}</span>
-                    </div>
-                  </div>
 
-                  {isAdminOrManager && (
-                    <div className="card-actions">
-                      <button className="edit-icon-btn" onClick={(e) => handleOpenEditForm(supplier, e)} title="Edit Supplier Info">
-                        ✏️ Edit
-                      </button>
-                      <button
-                        className="edit-icon-btn delete-btn"
-                        onClick={(e) => handleDeleteSupplier(supplier.id || supplier._id, e)}
-                        title="Delete Supplier"
-                      >
-                        🗑️ Delete
-                      </button>
-                      <button
-                        className={`status-toggle-btn ${supplier.status === 'Active' ? 'deactivate' : 'activate'}`}
-                        onClick={(e) => handleToggleStatus(supplier.id || supplier._id, supplier.status, e)}
-                      >
-                        {supplier.status === 'Active' ? '⏸️ Suspend' : '▶️ Activate'}
-                      </button>
+                    <div className="card-info">
+                      <div className="info-row">
+                        <span>👤 Contact:</span>
+                        <strong>{supplier.contactPerson}</strong>
+                      </div>
+                      <div className="info-row">
+                        <span>📞 Phone:</span>
+                        <span>{supplier.phone}</span>
+                      </div>
+                      <div className="info-row">
+                        <span>⭐ Rating:</span>
+                        <div className="star-rating">
+                          <span className="stars">★</span> {(supplier.rating || 5.0).toFixed(1)}
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
-              ))}
+
+                    <div className="card-mini-metrics">
+                      <div className="mini-stat">
+                        <span className="label">Delivery</span>
+                        <span className={`value ${supplier.performance?.onTimeDelivery >= 90 ? 'good' : supplier.performance?.onTimeDelivery >= 80 ? 'warn' : 'bad'}`}>
+                          {supplier.performance?.onTimeDelivery || 95}%
+                        </span>
+                      </div>
+                      <div className="mini-stat">
+                        <span className="label">Spend</span>
+                        <span className="value">Rs. {(supplier.totalSpend || 0).toLocaleString()}</span>
+                      </div>
+                    </div>
+
+                    {isAdminOrManager && (
+                      <div className="card-actions">
+                        <button className="edit-icon-btn" onClick={(e) => handleOpenEditForm(supplier, e)} title="Edit Supplier Info">
+                          ✏️ Edit
+                        </button>
+                        <button
+                          className="edit-icon-btn delete-btn"
+                          onClick={(e) => handleDeleteSupplier(supplier.id || supplier._id, e)}
+                          title="Delete Supplier"
+                        >
+                          🗑️ Delete
+                        </button>
+                        <button
+                          className={`status-toggle-btn ${supplier.status === 'Active' ? 'deactivate' : 'activate'}`}
+                          onClick={(e) => handleToggleStatus(supplier.id || supplier._id, supplier.status, e)}
+                        >
+                          {supplier.status === 'Active' ? '⏸️ Suspend' : '▶️ Activate'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -763,6 +815,21 @@ const SuppliersPage = () => {
                   onClick={() => setActiveDetailTab('history')}
                 >
                   ⏳ Timeline ({procurementHistory?.history?.length || 0})
+                </button>
+                <button
+                  className={`tab-btn ${activeDetailTab === 'alerts' ? 'active' : ''}`}
+                  onClick={() => setActiveDetailTab('alerts')}
+                  style={{ position: 'relative' }}
+                >
+                  ⚠️ Restock Alerts
+                  {(() => {
+                    const count = alerts.filter(
+                      a => mapProductToCategory(a.product?.name) === viewingSupplier.category
+                    ).length;
+                    return count > 0 ? (
+                      <span className="tab-badge-count">{count}</span>
+                    ) : null;
+                  })()}
                 </button>
               </div>
 
@@ -940,6 +1007,74 @@ const SuppliersPage = () => {
                           </tbody>
                         </table>
                       </div>
+                    </div>
+                  )}
+
+                  {activeDetailTab === 'alerts' && (
+                    <div className="alerts-tab-content">
+                      {(() => {
+                        const supplierAlerts = alerts.filter(
+                          alert => mapProductToCategory(alert.product?.name) === viewingSupplier.category
+                        );
+                        if (supplierAlerts.length === 0) {
+                          return (
+                            <div className="empty-state">
+                              <span className="empty-icon">✅</span>
+                              <p className="empty-title">Stock Levels Healthy</p>
+                              <p className="empty-subtitle">All products in the &ldquo;{viewingSupplier.category}&rdquo; category supplied by this vendor are currently above reorder levels.</p>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div className="restock-alerts-container">
+                            <h4 className="section-subtitle" style={{ fontSize: '13px', fontWeight: '700', marginBottom: '16px', color: '#475569' }}>
+                              ⚠️ Stock shortages in &ldquo;{viewingSupplier.category}&rdquo; category:
+                            </h4>
+                            <div className="alerts-list" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                              {supplierAlerts.map(alert => (
+                                <div
+                                  key={alert._id}
+                                  className="restock-alert-card bg-glass"
+                                  style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    padding: '16px',
+                                    borderRadius: '12px',
+                                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                                    background: 'rgba(254, 242, 242, 0.5)'
+                                  }}
+                                >
+                                  <div className="alert-card-info" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                    <div className="alert-product-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                      <strong style={{ fontSize: '13px', color: '#0f172a' }}>📦 {alert.product?.name || "Unknown Product"}</strong>
+                                      <span className="branch-label" style={{ fontSize: '10px', background: 'rgba(15, 23, 42, 0.05)', color: '#475569', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>📍 {alert.branch?.name || "Global"}</span>
+                                    </div>
+                                    <div className="alert-stock-details" style={{ display: 'flex', gap: '12px', fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
+                                      <span className="current-stock-label">Current Stock: <strong style={{ color: '#dc2626', fontWeight: '800' }}>{alert.quantity}</strong></span>
+                                      <span className="reorder-label">Reorder Limit: <strong style={{ color: '#1e293b' }}>{alert.product?.reorderLevel || 0}</strong></span>
+                                    </div>
+                                  </div>
+                                  <button
+                                    className="register-btn restock-action-btn"
+                                    onClick={() => handleQuickRestock(alert, viewingSupplier)}
+                                    style={{
+                                      height: '32px',
+                                      padding: '0 12px',
+                                      fontSize: '11px',
+                                      background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                                      boxShadow: '0 4px 12px rgba(239, 68, 68, 0.2)'
+                                    }}
+                                  >
+                                    ⚡ Quick Restock
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
@@ -2170,6 +2305,52 @@ const SuppliersPage = () => {
         .empty-icon { font-size: 40px; margin-bottom: 12px; }
         .empty-title { font-size: 14px; font-weight: 700; color: #334155; }
         .empty-subtitle { font-size: 12px; color: #64748b; margin-bottom: 14px; }
+
+        /* Custom alerts styling */
+        .alert-badge {
+          font-size: 10px;
+          background: rgba(239, 68, 68, 0.08);
+          color: #ef4444;
+          padding: 2px 6px;
+          border-radius: 6px;
+          font-weight: 700;
+          display: inline-flex;
+          align-items: center;
+          gap: 2px;
+          border: 1px solid rgba(239, 68, 68, 0.15);
+        }
+        .pulsing-alert {
+          animation: pulse-border 2s infinite ease-in-out;
+        }
+        @keyframes pulse-border {
+          0%, 100% {
+            background-color: rgba(239, 68, 68, 0.08);
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.2);
+          }
+          50% {
+            background-color: rgba(239, 68, 68, 0.18);
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0);
+          }
+        }
+        .card-has-alerts {
+          border-left: 4px solid #ef4444 !important;
+        }
+        .tab-badge-count {
+          position: absolute;
+          top: -6px;
+          right: -12px;
+          background: #ef4444;
+          color: white;
+          border-radius: 50%;
+          width: 16px;
+          height: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 9px;
+          font-weight: 800;
+          box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
+        }
       `}</style>
     </div>
   );
