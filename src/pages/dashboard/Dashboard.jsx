@@ -11,7 +11,8 @@ import PersonalizedRecommendations from '../../components/dashboard/Personalized
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
 import { socketService } from '../../services/socketService';
-const WarehouseList = lazy(() => import('../warehouse/WarehouseList'));
+const WarehouseList = lazy(() => import('../Warehouse/WarehouseList'));
+const WarehouseDetail = lazy(() => import('../Warehouse/WarehouseDetail'));
 import { useNavigate } from 'react-router-dom';
 import Chatbot from '../../components/ai/Chatbot/Chatbot';
 import AIIntelligenceHub from '../../components/ai/AIIntelligenceHub';
@@ -152,6 +153,7 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
   const [greeting, setGreeting] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
   const [navExpanded, setNavExpanded] = useState(true);
+  const [warehouseDetailId, setWarehouseDetailId] = useState(null);
   const [activeModule, setActiveModule] = useState(() => {
     return sessionStorage.getItem('dashboard_activeModule') || 'dashboard';
   });
@@ -284,6 +286,11 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
       setActiveModule('product-mgmt');
     } else {
       setActiveModule(moduleId);
+    }
+
+    // Reset warehouse detail when navigating away or back to list
+    if (moduleId === 'warehouse-mgmt') {
+      setWarehouseDetailId(null);
     }
 
     setVisibleModule(moduleId);
@@ -705,9 +712,21 @@ case 'product-edit':
           </InventoryProvider>
         );
       case 'warehouse-mgmt':
+        if (warehouseDetailId) {
+          return (
+            <Suspense fallback={<ModuleLoading />}>
+              <WarehouseDetail
+                warehouseId={warehouseDetailId}
+                onBack={() => setWarehouseDetailId(null)}
+              />
+            </Suspense>
+          );
+        }
         return (
           <Suspense fallback={<ModuleLoading />}>
-            <WarehouseList />
+            <WarehouseList
+              onView={(id) => setWarehouseDetailId(id)}
+            />
           </Suspense>
         );
       case 'purchase-order':
