@@ -44,8 +44,6 @@ import WarehouseDetail from './pages/Warehouse/WarehouseDetail';
 
 // Branch Pages
 import BranchListPage from "./pages/branches/BranchListPage";
-import AddBranchPage from "./pages/branches/AddBranchPage";
-import EditBranchPage from "./pages/branches/EditBranchPage";
 import BranchDetailsPage from "./pages/branches/BranchDetailsPage";
 
 // Customer Pages
@@ -183,8 +181,6 @@ function App() {
 
                             {/* Branch Routes */}
                             <Route path="/branches" element={<BranchListPage />} />
-                            <Route path="/branches/add" element={<AddBranchPage />} />
-                            <Route path="/branches/edit/:id" element={<EditBranchPage />} />
                             <Route path="/branches/:id" element={<BranchDetailsPage />} />
                             
                             {/* Customer Routes */}
