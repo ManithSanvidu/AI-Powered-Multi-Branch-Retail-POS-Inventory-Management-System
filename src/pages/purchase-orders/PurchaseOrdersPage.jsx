@@ -16,6 +16,7 @@ import {
   FiUsers,
   FiXCircle,
 } from 'react-icons/fi'
+import api from '../../api/axiosInstance'
 
 const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
 const API_BASE_URL = rawApiBaseUrl.endsWith('/api')
@@ -78,18 +79,6 @@ const initialPurchaseOrders = [
   },
 ]
 
-const reorderRecommendations = [
-  { item: 'Premium Basmati Rice', branch: 'Colombo Central', stock: 50, reorder: 500, confidence: '96%', supplier: 'BlueLine Wholesale' },
-  { item: 'Organic Coconut Oil', branch: 'Kandy City', stock: 23, reorder: 200, confidence: '93%', supplier: 'Prime Foods Lanka' },
-  { item: 'Milk Powder 400g', branch: 'Negombo', stock: 42, reorder: 150, confidence: '91%', supplier: 'Metro Retail Supply' },
-]
-
-const supplierScorecards = [
-  { name: 'BlueLine Wholesale', score: 96, metric: 'On-time delivery', open: 12 },
-  { name: 'NorthStar Distributors', score: 91, metric: 'Best price match', open: 8 },
-  { name: 'Prime Foods Lanka', score: 86, metric: 'Fresh-stock reliability', open: 5 },
-]
-
 const statuses = ['All', 'Pending', 'Approved', 'Received', 'Rejected']
 
 const cn = (...classes) => classes.filter(Boolean).join(' ')
@@ -129,6 +118,12 @@ const formatAmount = (amount) =>
     maximumFractionDigits: 2,
   })}`
 
+const formatPercent = (value, fallback = 0) => {
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric)) return `${fallback}%`
+  return `${Math.round(numeric)}%`
+}
+
 const normalizeStatus = (status) => {
   const normalized = String(status || 'Pending').trim().toUpperCase()
   if (normalized === 'APPROVED') return 'Approved'
@@ -156,10 +151,58 @@ const normalizeOrder = (order) => ({
   owner: order.owner ?? 'Procurement Team',
 })
 
+const normalizeRecommendation = (recommendation) => ({
+  id: recommendation.id,
+  item: recommendation.product?.name ?? 'Unknown product',
+  branch: recommendation.branch?.name ?? 'Unknown branch',
+  stock: Number(recommendation.currentStock ?? 0),
+  reorder: Number(recommendation.recommendedQuantity ?? 0),
+  confidence: formatPercent(
+    recommendation.avgDailySales > 0
+      ? Math.min(99, Math.max(55, (recommendation.stock <= recommendation.reorderPoint ? 90 : 72) + recommendation.avgDailySales))
+      : recommendation.lowStock
+        ? 88
+        : 70,
+    70,
+  ),
+  supplier: recommendation.product?.supplierName ?? recommendation.supplierName ?? 'Assigned supplier pending',
+  urgency: recommendation.urgency ?? 'MEDIUM',
+})
+
+const normalizeSupplierScorecard = (supplier) => ({
+  id: supplier.id,
+  name: supplier.companyName ?? 'Unknown supplier',
+  score: Number(supplier.performance?.onTimeDelivery ?? supplier.rating ?? 0),
+  metric:
+    Number(supplier.performance?.onTimeDelivery ?? 0) >= 90
+      ? 'On-time delivery'
+      : Number(supplier.performance?.qualityScore ?? 0) >= 90
+        ? 'Quality score'
+        : 'Supplier rating',
+  open: Number(supplier.totalSpend ?? 0),
+  purchaseOrders: Number(supplier.purchaseOrderCount ?? supplier.metrics?.purchaseOrderCount ?? 0),
+})
+
+const getWorkflowStage = (status) => {
+  switch (status) {
+    case 'Rejected':
+      return 2
+    case 'Approved':
+      return 3
+    case 'Received':
+      return 4
+    case 'Pending':
+    default:
+      return 2
+  }
+}
+
 function PurchaseOrdersPage() {
   const [purchaseOrders, setPurchaseOrders] = useState(initialPurchaseOrders)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState(initialPurchaseOrders[0])
+  const [reorderRecommendations, setReorderRecommendations] = useState([])
+  const [supplierScorecards, setSupplierScorecards] = useState([])
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
   const [lastSync, setLastSync] = useState('Ready')
@@ -198,9 +241,39 @@ function PurchaseOrdersPage() {
     }
   }, [])
 
+  const loadInsightCards = useCallback(async () => {
+    try {
+      const [reorderResult, supplierResult] = await Promise.all([
+        api.get('/reorders/suggestions?limit=3&includeAll=true'),
+        api.get('/suppliers/reports/performance'),
+      ])
+
+      const reorderData = Array.isArray(reorderResult.data?.data) ? reorderResult.data.data : []
+      const supplierData = Array.isArray(supplierResult.data?.data) ? supplierResult.data.data : []
+
+      setReorderRecommendations(reorderData.map(normalizeRecommendation))
+      setSupplierScorecards(
+        supplierData
+          .map(normalizeSupplierScorecard)
+          .sort((a, b) => {
+            if (b.score !== a.score) return b.score - a.score
+            return b.purchaseOrders - a.purchaseOrders
+          })
+          .slice(0, 3),
+      )
+    } catch {
+      setReorderRecommendations([])
+      setSupplierScorecards([])
+    }
+  }, [])
+
   useEffect(() => {
     loadPurchaseOrders()
   }, [loadPurchaseOrders])
+
+  useEffect(() => {
+    loadInsightCards()
+  }, [loadInsightCards])
 
   const filteredOrders = useMemo(() => {
     const search = query.trim().toLowerCase()
@@ -228,7 +301,38 @@ function PurchaseOrdersPage() {
       { label: 'AI Reorder Alerts', value: reorderRecommendations.length.toString(), trend: 'Low-stock suggestions', icon: FiAlertTriangle, tone: 'danger' },
       { label: 'High Priority', value: highPriority.toString(), trend: 'Expedite before stock-out', icon: FiTruck, tone: 'info' },
     ]
-  }, [purchaseOrders])
+  }, [purchaseOrders, reorderRecommendations.length])
+
+  const workflowSteps = useMemo(() => {
+    const currentStage = getWorkflowStage(selectedOrder?.status)
+    const baseSteps = [
+      {
+        title: 'Draft created',
+        detail: selectedOrder?.date ? `Order created on ${selectedOrder.date}` : 'Tracked in the order audit trail',
+      },
+      {
+        title: 'Manager review',
+        detail: selectedOrder?.owner ? `Current owner: ${selectedOrder.owner}` : 'Tracked in the order audit trail',
+      },
+      {
+        title: 'Approval decision',
+        detail: selectedOrder?.status ? `Current status: ${selectedOrder.status}` : 'Tracked in the order audit trail',
+      },
+      {
+        title: 'Goods receiving',
+        detail:
+          selectedOrder?.status === 'Received'
+            ? 'Inventory updates confirmed for this order'
+            : 'Inventory updates after receiving notes are confirmed',
+      },
+    ]
+
+    return baseSteps.map((step, index) => ({
+      ...step,
+      number: index + 1,
+      active: index + 1 <= currentStage,
+    }))
+  }, [selectedOrder])
 
   const updateOrderStatus = async (order, status) => {
     if (!order.id) {
@@ -506,13 +610,17 @@ function PurchaseOrdersPage() {
               <FiAlertTriangle className="size-[26px] text-[#0a62df]" aria-hidden="true" />
             </div>
             <div className="grid gap-3">
-              {reorderRecommendations.map((item) => (
+              {reorderRecommendations.length > 0 ? reorderRecommendations.map((item) => (
                 <div className="rounded-[14px] border border-[#e4edf7] bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(245,249,255,0.98))] p-4" key={item.item}>
                   <strong className="block font-black text-[#101b31]">{item.item}</strong>
                   <span className="mt-1.5 block text-[13px] font-black text-[#b45309]">{item.branch} stock: {item.stock} units</span>
                   <small className="mt-1 block leading-snug text-[#637083]">Suggest {item.reorder} units from {item.supplier} - {item.confidence} confidence</small>
                 </div>
-              ))}
+              )) : (
+                <div className="rounded-[14px] border border-dashed border-[#d4e2f4] bg-[#f8fbff] p-4 text-sm font-bold text-[#637083]">
+                  No live reorder suggestions available from MongoDB right now.
+                </div>
+              )}
             </div>
           </article>
         </aside>
@@ -528,13 +636,17 @@ function PurchaseOrdersPage() {
             <FiUsers className="size-[26px] text-[#0a62df]" aria-hidden="true" />
           </div>
           <div className="grid gap-3">
-            {supplierScorecards.map((supplier) => (
+            {supplierScorecards.length > 0 ? supplierScorecards.map((supplier) => (
               <div className="rounded-[14px] border border-[#e3edf8] bg-[#f8fbff] p-4" key={supplier.name}>
                 <span className="block font-black text-[#101b31]">{supplier.name}</span>
                 <strong className="mt-1.5 block text-sm font-bold text-[#0a62df]">{supplier.score}% {supplier.metric}</strong>
-                <small className="mt-1 block leading-snug text-[#637083]">{supplier.open} active purchase orders</small>
+                <small className="mt-1 block leading-snug text-[#637083]">{supplier.purchaseOrders} active purchase orders</small>
               </div>
-            ))}
+            )) : (
+              <div className="rounded-[14px] border border-dashed border-[#d4e2f4] bg-[#f8fbff] p-4 text-sm font-bold text-[#637083]">
+                No live supplier scorecards available from MongoDB right now.
+              </div>
+            )}
           </div>
         </article>
 
@@ -547,12 +659,12 @@ function PurchaseOrdersPage() {
             <FiShield className="size-[26px] text-[#0a62df]" aria-hidden="true" />
           </div>
           <div className="grid gap-3.5">
-            {['Draft created', 'Manager review', 'Approval decision', 'Goods receiving'].map((step, index) => (
-              <div className="grid grid-cols-[38px_minmax(0,1fr)] items-start gap-3" key={step}>
-                <span className={cn('grid size-[38px] place-items-center rounded-full font-black', index < 3 ? 'bg-[#0a62df] text-white' : 'bg-[#eef4fb] text-[#67768b]')}>{index + 1}</span>
+            {workflowSteps.map((step) => (
+              <div className="grid grid-cols-[38px_minmax(0,1fr)] items-start gap-3" key={step.title}>
+                <span className={cn('grid size-[38px] place-items-center rounded-full font-black', step.active ? 'bg-[#0a62df] text-white' : 'bg-[#eef4fb] text-[#67768b]')}>{step.number}</span>
                 <div>
-                  <strong className="block text-[15px] font-bold text-[#101b31]">{step}</strong>
-                  <small className="mt-1 block leading-snug text-[#637083]">{index === 3 ? 'Inventory updates after receiving notes are confirmed' : 'Tracked in the order audit trail'}</small>
+                  <strong className="block text-[15px] font-bold text-[#101b31]">{step.title}</strong>
+                  <small className="mt-1 block leading-snug text-[#637083]">{step.detail}</small>
                 </div>
               </div>
             ))}
