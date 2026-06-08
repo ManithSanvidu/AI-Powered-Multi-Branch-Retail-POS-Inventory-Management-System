@@ -53,8 +53,8 @@ function BranchListPage() {
         {/* Header */}
         <div className="mb-6 flex justify-between rounded-2xl bg-white p-6 shadow-sm">
           <div>
-            <h1 className="text-2xl font-bold">Branch Management</h1>
-            <p className="text-sm text-slate-500">
+            <h1 className="text-2xl font-bold text-gray-800">Branch Management</h1>
+            <p className="text-sm text-slate-700">
               Manage all branches
             </p>
           </div>
@@ -74,7 +74,7 @@ function BranchListPage() {
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               placeholder="Search branch..."
-              className="border px-4 py-2 rounded-lg w-full"
+              className="border px-4 py-2 rounded-lg w-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
 
             <button className="bg-blue-600 text-white px-4 rounded-lg">
@@ -101,7 +101,7 @@ function BranchListPage() {
         {/* Table */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <div className="p-4 border-b">
-            <h2 className="font-semibold">
+            <h2 className="font-semibold text-gray-800">
               Branch List ({branches.length})
             </h2>
           </div>
@@ -114,22 +114,22 @@ function BranchListPage() {
             <table className="w-full text-left">
               <thead className="bg-slate-100">
                 <tr>
-                  <th className="p-3">Name</th>
-                  <th className="p-3">Code</th>
-                  <th className="p-3">City</th>
-                  <th className="p-3">Contact</th>
-                  <th className="p-3">Status</th>
-                  <th className="p-3">Actions</th>
+                  <th className="p-3 text-gray-800">Name</th>
+                  <th className="p-3 text-gray-800">Code</th>
+                  <th className="p-3 text-gray-800">City</th>
+                  <th className="p-3 text-gray-800">Contact</th>
+                  <th className="p-3 text-gray-800">Status</th>
+                  <th className="p-3 text-gray-800">Actions</th>
                 </tr>
               </thead>
 
               <tbody>
                 {branches.map((b) => (
                   <tr key={b._id} className="border-t">
-                    <td className="p-3">{b.name}</td>
-                    <td className="p-3">{b.code || "N/A"}</td>
-                    <td className="p-3">{b.city || "N/A"}</td>
-                    <td className="p-3">{b.contactNumber || "N/A"}</td>
+                    <td className="p-3 text-gray-800">{b.name}</td>
+                    <td className="p-3 text-gray-800">{b.code || "N/A"}</td>
+                    <td className="p-3 text-gray-800">{b.city || "N/A"}</td>
+                    <td className="p-3 text-gray-800">{b.contactNumber || "N/A"}</td>
 
                     <td className="p-3">
                       {b.isActive ? (
