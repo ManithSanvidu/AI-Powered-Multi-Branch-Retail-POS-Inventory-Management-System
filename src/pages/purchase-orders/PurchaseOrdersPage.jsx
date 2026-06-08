@@ -17,8 +17,11 @@ import {
   FiXCircle,
 } from 'react-icons/fi'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
-const API_URL = `${API_BASE_URL}/api/purchase-orders`
+const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
+const API_BASE_URL = rawApiBaseUrl.endsWith('/api')
+  ? rawApiBaseUrl
+  : `${rawApiBaseUrl.replace(/\/$/, '')}/api`
+const API_URL = `${API_BASE_URL}/purchase-orders`
 
 const initialPurchaseOrders = [
   {
@@ -126,17 +129,29 @@ const formatAmount = (amount) =>
     maximumFractionDigits: 2,
   })}`
 
+const normalizeStatus = (status) => {
+  const normalized = String(status || 'Pending').trim().toUpperCase()
+  if (normalized === 'APPROVED') return 'Approved'
+  if (normalized === 'REJECTED') return 'Rejected'
+  if (normalized === 'RECEIVED') return 'Received'
+  if (normalized === 'CANCELLED') return 'Rejected'
+  return 'Pending'
+}
+
 const normalizeOrder = (order) => ({
   id: order.id ?? order._id,
   po: order.po ?? order.poNumber ?? 'PO-PENDING',
   supplier: order.supplier ?? order.supplierName ?? '',
-  branch: order.branch ?? '',
+  branch:
+    typeof (order.branch ?? '') === 'object'
+      ? order.branch?.name ?? order.branch?.branchName ?? order.branch?.label ?? ''
+      : order.branch ?? '',
   date: order.date ?? order.orderDate ?? '',
   expectedDate: order.expectedDate ?? order.deliveryDate ?? 'Not scheduled',
   amount: formatAmount(order.amount ?? order.totalAmount ?? 0),
-  status: order.status ?? 'Pending',
+  status: normalizeStatus(order.status),
   priority: order.priority ?? 'Normal',
-  items: order.items ?? order.itemCount ?? 1,
+  items: Array.isArray(order.items) ? order.items.length : order.items ?? order.itemCount ?? 1,
   category: order.category ?? 'Mixed Stock',
   owner: order.owner ?? 'Procurement Team',
 })
@@ -169,12 +184,17 @@ function PurchaseOrdersPage() {
       if (orders.length > 0) {
         const normalized = orders.map(normalizeOrder)
         setPurchaseOrders(normalized)
-        setSelectedOrder(normalized[0])
+        setSelectedOrder((current) => normalized.find((item) => item.id === current?.id) ?? normalized[0])
+      } else {
+        setPurchaseOrders([])
+        setSelectedOrder(null)
       }
       setApiMessage('Connected to MongoDB purchase orders')
       setLastSync(`Synced ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`)
     } catch {
       setApiMessage('Database not connected. Showing polished demo data.')
+      setPurchaseOrders(initialPurchaseOrders)
+      setSelectedOrder(initialPurchaseOrders[0])
     }
   }, [])
 
