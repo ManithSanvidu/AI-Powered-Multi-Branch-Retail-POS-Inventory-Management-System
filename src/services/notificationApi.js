@@ -58,3 +58,9 @@ export const getEmailLogs = () => request("GET", "/emails");
 
 export const sendSmsToSuppliers = (supplierIds, message) =>
   request("POST", "/sms/suppliers", { supplierIds, message });
+
+export const sendSmsToWarehouses = (warehouseIds, message) =>
+  request("POST", "/sms/warehouses", { warehouseIds, message });
+
+export const sendSupplierNotifications = (supplierIds, message, subject, sendSms, sendEmail) =>
+  request("POST", "/notify/suppliers", { supplierIds, message, subject, sendSms, sendEmail });

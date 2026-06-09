@@ -128,7 +128,7 @@ const MODULE_NAV_ITEMS = [
   { id: 'reporting',     label: 'Reporting Management',             icon: '📄', page: 4,
     roles: ['admin'] },
   { id: 'notifications', label: 'Notifications & Alerts',           icon: '🔔', page: 4,
-    roles: ['admin','manager'] },
+    roles: ['admin','manager','cashier'] },
   { id: 'audit-logs',    label: 'Audit Logs & Security',            icon: '🛡️', page: 4,
     roles: ['admin'] },
   { id: 'ai-intelligence',label: 'AI Intelligence',                 icon: '🧠', page: 5, isAI: true,
