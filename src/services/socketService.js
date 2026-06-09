@@ -1,4 +1,6 @@
-// WebSocket service using native WebSocket with fallback simulation
+// Socket service using Socket.IO client with fallback simulation
+import { io } from 'socket.io-client';
+
 class SocketService {
   constructor() {
     this.listeners = {};
@@ -8,28 +10,35 @@ class SocketService {
   }
 
   connect(url, token) {
-    // Try real WS, fallback to simulation for demo
+    // Try Socket.IO client first, fallback to simulation for demo
     try {
-      this.socket = new WebSocket(url.replace('http', 'ws'));
-      this.socket.onopen = () => {
+      this.socket = io(url.replace(/\/$/,''), {
+        auth: { token },
+        // Let Socket.IO choose transports (polling first, then upgrade)
+      });
+
+      this.socket.on('connect', () => {
         this.connected = true;
         this._emit('connect');
-      };
-      this.socket.onmessage = (e) => {
-        try {
-          const { event, data } = JSON.parse(e.data);
-          this._emit(event, data);
-        } catch (error) {
-          console.warn('Ignored malformed WebSocket message:', error.message);
-        }
-      };
-      this.socket.onclose = () => {
+      });
+
+      this.socket.on('disconnect', () => {
         this.connected = false;
         this._emit('disconnect');
         this._startSimulation();
-      };
-      this.socket.onerror = () => this._startSimulation();
-    } catch {
+      });
+
+      // Forward common server events to local listeners
+      this.socket.on('new-notification', (data) => this._emit('new-notification', data));
+      this.socket.on('lowStockAlert', (data) => this._emit('lowStockAlert', data));
+      this.socket.on('dashboard-update', (data) => this._emit('dashboard-update', data));
+
+      this.socket.on('connect_error', (err) => {
+        console.warn('Socket connect error:', err?.message || err);
+        this._startSimulation();
+      });
+    } catch (err) {
+      console.warn('Socket.IO client init failed, falling back to simulation:', err?.message || err);
       this._startSimulation();
     }
   }
@@ -47,6 +56,15 @@ class SocketService {
         liveTransaction: { amount: `$${(Math.random() * 500 + 20).toFixed(2)}`, branch: ['Colombo', 'Kandy', 'Galle', 'Negombo'][Math.floor(Math.random() * 4)], time: new Date().toLocaleTimeString() }
       });
     }, 5000);
+  }
+
+  // Join/leave notifications room on server
+  joinNotifications(userId) {
+    if (this.socket && this.socket.emit) this.socket.emit('joinNotifications', userId);
+  }
+
+  leaveNotifications(userId) {
+    if (this.socket && this.socket.emit) this.socket.emit('leaveNotifications', userId);
   }
 
   on(event, callback) {

@@ -37,6 +37,8 @@ const ReceiptPage = lazy(() => import('../pos/ReceiptPage'));
 const BranchListPage = lazy(() => import('../branches/BranchListPage'));
 const PromotionsPage = lazy(() => import('../promotions/PromotionsPage'));
 const UserListPage = lazy(() => import("../users/UserListPage")); 
+const SalesHistoryPage = lazy(() => import('../pos/SalesHistoryPage'));
+
 const AuditSecurityPage = lazy(() => import('../audit/AuditSecurityPage'));
 const ModuleLoading = () => (
   <div
@@ -86,31 +88,51 @@ const DATE_PRESETS = [
   { label: 'Custom', value: 'custom', icon: '⚙️' },
 ];
 
-// 22 Modules exactly as per your image
 const MODULE_NAV_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard & Business Overview', icon: '📊', page: 1, isMain: true },
-  { id: 'auth', label: 'Authentication & Authorization', icon: '🔐', page: 1 },
-  { id: 'user-mgmt', label: 'User Management', icon: '👥', page: 1 },
-  { id: 'branch-mgmt', label: 'Branch Management', icon: '🏢', page: 1 },
-  { id: 'employee-mgmt', label: 'Employee Management', icon: '👔', page: 1 },
-  { id: 'customer-mgmt', label: 'Customer Management', icon: '👤', page: 2 },
-  { id: 'supplier-mgmt', label: 'Supplier Management', icon: '🚚', page: 2 },
-  { id: 'product-mgmt', label: 'Product Management', icon: '📦', page: 2 },
-  { id: 'inventory-mgmt', label: 'Inventory Management', icon: '📊', page: 2 },
-  { id: 'warehouse-mgmt', label: 'Warehouse Management', icon: '🏭', page: 2 },
-  { id: 'purchase-order', label: 'Purchase Order Management', icon: '📋', page: 2 },
-  { id: 'pos-sales', label: 'POS Sales & Billing', icon: '🛒', page: 3 },
-  { id: 'returns-refund', label: 'Returns & Refund Management', icon: '🔄', page: 3 },
-  { id: 'stock-transfer', label: 'Stock Transfer Management', icon: '🚛', page: 3 },
-  { id: 'promotion', label: 'Promotion & Discount Management', icon: '🏷️', page: 3 },
-  { id: 'ai-forecast', label: 'AI Demand Forecasting', icon: '🤖', page: 3 },
-  { id: 'ai-reorder', label: 'AI Smart Reordering', icon: '📈', page: 3 },
-  { id: 'analytics', label: 'Business Analytics', icon: '📉', page: 3 },
-  { id: 'reporting', label: 'Reporting Management', icon: '📄', page: 4 },
-  { id: 'notifications', label: 'Notifications & Alerts', icon: '🔔', page: 4 },
-  { id: 'audit-logs', label: 'Audit Logs & Security', icon: '🛡️', page: 4 },
-  // ── AI Intelligence ──
-  { id: 'ai-intelligence', label: 'AI Intelligence', icon: '🧠', page: 5, isAI: true },
+  { id: 'dashboard',     label: 'Dashboard & Business Overview',    icon: '📊', page: 1, isMain: true,
+    roles: ['admin','manager','cashier','user'] },
+  { id: 'auth',          label: 'Authentication & Authorization',   icon: '🔐', page: 1,
+    roles: ['admin'] },
+  { id: 'user-mgmt',     label: 'User Management',                  icon: '👥', page: 1,
+    roles: ['admin'] },
+  { id: 'branch-mgmt',   label: 'Branch Management',                icon: '🏢', page: 1,
+    roles: ['admin','manager'] },
+  { id: 'employee-mgmt', label: 'Employee Management',              icon: '👔', page: 1,
+    roles: ['admin','manager'] },
+  { id: 'customer-mgmt', label: 'Customer Management',              icon: '👤', page: 2,
+    roles: ['admin','manager','cashier'] },
+  { id: 'supplier-mgmt', label: 'Supplier Management',              icon: '🚚', page: 2,
+    roles: ['admin','manager'] },
+  { id: 'product-mgmt',  label: 'Product Management',               icon: '📦', page: 2,
+    roles: ['admin','manager'] },
+  { id: 'inventory-mgmt',label: 'Inventory Management',             icon: '📊', page: 2,
+    roles: ['admin','manager'] },
+  { id: 'warehouse-mgmt',label: 'Warehouse Management',             icon: '🏭', page: 2,
+    roles: ['admin','manager'] },
+  { id: 'purchase-order',label: 'Purchase Order Management',        icon: '📋', page: 2,
+    roles: ['admin','manager'] },
+  { id: 'pos-sales',     label: 'POS Sales & Billing',              icon: '🛒', page: 3,
+    roles: ['admin','manager','cashier'] },
+  { id: 'returns-refund',label: 'Returns & Refund Management',      icon: '🔄', page: 3,
+    roles: ['admin','manager','cashier'] },
+  { id: 'stock-transfer',label: 'Stock Transfer Management',        icon: '🚛', page: 3,
+    roles: ['admin','manager'] },
+  { id: 'promotion',     label: 'Promotion & Discount Management',  icon: '🏷️', page: 3,
+    roles: ['admin','manager'] },
+  { id: 'ai-forecast',   label: 'AI Demand Forecasting',            icon: '🤖', page: 3,
+    roles: ['admin','manager'] },
+  { id: 'ai-reorder',    label: 'AI Smart Reordering',              icon: '📈', page: 3,
+    roles: ['admin','manager'] },
+  { id: 'analytics',     label: 'Business Analytics',               icon: '📉', page: 3,
+    roles: ['admin','manager'] },
+  { id: 'reporting',     label: 'Reporting Management',             icon: '📄', page: 4,
+    roles: ['admin'] },
+  { id: 'notifications', label: 'Notifications & Alerts',           icon: '🔔', page: 4,
+    roles: ['admin','manager'] },
+  { id: 'audit-logs',    label: 'Audit Logs & Security',            icon: '🛡️', page: 4,
+    roles: ['admin'] },
+  { id: 'ai-intelligence',label: 'AI Intelligence',                 icon: '🧠', page: 5, isAI: true,
+    roles: ['admin','manager'] },
 ];
 
 const _getDateRange = (preset) => {
@@ -133,10 +155,10 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
   const navigate = useNavigate();
   const role = viewRole || user?.role || 'admin';
 
-  const filteredNavItems = MODULE_NAV_ITEMS.filter(item => {
-    if (item.id === 'reporting' && role !== 'admin') return false;
-    return true;
-  });
+  // ✅ අලුත් — roles array check
+  const filteredNavItems = MODULE_NAV_ITEMS.filter(item =>
+    item.roles.includes(role)
+  );
 
   const [dashboardData, setDashboardData] = useState(generateDemoData());
   const [loading, setLoading] = useState(false);
@@ -605,7 +627,9 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
       case 'supplier-mgmt':
         return (
           <Suspense fallback={<ModuleLoading />}>
-            <SuppliersPage />
+            <InventoryProvider>
+              <SuppliersPage />
+            </InventoryProvider>
           </Suspense>
         );
       case 'product-mgmt':
@@ -759,9 +783,14 @@ case 'product-edit':
       />
     </Suspense>
   );
+  if (posView === 'history') return (
+  <Suspense fallback={<ModuleLoading />}>
+    <SalesHistoryPage onBack={() => setPosView('pos')} />
+  </Suspense>
+);
   return (
     <Suspense fallback={<ModuleLoading />}>
-      <POSPage onCheckout={() => setPosView('checkout')} />
+      <POSPage onCheckout={() => setPosView('checkout')} onViewHistory={() => setPosView('history')} />
     </Suspense>
   );
 
