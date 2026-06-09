@@ -41,11 +41,10 @@ import CategoryManagementPage from "./pages/products/CategoryManagementPage";
 // Warehouse Pages (Oyage Routes)
 import WarehouseList from './pages/warehouse/WarehouseList';
 import WarehouseDetail from './pages/Warehouse/WarehouseDetail';
+import DashboardLayout from './layouts/DashboardLayout';
 
 // Branch Pages
 import BranchListPage from "./pages/branches/BranchListPage";
-import AddBranchPage from "./pages/branches/AddBranchPage";
-import EditBranchPage from "./pages/branches/EditBranchPage";
 import BranchDetailsPage from "./pages/branches/BranchDetailsPage";
 
 // Customer Pages
@@ -177,14 +176,20 @@ function App() {
                             <Route path="/products/categories" element={<CategoryManagementPage />} />
                             <Route path="/products/:id" element={<ProductDetailsPage />} />
 
-                            {/* Warehouse Routes */}
-                            <Route path="/warehouse" element={<WarehouseList />} />
-                            <Route path="/warehouse/:id" element={<WarehouseDetail />} />
+                            {/* Warehouse Routes - DashboardLayout keeps nav visible */}
+                            <Route path="/warehouse" element={
+                              <DashboardLayout>
+                                <WarehouseList />
+                              </DashboardLayout>
+                            } />
+                            <Route path="/warehouse/:id" element={
+                              <DashboardLayout>
+                                <WarehouseDetail />
+                              </DashboardLayout>
+                            } />
 
                             {/* Branch Routes */}
                             <Route path="/branches" element={<BranchListPage />} />
-                            <Route path="/branches/add" element={<AddBranchPage />} />
-                            <Route path="/branches/edit/:id" element={<EditBranchPage />} />
                             <Route path="/branches/:id" element={<BranchDetailsPage />} />
                             
                             {/* Customer Routes */}
