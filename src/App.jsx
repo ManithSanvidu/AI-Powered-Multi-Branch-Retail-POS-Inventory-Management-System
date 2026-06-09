@@ -58,6 +58,7 @@ import ReportsPage from "./pages/reports/ReportsPage";
 import EmployeesPage from "./pages/employees/EmployeesPage";
 import ReturnsPage from "./pages/returns/ReturnsPage";
 import PurchaseOrdersPage from "./pages/purchase-orders/PurchaseOrdersPage";
+import AnalyticsPage from "./pages/analytics/AnalyticsPage";
 
 // Services
 import { getInvoices, getReturns } from "./services/returnsApi";
@@ -278,6 +279,14 @@ function App() {
                             <Route
                               path="/purchase-orders"
                               element={<PurchaseOrdersPage />}
+                            />
+                            <Route
+                              path="/analytics"
+                              element={
+                                <ProtectedRoute roles={["admin", "manager"]}>
+                                  <AnalyticsPage />
+                                </ProtectedRoute>
+                              }
                             />
 
                             {/* Default Redirect */}
