@@ -5,8 +5,10 @@ import {
   markAllAsRead,
   getPreferences,
   updatePreferences,
-  getEmailLogs
+  getEmailLogs,
+  sendSmsToSuppliers
 } from '../../services/notificationApi';
+import { getAllSuppliers } from '../../services/supplierManagementApi';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 
@@ -39,6 +41,12 @@ const NotificationsModule = () => {
   const [loading, setLoading] = useState(true);
   const [savingPrefs, setSavingPrefs] = useState(false);
 
+  // SMS Feature State
+  const [suppliers, setSuppliers] = useState([]);
+  const [selectedSuppliers, setSelectedSuppliers] = useState([]);
+  const [smsMessage, setSmsMessage] = useState('');
+  const [sendingSms, setSendingSms] = useState(false);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -46,13 +54,15 @@ const NotificationsModule = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [notifRes, prefRes, emailRes] = await Promise.all([
+      const [notifRes, prefRes, emailRes, supplierRes] = await Promise.all([
         getNotifications(),
         getPreferences(),
-        !isCashier ? getEmailLogs() : Promise.resolve({ data: [] })
+        !isCashier ? getEmailLogs() : Promise.resolve({ data: [] }),
+        !isCashier ? getAllSuppliers() : Promise.resolve({ data: [] })
       ]);
       setNotifications(notifRes.data || []);
       setEmailLogs(emailRes.data || []);
+      setSuppliers(supplierRes.data?.data || []);
       if (prefRes.data) {
         setPreferences({
           emailEnabled: prefRes.data.emailEnabled,
@@ -171,6 +181,23 @@ const NotificationsModule = () => {
             }}
           >
             Emails
+          </button>
+        )}
+        {!isCashier && (
+          <button 
+            onClick={() => setActiveTab('sms')}
+            style={{
+              padding: '8px 16px',
+              border: 'none',
+              background: activeTab === 'sms' ? '#eff6ff' : 'transparent',
+              color: activeTab === 'sms' ? '#2563eb' : '#64748b',
+              borderRadius: '8px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            Supplier SMS
           </button>
         )}
       </div>
@@ -340,6 +367,109 @@ const NotificationsModule = () => {
               ))}
             </div>
           )}
+        </div>
+      ) : activeTab === 'sms' && !isCashier ? (
+        // SUPPLIER SMS TAB
+        <div>
+          <div style={{ marginBottom: '24px' }}>
+            <h3 style={{ fontSize: '18px', color: '#1e293b', marginBottom: '8px' }}>Send SMS to Suppliers</h3>
+            <p style={{ color: '#64748b', fontSize: '14px' }}>Select suppliers and broadcast a custom SMS message.</p>
+          </div>
+          
+          <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+            {/* Left side: Supplier List */}
+            <div style={{ flex: '1 1 300px', background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', maxHeight: '400px', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h4 style={{ margin: 0, fontSize: '15px', color: '#1e293b' }}>Select Suppliers</h4>
+                <button
+                  onClick={() => {
+                    if (selectedSuppliers.length === suppliers.length && suppliers.length > 0) {
+                      setSelectedSuppliers([]);
+                    } else {
+                      setSelectedSuppliers(suppliers.map(s => s._id));
+                    }
+                  }}
+                  style={{ background: 'transparent', border: 'none', color: '#3b82f6', fontSize: '13px', cursor: 'pointer', fontWeight: '500' }}
+                >
+                  {selectedSuppliers.length === suppliers.length && suppliers.length > 0 ? 'Deselect All' : 'Select All'}
+                </button>
+              </div>
+              
+              {suppliers.length === 0 ? (
+                <div style={{ fontSize: '14px', color: '#94a3b8', textAlign: 'center', padding: '20px' }}>No suppliers available.</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {suppliers.map(supplier => (
+                    <label key={supplier._id} style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', background: 'white', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={selectedSuppliers.includes(supplier._id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedSuppliers(prev => [...prev, supplier._id]);
+                          } else {
+                            setSelectedSuppliers(prev => prev.filter(id => id !== supplier._id));
+                          }
+                        }}
+                        style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                      />
+                      <div>
+                        <div style={{ fontSize: '14px', fontWeight: '600', color: '#1e293b' }}>{supplier.companyName}</div>
+                        <div style={{ fontSize: '12px', color: '#64748b' }}>{supplier.contactPerson} • {supplier.phone}</div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {/* Right side: Message Composition */}
+            <div style={{ flex: '1 1 300px' }}>
+              <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px' }}>
+                <h4 style={{ margin: 0, marginBottom: '16px', fontSize: '15px', color: '#1e293b' }}>Message Content</h4>
+                <textarea
+                  value={smsMessage}
+                  onChange={(e) => setSmsMessage(e.target.value)}
+                  placeholder="Type your SMS message here..."
+                  style={{ width: '100%', height: '150px', padding: '12px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', resize: 'vertical', fontFamily: 'inherit', marginBottom: '16px' }}
+                />
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '13px', color: '#64748b' }}>
+                    {selectedSuppliers.length} supplier(s) selected
+                  </span>
+                  <button
+                    disabled={sendingSms || selectedSuppliers.length === 0 || !smsMessage.trim()}
+                    onClick={async () => {
+                      setSendingSms(true);
+                      try {
+                        await sendSmsToSuppliers(selectedSuppliers, smsMessage);
+                        toast.success('SMS sent successfully!');
+                        setSmsMessage('');
+                        setSelectedSuppliers([]);
+                      } catch (error) {
+                        toast.error(`Failed to send SMS: ${error.message}`);
+                      } finally {
+                        setSendingSms(false);
+                      }
+                    }}
+                    style={{
+                      background: (sendingSms || selectedSuppliers.length === 0 || !smsMessage.trim()) ? '#cbd5e1' : '#3b82f6',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '8px',
+                      fontWeight: '600',
+                      cursor: (sendingSms || selectedSuppliers.length === 0 || !smsMessage.trim()) ? 'not-allowed' : 'pointer',
+                      transition: 'background 0.2s'
+                    }}
+                  >
+                    {sendingSms ? 'Sending...' : 'Send SMS'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       ) : null}
     </div>

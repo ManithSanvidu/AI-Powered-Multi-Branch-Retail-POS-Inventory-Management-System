@@ -55,3 +55,6 @@ export const updatePreferences = (preferences) =>
   request("PUT", "/preferences", preferences);
 
 export const getEmailLogs = () => request("GET", "/emails");
+
+export const sendSmsToSuppliers = (supplierIds, message) =>
+  request("POST", "/sms/suppliers", { supplierIds, message });
