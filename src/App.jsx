@@ -4,11 +4,11 @@ import { Toaster } from "react-hot-toast";
 
 // Contexts
 import { AuthProvider } from "./context/AuthContext";
-import { CartProvider } from './context/CartContext';
-import { EmployeeProvider } from './context/EmployeeContext';
-import { ProductProvider } from './context/ProductContext';
-import { SalesProvider } from './context/SalesContext';
-import { NotificationProvider } from './context/NotificationContext';
+import { CartProvider } from "./context/CartContext";
+import { EmployeeProvider } from "./context/EmployeeContext";
+import { ProductProvider } from "./context/ProductContext";
+import { SalesProvider } from "./context/SalesContext";
+import { NotificationProvider } from "./context/NotificationContext";
 import { BranchProvider } from "./context/BranchContext";
 import { CustomerProvider } from "./context/CustomerContext";
 
@@ -26,22 +26,22 @@ import Unauthorized from "./pages/auth/Unauthorized";
 
 // POS / Dashboard Pages
 import Dashboard from "./pages/dashboard/Dashboard";
-import CheckoutPage from './pages/pos/CheckoutPage';
-import POSPage from './pages/pos/POSPage';
-import ReceiptPage from './pages/pos/ReceiptPage';
-import SalesHistoryPage from './pages/pos/SalesHistoryPage';
+import CheckoutPage from "./pages/pos/CheckoutPage";
+import POSPage from "./pages/pos/POSPage";
+import ReceiptPage from "./pages/pos/ReceiptPage";
+import SalesHistoryPage from "./pages/pos/SalesHistoryPage";
 
 // Product Pages
-import ProductListPage from './pages/products/ProductListPage';
-import AddProductPage from './pages/products/AddProductPage';
-import EditProductPage from './pages/products/EditProductPage';
-import ProductDetailsPage from './pages/products/ProductDetailsPage';
+import ProductListPage from "./pages/products/ProductListPage";
+import AddProductPage from "./pages/products/AddProductPage";
+import EditProductPage from "./pages/products/EditProductPage";
+import ProductDetailsPage from "./pages/products/ProductDetailsPage";
 import CategoryManagementPage from "./pages/products/CategoryManagementPage";
 
 // Warehouse Pages (Oyage Routes)
-import WarehouseList from './pages/warehouse/WarehouseList';
-import WarehouseDetail from './pages/Warehouse/WarehouseDetail';
-import DashboardLayout from './layouts/DashboardLayout';
+import WarehouseList from "./pages/warehouse/WarehouseList";
+import WarehouseDetail from "./pages/Warehouse/WarehouseDetail";
+import DashboardLayout from "./layouts/DashboardLayout";
 
 // Branch Pages
 import BranchListPage from "./pages/branches/BranchListPage";
@@ -55,7 +55,7 @@ import AIAssistantPage from "./pages/ai/AIAssistantPage";
 import ReportsPage from "./pages/reports/ReportsPage";
 
 // Other Pages
-import EmployeesPage from './pages/employees/EmployeesPage';
+import EmployeesPage from "./pages/employees/EmployeesPage";
 import ReturnsPage from "./pages/returns/ReturnsPage";
 import PurchaseOrdersPage from "./pages/purchase-orders/PurchaseOrdersPage";
 
@@ -108,26 +108,43 @@ function App() {
                             {/* Public Auth Routes */}
                             <Route path="/login" element={<Login />} />
                             <Route path="/register" element={<Register />} />
-                            <Route path="/forgot-password" element={<ForgotPassword />} />
-                            <Route path="/reset-password/:token" element={<ResetPassword />} />
-                            <Route path="/unauthorized" element={<Unauthorized />} />
+                            <Route
+                              path="/forgot-password"
+                              element={<ForgotPassword />}
+                            />
+                            <Route
+                              path="/reset-password/:token"
+                              element={<ResetPassword />}
+                            />
+                            <Route
+                              path="/unauthorized"
+                              element={<Unauthorized />}
+                            />
 
                             {/* Protected Dashboard Route */}
                             <Route
                               path="/dashboard"
                               element={
-                                <ProtectedRoute roles={["admin", "manager", "cashier", "user"]}>
+                                <ProtectedRoute
+                                  roles={[
+                                    "admin",
+                                    "manager",
+                                    "cashier",
+                                    "user",
+                                  ]}
+                                >
                                   <Suspense
                                     fallback={
                                       <div
                                         style={{
-                                          minHeight: '100vh',
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          justifyContent: 'center',
-                                          background: 'linear-gradient(180deg, #4facfe 0%, #00f2fe 100%)',
+                                          minHeight: "100vh",
+                                          display: "flex",
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                          background:
+                                            "linear-gradient(180deg, #4facfe 0%, #00f2fe 100%)",
                                           fontWeight: 600,
-                                          color: '#0f172a',
+                                          color: "#0f172a",
                                         }}
                                       >
                                         Loading dashboard…
@@ -165,41 +182,87 @@ function App() {
 
                             {/* POS Routes */}
                             <Route path="/pos" element={<POSPage />} />
-                            <Route path="/checkout" element={<CheckoutPage />} />
+                            <Route
+                              path="/checkout"
+                              element={<CheckoutPage />}
+                            />
                             <Route path="/receipt" element={<ReceiptPage />} />
-                            <Route path="/history" element={<SalesHistoryPage />} />
+                            <Route
+                              path="/history"
+                              element={<SalesHistoryPage />}
+                            />
 
                             {/* Product Routes */}
-                            <Route path="/products" element={<ProductListPage />} />
-                            <Route path="/products/add" element={<AddProductPage />} />
-                            <Route path="/products/edit/:id" element={<EditProductPage />} />
-                            <Route path="/products/categories" element={<CategoryManagementPage />} />
-                            <Route path="/products/:id" element={<ProductDetailsPage />} />
+                            <Route
+                              path="/products"
+                              element={<ProductListPage />}
+                            />
+                            <Route
+                              path="/products/add"
+                              element={<AddProductPage />}
+                            />
+                            <Route
+                              path="/products/edit/:id"
+                              element={<EditProductPage />}
+                            />
+                            <Route
+                              path="/products/categories"
+                              element={<CategoryManagementPage />}
+                            />
+                            <Route
+                              path="/products/:id"
+                              element={<ProductDetailsPage />}
+                            />
 
                             {/* Warehouse Routes - DashboardLayout keeps nav visible */}
-                            <Route path="/warehouse" element={
-                              <DashboardLayout>
-                                <WarehouseList />
-                              </DashboardLayout>
-                            } />
-                            <Route path="/warehouse/:id" element={
-                              <DashboardLayout>
-                                <WarehouseDetail />
-                              </DashboardLayout>
-                            } />
+                            <Route
+                              path="/warehouse"
+                              element={
+                                <DashboardLayout>
+                                  <WarehouseList />
+                                </DashboardLayout>
+                              }
+                            />
+                            <Route
+                              path="/warehouse/:id"
+                              element={
+                                <DashboardLayout>
+                                  <WarehouseDetail />
+                                </DashboardLayout>
+                              }
+                            />
 
                             {/* Branch Routes */}
-                            <Route path="/branches" element={<BranchListPage />} />
-                            <Route path="/branches/:id" element={<BranchDetailsPage />} />
-                            
+                            <Route
+                              path="/branches"
+                              element={
+                                <ProtectedRoute roles={["admin", "manager"]}>
+                                  <BranchListPage />
+                                </ProtectedRoute>
+                              }
+                            />
+                            <Route
+                              path="/branches/:id"
+                              element={
+                                <ProtectedRoute roles={["admin", "manager"]}>
+                                  <BranchDetailsPage />
+                                </ProtectedRoute>
+                              }
+                            />
+
                             {/* Customer Routes */}
-                            <Route path="/customers" element={<CustomerListPage />} />
+                            <Route
+                              path="/customers"
+                              element={<CustomerListPage />}
+                            />
 
                             {/* AI & Reports Routes */}
                             <Route
                               path="/ai"
                               element={
-                                <ProtectedRoute roles={["admin", "manager", "cashier"]}>
+                                <ProtectedRoute
+                                  roles={["admin", "manager", "cashier"]}
+                                >
                                   <AIAssistantPage />
                                 </ProtectedRoute>
                               }
@@ -207,12 +270,21 @@ function App() {
                             <Route path="/reports" element={<ReportsPage />} />
 
                             {/* Other Routes */}
-                            <Route path="/employees" element={<EmployeesPage />} />
+                            <Route
+                              path="/employees"
+                              element={<EmployeesPage />}
+                            />
                             <Route path="/returns" element={<ReturnsPage />} />
-                            <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
+                            <Route
+                              path="/purchase-orders"
+                              element={<PurchaseOrdersPage />}
+                            />
 
                             {/* Default Redirect */}
-                            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                            <Route
+                              path="*"
+                              element={<Navigate to="/dashboard" replace />}
+                            />
                           </Routes>
                         </div>
                       </ErrorBoundary>
