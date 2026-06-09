@@ -236,11 +236,19 @@ function App() {
                             {/* Branch Routes */}
                             <Route
                               path="/branches"
-                              element={<BranchListPage />}
+                              element={
+                                <ProtectedRoute roles={["admin", "manager"]}>
+                                  <BranchListPage />
+                                </ProtectedRoute>
+                              }
                             />
                             <Route
                               path="/branches/:id"
-                              element={<BranchDetailsPage />}
+                              element={
+                                <ProtectedRoute roles={["admin", "manager"]}>
+                                  <BranchDetailsPage />
+                                </ProtectedRoute>
+                              }
                             />
 
                             {/* Customer Routes */}
