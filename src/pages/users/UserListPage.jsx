@@ -26,7 +26,7 @@ export default function UserListPage() {
   const handleSearch = async (e) => {
     const q = e.target.value; setSearch(q);
     if (!q.trim()) { fetchUsers(); return; }
-    try { const res = await searchUsers(q); setUsers(res.data.data || []); } catch { fetchUsers(); }
+   try { const res = await searchUsers(q); setUsers(res.data.data || res.data || []); } catch (err) { console.error("Search error:", err); fetchUsers(); }
   };
 
   const openAdd = () => { setEditUser(null); setForm(emptyForm); setFormError(""); setShowModal(true); };
