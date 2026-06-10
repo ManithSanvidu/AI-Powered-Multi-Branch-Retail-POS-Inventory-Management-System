@@ -38,11 +38,6 @@ import EditProductPage from "./pages/products/EditProductPage";
 import ProductDetailsPage from "./pages/products/ProductDetailsPage";
 import CategoryManagementPage from "./pages/products/CategoryManagementPage";
 
-// Warehouse Pages (Oyage Routes)
-import WarehouseList from "./pages/warehouse/WarehouseList";
-import WarehouseDetail from "./pages/Warehouse/WarehouseDetail";
-import DashboardLayout from "./layouts/DashboardLayout";
-
 // Branch Pages
 import BranchListPage from "./pages/branches/BranchListPage";
 import BranchDetailsPage from "./pages/branches/BranchDetailsPage";
@@ -53,6 +48,9 @@ import CustomerListPage from "./pages/customers/CustomerListPage";
 // AI & Reports Pages
 import AIAssistantPage from "./pages/ai/AIAssistantPage";
 import ReportsPage from "./pages/reports/ReportsPage";
+
+// Audit & Security Pages
+import AuditSecurityPage from "./pages/audit/AuditSecurityPage";
 
 // Other Pages
 import EmployeesPage from "./pages/employees/EmployeesPage";
@@ -81,11 +79,16 @@ function App() {
         const returnsRes = await getReturns();
 
         setReturnState({
-          invoices: invoicesRes.data || [],
-          returns: returnsRes.data || [],
+          invoices: invoicesRes?.data || invoicesRes || [],
+          returns: returnsRes?.data || returnsRes || [],
         });
       } catch (error) {
         console.error("Error fetching returns/invoices from backend:", error);
+        // Set empty arrays on error to avoid breaking the UI
+        setReturnState({
+          invoices: [],
+          returns: [],
+        });
       }
     };
 
@@ -94,7 +97,27 @@ function App() {
 
   return (
     <AuthProvider>
-      <Toaster position="top-right" />
+      <Toaster position="top-right" toastOptions={{
+        duration: 4000,
+        style: {
+          background: '#363636',
+          color: '#fff',
+        },
+        success: {
+          duration: 3000,
+          iconTheme: {
+            primary: '#10b981',
+            secondary: '#fff',
+          },
+        },
+        error: {
+          duration: 4000,
+          iconTheme: {
+            primary: '#ef4444',
+            secondary: '#fff',
+          },
+        },
+      }} />
       <EmployeeProvider>
         <ProductProvider>
           <SalesProvider>
@@ -102,7 +125,7 @@ function App() {
               <NotificationProvider>
                 <CustomerProvider>
                   <BranchProvider>
-                    <BrowserRouter>
+                    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                       <ErrorBoundary>
                         <div className="app-container">
                           <Routes>
@@ -177,6 +200,18 @@ function App() {
                               element={
                                 <ProtectedRoute roles={["admin"]}>
                                   <AdminPanel />
+                                </ProtectedRoute>
+                              }
+                            />
+
+                            {/* Audit & Security Route */}
+                            <Route
+                              path="/audit"
+                              element={
+                                <ProtectedRoute roles={["admin", "manager", "super_admin"]}>
+                                  <Suspense fallback={<div>Loading Audit Security...</div>}>
+                                    <AuditSecurityPage />
+                                  </Suspense>
                                 </ProtectedRoute>
                               }
                             />
@@ -290,10 +325,7 @@ function App() {
                             />
 
                             {/* Default Redirect */}
-                            <Route
-                              path="*"
-                              element={<Navigate to="/dashboard" replace />}
-                            />
+
                           </Routes>
                         </div>
                       </ErrorBoundary>
