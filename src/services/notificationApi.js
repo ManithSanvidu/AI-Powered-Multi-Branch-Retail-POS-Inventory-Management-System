@@ -64,3 +64,6 @@ export const sendSmsToWarehouses = (warehouseIds, message) =>
 
 export const sendSupplierNotifications = (supplierIds, message, subject, sendSms, sendEmail) =>
   request("POST", "/notify/suppliers", { supplierIds, message, subject, sendSms, sendEmail });
+
+export const sendEmployeeNotifications = (employeeIds, message, subject, sendSms, sendEmail) =>
+  request("POST", "/notify/employees", { employeeIds, message, subject, sendSms, sendEmail });

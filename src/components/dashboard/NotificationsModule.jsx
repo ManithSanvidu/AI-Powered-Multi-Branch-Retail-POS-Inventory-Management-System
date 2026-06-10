@@ -8,10 +8,12 @@ import {
   getEmailLogs,
   sendSmsToSuppliers,
   sendSmsToWarehouses,
-  sendSupplierNotifications
+  sendSupplierNotifications,
+  sendEmployeeNotifications
 } from '../../services/notificationApi';
 import { getAllSuppliers } from '../../services/supplierManagementApi';
 import { getAllWarehouses } from '../../services/warehouseService';
+import { getAllEmployees } from '../../services/employeeApi';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 
@@ -59,6 +61,15 @@ const NotificationsModule = () => {
   const [warehouseSmsMessage, setWarehouseSmsMessage] = useState('');
   const [sendingWarehouseSms, setSendingWarehouseSms] = useState(false);
 
+  // Employee Notification Feature State
+  const [employees, setEmployees] = useState([]);
+  const [selectedEmployees, setSelectedEmployees] = useState([]);
+  const [employeeSubject, setEmployeeSubject] = useState('');
+  const [employeeMessage, setEmployeeMessage] = useState('');
+  const [sendEmployeeViaSms, setSendEmployeeViaSms] = useState(true);
+  const [sendEmployeeViaEmail, setSendEmployeeViaEmail] = useState(false);
+  const [sendingEmployeeNotif, setSendingEmployeeNotif] = useState(false);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -66,17 +77,23 @@ const NotificationsModule = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [notifRes, prefRes, emailRes, supplierRes, warehouseRes] = await Promise.all([
+      const [notifRes, prefRes, emailRes, supplierRes, warehouseRes, employeeRes] = await Promise.all([
         getNotifications(),
         getPreferences(),
         !isCashier ? getEmailLogs() : Promise.resolve({ data: [] }),
         !isCashier ? getAllSuppliers() : Promise.resolve({ data: [] }),
-        !isCashier ? getAllWarehouses() : Promise.resolve({ data: [] })
+        !isCashier ? getAllWarehouses() : Promise.resolve({ data: [] }),
+        !isCashier ? getAllEmployees() : Promise.resolve({ data: [] })
       ]);
       setNotifications(notifRes.data || []);
       setEmailLogs(emailRes.data || []);
       setSuppliers(supplierRes.data?.data || []);
       setWarehouses(warehouseRes.data || []);
+      
+      // employeeRes.data structure is { success: true, employees: [...] }
+      const empData = employeeRes.data || {};
+      setEmployees(empData.employees || empData.data || (Array.isArray(empData) ? empData : []));
+      
       if (prefRes.data) {
         setPreferences({
           emailEnabled: prefRes.data.emailEnabled,
@@ -229,6 +246,23 @@ const NotificationsModule = () => {
             }}
           >
             Warehouse SMS
+          </button>
+        )}
+        {!isCashier && (
+          <button
+            onClick={() => setActiveTab('employee-notif')}
+            style={{
+              padding: '8px 16px',
+              border: 'none',
+              background: activeTab === 'employee-notif' ? '#eff6ff' : 'transparent',
+              color: activeTab === 'employee-notif' ? '#2563eb' : '#64748b',
+              borderRadius: '8px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            Employee Notifications
           </button>
         )}
       </div>
@@ -461,11 +495,11 @@ const NotificationsModule = () => {
 
                 {/* Channel Selection */}
                 <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#1e293b' }}>
                     <input type="checkbox" checked={sendViaSms} onChange={e => setSendViaSms(e.target.checked)} />
                     Send via SMS
                   </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#1e293b' }}>
                     <input type="checkbox" checked={sendViaEmail} onChange={e => setSendViaEmail(e.target.checked)} />
                     Send via Email
                   </label>
@@ -629,6 +663,139 @@ const NotificationsModule = () => {
                     }}
                   >
                     {sendingWarehouseSms ? 'Sending...' : 'Send SMS'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : activeTab === 'employee-notif' && !isCashier ? (
+        // EMPLOYEE NOTIFICATIONS TAB
+        <div>
+          <div style={{ marginBottom: '24px' }}>
+            <h3 style={{ fontSize: '18px', color: '#1e293b', marginBottom: '8px' }}>Send Notifications to Employees</h3>
+            <p style={{ color: '#64748b', fontSize: '14px' }}>Select employees and broadcast a custom message via SMS, Email, or both.</p>
+          </div>
+
+          <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+            {/* Left side: Employee List */}
+            <div style={{ flex: '1 1 300px', background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', maxHeight: '550px', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h4 style={{ margin: 0, fontSize: '15px', color: '#1e293b' }}>Select Employees</h4>
+                <button
+                  onClick={() => {
+                    if (selectedEmployees.length === employees.length && employees.length > 0) {
+                      setSelectedEmployees([]);
+                    } else {
+                      setSelectedEmployees(employees.map(e => e._id));
+                    }
+                  }}
+                  style={{ background: 'transparent', border: 'none', color: '#3b82f6', fontSize: '13px', cursor: 'pointer', fontWeight: '500' }}
+                >
+                  {selectedEmployees.length === employees.length && employees.length > 0 ? 'Deselect All' : 'Select All'}
+                </button>
+              </div>
+
+              {employees.length === 0 ? (
+                <div style={{ fontSize: '14px', color: '#94a3b8', textAlign: 'center', padding: '20px' }}>No employees available.</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {employees.map(employee => (
+                    <label key={employee._id} style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', background: 'white', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedEmployees.includes(employee._id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedEmployees(prev => [...prev, employee._id]);
+                          } else {
+                            setSelectedEmployees(prev => prev.filter(id => id !== employee._id));
+                          }
+                        }}
+                        style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                      />
+                      <div>
+                        <div style={{ fontSize: '14px', fontWeight: '600', color: '#1e293b' }}>{employee.firstName} {employee.lastName} ({employee.role || 'Employee'})</div>
+                        <div style={{ fontSize: '12px', color: '#64748b' }}>{employee.phone || 'No phone'} • {employee.email || 'No email'}</div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Right side: Message Composition */}
+            <div style={{ flex: '1 1 300px' }}>
+              <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px' }}>
+                <h4 style={{ margin: 0, marginBottom: '16px', fontSize: '15px', color: '#1e293b' }}>Broadcast Settings</h4>
+
+                {/* Channel Selection */}
+                <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#1e293b' }}>
+                    <input type="checkbox" checked={sendEmployeeViaSms} onChange={e => setSendEmployeeViaSms(e.target.checked)} />
+                    Send via SMS
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#1e293b' }}>
+                    <input type="checkbox" checked={sendEmployeeViaEmail} onChange={e => setSendEmployeeViaEmail(e.target.checked)} />
+                    Send via Email
+                  </label>
+                </div>
+
+                {sendEmployeeViaEmail && (
+                  <input
+                    type="text"
+                    value={employeeSubject}
+                    onChange={(e) => setEmployeeSubject(e.target.value)}
+                    placeholder="Email Subject Line"
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', marginBottom: '16px', boxSizing: 'border-box' }}
+                  />
+                )}
+
+                <textarea
+                  value={employeeMessage}
+                  onChange={(e) => setEmployeeMessage(e.target.value)}
+                  placeholder="Type your message content here..."
+                  style={{ width: '100%', height: '150px', padding: '12px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', resize: 'vertical', fontFamily: 'inherit', marginBottom: '16px', boxSizing: 'border-box' }}
+                />
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '13px', color: '#64748b' }}>
+                    {selectedEmployees.length} employee(s) selected
+                  </span>
+                  <button
+                    disabled={
+                      sendingEmployeeNotif ||
+                      selectedEmployees.length === 0 ||
+                      !employeeMessage.trim() ||
+                      (!sendEmployeeViaSms && !sendEmployeeViaEmail) ||
+                      (sendEmployeeViaEmail && !employeeSubject.trim())
+                    }
+                    onClick={async () => {
+                      setSendingEmployeeNotif(true);
+                      try {
+                        await sendEmployeeNotifications(selectedEmployees, employeeMessage, employeeSubject, sendEmployeeViaSms, sendEmployeeViaEmail);
+                        toast.success('Broadcast sent to employees successfully!');
+                        setEmployeeMessage('');
+                        setEmployeeSubject('');
+                        setSelectedEmployees([]);
+                      } catch (error) {
+                        toast.error(`Failed to send notifications: ${error.message}`);
+                      } finally {
+                        setSendingEmployeeNotif(false);
+                      }
+                    }}
+                    style={{
+                      background: (sendingEmployeeNotif || selectedEmployees.length === 0 || !employeeMessage.trim()) ? '#cbd5e1' : '#3b82f6',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '8px',
+                      fontWeight: '600',
+                      cursor: (sendingEmployeeNotif || selectedEmployees.length === 0 || !employeeMessage.trim()) ? 'not-allowed' : 'pointer',
+                      transition: 'background 0.2s'
+                    }}
+                  >
+                    {sendingEmployeeNotif ? 'Sending...' : 'Send'}
                   </button>
                 </div>
               </div>
