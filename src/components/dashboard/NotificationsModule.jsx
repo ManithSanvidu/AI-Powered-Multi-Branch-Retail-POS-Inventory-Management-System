@@ -9,11 +9,14 @@ import {
   sendSmsToSuppliers,
   sendSmsToWarehouses,
   sendSupplierNotifications,
-  sendEmployeeNotifications
+  sendEmployeeNotifications,
+  sendCustomerNotifications
 } from '../../services/notificationApi';
 import { getAllSuppliers } from '../../services/supplierManagementApi';
 import { getAllWarehouses } from '../../services/warehouseService';
 import { getAllEmployees } from '../../services/employeeApi';
+import { getAllCustomers } from '../../services/customerApi';
+import { getPromotions } from '../../services/promotionApi';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 
@@ -70,6 +73,17 @@ const NotificationsModule = () => {
   const [sendEmployeeViaEmail, setSendEmployeeViaEmail] = useState(false);
   const [sendingEmployeeNotif, setSendingEmployeeNotif] = useState(false);
 
+  // Customer Promos Feature State
+  const [customers, setCustomers] = useState([]);
+  const [selectedCustomers, setSelectedCustomers] = useState([]);
+  const [promotions, setPromotions] = useState([]);
+  const [selectedPromotionId, setSelectedPromotionId] = useState('');
+  const [customerSubject, setCustomerSubject] = useState('');
+  const [customerMessage, setCustomerMessage] = useState('');
+  const [sendCustomerViaSms, setSendCustomerViaSms] = useState(true);
+  const [sendCustomerViaEmail, setSendCustomerViaEmail] = useState(false);
+  const [sendingCustomerNotif, setSendingCustomerNotif] = useState(false);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -77,13 +91,15 @@ const NotificationsModule = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [notifRes, prefRes, emailRes, supplierRes, warehouseRes, employeeRes] = await Promise.all([
+      const [notifRes, prefRes, emailRes, supplierRes, warehouseRes, employeeRes, customerRes, promotionRes] = await Promise.all([
         getNotifications(),
         getPreferences(),
         !isCashier ? getEmailLogs() : Promise.resolve({ data: [] }),
         !isCashier ? getAllSuppliers() : Promise.resolve({ data: [] }),
         !isCashier ? getAllWarehouses() : Promise.resolve({ data: [] }),
-        !isCashier ? getAllEmployees() : Promise.resolve({ data: [] })
+        !isCashier ? getAllEmployees() : Promise.resolve({ data: [] }),
+        !isCashier ? getAllCustomers() : Promise.resolve({ data: [] }),
+        !isCashier ? getPromotions() : Promise.resolve({ data: [] })
       ]);
       setNotifications(notifRes.data || []);
       setEmailLogs(emailRes.data || []);
@@ -93,6 +109,16 @@ const NotificationsModule = () => {
       // employeeRes.data structure is { success: true, employees: [...] }
       const empData = employeeRes.data || {};
       setEmployees(empData.employees || empData.data || (Array.isArray(empData) ? empData : []));
+      
+      const custData = customerRes.data || {};
+      setCustomers(custData.customers || custData.data || (Array.isArray(custData) ? custData : []));
+
+      const promoData = promotionRes.data || {};
+      const allPromotions = promoData.promotions || promoData.data || (Array.isArray(promoData) ? promoData : []);
+      // Filter out inactive or expired promotions
+      const now = new Date();
+      const validPromotions = allPromotions.filter(p => p.isActive && new Date(p.endDate) >= now);
+      setPromotions(validPromotions);
       
       if (prefRes.data) {
         setPreferences({
@@ -166,7 +192,7 @@ const NotificationsModule = () => {
       </div>
 
       {/* TABS */}
-      <div style={{ display: 'flex', gap: '16px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', marginBottom: '24px' }}>
         <button
           onClick={() => setActiveTab('history')}
           style={{
@@ -263,6 +289,23 @@ const NotificationsModule = () => {
             }}
           >
             Employee Notifications
+          </button>
+        )}
+        {!isCashier && (
+          <button
+            onClick={() => setActiveTab('customer-promo')}
+            style={{
+              padding: '8px 16px',
+              border: 'none',
+              background: activeTab === 'customer-promo' ? '#eff6ff' : 'transparent',
+              color: activeTab === 'customer-promo' ? '#2563eb' : '#64748b',
+              borderRadius: '8px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            Customer Promos
           </button>
         )}
       </div>
@@ -798,6 +841,160 @@ const NotificationsModule = () => {
                     {sendingEmployeeNotif ? 'Sending...' : 'Send'}
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : activeTab === 'customer-promo' ? (
+        // CUSTOMER PROMOS TAB
+        <div style={{ display: 'flex', gap: '24px', height: '500px' }}>
+          {/* Left Column: Customers List */}
+          <div style={{ flex: '0 0 35%', borderRight: '1px solid #e2e8f0', paddingRight: '24px', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, color: '#1e293b', fontSize: '18px' }}>Customers</h3>
+              <button
+                onClick={() => {
+                  if (selectedCustomers.length === customers.length && customers.length > 0) {
+                    setSelectedCustomers([]);
+                  } else {
+                    setSelectedCustomers(customers.map(c => c._id));
+                  }
+                }}
+                style={{ background: 'transparent', border: '1px solid #cbd5e1', padding: '4px 12px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', color: '#475569' }}
+              >
+                {selectedCustomers.length === customers.length && customers.length > 0 ? 'Deselect All' : 'Select All'}
+              </button>
+            </div>
+            
+            {customers.length === 0 ? (
+              <p style={{ color: '#94a3b8', fontSize: '14px' }}>No customers found.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {customers.map(customer => (
+                  <label key={customer._id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px', background: selectedCustomers.includes(customer._id) ? '#f8fafc' : 'transparent', borderRadius: '8px', cursor: 'pointer', border: '1px solid', borderColor: selectedCustomers.includes(customer._id) ? '#cbd5e1' : 'transparent', transition: 'all 0.2s' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedCustomers.includes(customer._id)}
+                      onChange={(e) => {
+                        if (e.target.checked) setSelectedCustomers([...selectedCustomers, customer._id]);
+                        else setSelectedCustomers(selectedCustomers.filter(id => id !== customer._id));
+                      }}
+                      style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                    />
+                    <div>
+                      <div style={{ fontWeight: '500', color: '#1e293b', fontSize: '14px' }}>{customer.firstName} {customer.lastName}</div>
+                      <div style={{ fontSize: '12px', color: '#64748b' }}>{customer.phone || customer.email || 'No contact info'} | Tier: {customer.customerType || 'Bronze'}</div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Right Column: Compose Broadcast */}
+          <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
+            <h3 style={{ margin: '0 0 16px 0', color: '#1e293b', fontSize: '18px' }}>Compose Broadcast</h3>
+            
+            <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', flex: '1', display: 'flex', flexDirection: 'column' }}>
+              
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#475569', fontSize: '14px' }}>Select Active Promotion</label>
+                <select
+                  value={selectedPromotionId}
+                  onChange={(e) => {
+                    const promoId = e.target.value;
+                    setSelectedPromotionId(promoId);
+                    if (promoId) {
+                      const promo = promotions.find(p => p._id === promoId);
+                      if (promo) {
+                        setCustomerSubject(`🎉 Special Offer: ${promo.title}`);
+                        setCustomerMessage(`Hi there! We are running a new promotion: ${promo.title}. Use code ${promo.couponCode || 'at checkout'} to get ${promo.discountType === 'PERCENTAGE' ? promo.discountValue + '%' : '$' + promo.discountValue} off your next purchase! Valid until ${new Date(promo.endDate).toLocaleDateString()}. Don't miss out!`);
+                      }
+                    } else {
+                      setCustomerSubject('');
+                      setCustomerMessage('');
+                    }
+                  }}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
+                >
+                  <option value="">-- Choose a valid promotion --</option>
+                  {promotions.map(promo => (
+                    <option key={promo._id} value={promo._id}>{promo.title} (Valid until {new Date(promo.endDate).toLocaleDateString()})</option>
+                  ))}
+                </select>
+                {promotions.length === 0 && (
+                  <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '6px' }}>No active promotions found. Please create one first.</p>
+                )}
+              </div>
+
+              <div style={{ marginBottom: '16px', display: 'flex', gap: '24px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', color: '#475569' }}>
+                  <input type="checkbox" checked={sendCustomerViaSms} onChange={e => setSendCustomerViaSms(e.target.checked)} style={{ width: '16px', height: '16px' }} />
+                  Send via SMS
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', color: '#475569' }}>
+                  <input type="checkbox" checked={sendCustomerViaEmail} onChange={e => setSendCustomerViaEmail(e.target.checked)} style={{ width: '16px', height: '16px' }} />
+                  Send via Email
+                </label>
+              </div>
+
+              {sendCustomerViaEmail && (
+                <input
+                  type="text"
+                  value={customerSubject}
+                  onChange={(e) => setCustomerSubject(e.target.value)}
+                  placeholder="Email Subject"
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', marginBottom: '16px', boxSizing: 'border-box' }}
+                />
+              )}
+
+              <textarea
+                value={customerMessage}
+                onChange={(e) => setCustomerMessage(e.target.value)}
+                placeholder="Type your message content here..."
+                style={{ width: '100%', height: '150px', padding: '12px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', resize: 'vertical', fontFamily: 'inherit', marginBottom: '16px', boxSizing: 'border-box' }}
+              />
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+                <span style={{ fontSize: '13px', color: '#64748b' }}>
+                  {selectedCustomers.length} customer(s) selected
+                </span>
+                <button
+                  disabled={
+                    sendingCustomerNotif ||
+                    selectedCustomers.length === 0 ||
+                    !customerMessage.trim() ||
+                    (!sendCustomerViaSms && !sendCustomerViaEmail) ||
+                    (sendCustomerViaEmail && !customerSubject.trim())
+                  }
+                  onClick={async () => {
+                    setSendingCustomerNotif(true);
+                    try {
+                      await sendCustomerNotifications(selectedCustomers, customerMessage, customerSubject, sendCustomerViaSms, sendCustomerViaEmail);
+                      toast.success('Promotional broadcast sent successfully!');
+                      setCustomerMessage('');
+                      setCustomerSubject('');
+                      setSelectedPromotionId('');
+                      setSelectedCustomers([]);
+                    } catch (error) {
+                      toast.error(`Failed to send broadcast: ${error.message}`);
+                    } finally {
+                      setSendingCustomerNotif(false);
+                    }
+                  }}
+                  style={{
+                    background: (sendingCustomerNotif || selectedCustomers.length === 0 || !customerMessage.trim()) ? '#cbd5e1' : '#3b82f6',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '8px',
+                    fontWeight: '600',
+                    cursor: (sendingCustomerNotif || selectedCustomers.length === 0 || !customerMessage.trim()) ? 'not-allowed' : 'pointer',
+                    transition: 'background 0.2s'
+                  }}
+                >
+                  {sendingCustomerNotif ? 'Sending...' : 'Broadcast'}
+                </button>
               </div>
             </div>
           </div>
