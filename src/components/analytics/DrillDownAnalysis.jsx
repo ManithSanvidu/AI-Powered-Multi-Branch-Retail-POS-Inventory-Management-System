@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, ExternalLink, X, Receipt, Calendar, Building2, Tag, Package, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { formatLKR, formatNumber } from '../../services/analyticsService';
 import { fetchDrillDown, fetchDrillDownTransactions } from '../../services/analyticsService';
@@ -47,16 +48,39 @@ function TransactionModal({ groupBy, groupValue, params, onClose }) {
 
   const pages = Math.ceil(total / LIMIT);
 
-  return (
+  return createPortal(
     /* Backdrop */
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(15,23,42,0.55)', backdropFilter: 'blur(4px)' }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 16,
+        backgroundColor: 'rgba(15,23,42,0.6)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
+      }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       {/* Modal card */}
-      <div className="relative w-full max-w-3xl max-h-[90vh] flex flex-col rounded-2xl bg-white shadow-2xl overflow-hidden">
-
+      <div
+        style={{
+          position: 'relative',
+          width: '100%',
+          maxWidth: 760,
+          maxHeight: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
+          borderRadius: 20,
+          background: '#fff',
+          boxShadow: '0 25px 80px rgba(15,23,42,0.35)',
+          overflow: 'hidden',
+          animation: 'modalSlideUp 0.25s ease',
+        }}
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-violet-600 to-blue-600">
           <div className="flex items-center gap-3">
@@ -207,8 +231,16 @@ function TransactionModal({ groupBy, groupValue, params, onClose }) {
             )}
           </div>
         )}
+
+        <style>{`
+          @keyframes modalSlideUp {
+            from { opacity: 0; transform: translateY(24px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0)    scale(1);    }
+          }
+        `}</style>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

@@ -40,6 +40,7 @@ const UserListPage = lazy(() => import("../users/UserListPage"));
 const SalesHistoryPage = lazy(() => import('../pos/SalesHistoryPage'));
 
 const AuditSecurityPage = lazy(() => import('../audit/AuditSecurityPage'));
+const AnalyticsPageLazy = lazy(() => import('../analytics/AnalyticsPage'));
 const ModuleLoading = () => (
   <div
     className="module-detail"
@@ -815,7 +816,11 @@ case 'product-edit':
       case 'ai-reorder':
         return <AISmartReorderingModule />;
       case 'analytics':
-        return <BusinessAnalyticsModule />;
+        return (
+          <Suspense fallback={<ModuleLoading />}>
+            <AnalyticsPageLazy />
+          </Suspense>
+        );
       case 'reporting':
         return (
           <Suspense fallback={<ModuleLoading />}>
