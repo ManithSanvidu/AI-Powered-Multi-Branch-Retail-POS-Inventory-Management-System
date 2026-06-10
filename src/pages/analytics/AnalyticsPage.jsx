@@ -1,5 +1,5 @@
-﻿import { useState, useEffect, useCallback } from "react";
-import { BarChart3, RefreshCw, AlertCircle, Filter } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { BarChart3, RefreshCw, AlertCircle, Filter, Clock } from "lucide-react";
 
 import AnalyticsKPICards from "../../components/analytics/AnalyticsKPICards";
 import SalesTrendsChart from "../../components/analytics/SalesTrendsChart";
@@ -25,6 +25,7 @@ import {
   fetchCategoryAnalysis,
   fetchCustomerInsights,
   fetchInsights,
+  fetchAllBranches,
 } from "../../services/analyticsService";
 
 function AnalyticsPage() {
@@ -48,18 +49,38 @@ function AnalyticsPage() {
     insights: null,
   });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [errors, setErrors] = useState([]);
   const [lastRefreshed, setLastRefreshed] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
+  const [branchList, setBranchList] = useState([]);
+  // Debounce ref: filter changes wait 600ms before triggering a fetch
+  const debounceTimer = useRef(null);
+  const pendingFilters = useRef(filters);
 
   const hasActiveFilters =
     filters.fromDate || filters.toDate || filters.branchId;
 
+  // Keep pendingFilters in sync so the debounced callback always sees latest
+  pendingFilters.current = filters;
+
+  // getData: extract payload from a settled promise result
+  const getData = (res) =>
+    res.status === "fulfilled" ? res.value.data : null;
+
+  // getError: capture both network rejections AND HTTP-level errors returned
+  // as fulfilled { data: null, error: "..." } from the service layer
+  const getError = (res) => {
+    if (res.status === "rejected") return res.reason?.message;
+    // fulfilled but the service returned an error string
+    if (res.value?.error) return res.value.error;
+    return null;
+  };
+
   const loadAll = useCallback(
     async (filterObj) => {
       setLoading(true);
-      setError(null);
-      const f = filterObj || filters;
+      setErrors([]);
+      const f = filterObj || pendingFilters.current;
       try {
         const params = {};
         if (f.fromDate) params.fromDate = f.fromDate;
@@ -92,12 +113,7 @@ function AnalyticsPage() {
           fetchInsights(params),
         ]);
 
-        const getData = (res) =>
-          res.status === "fulfilled" ? res.value.data : null;
-        const getError = (res) =>
-          res.status === "rejected" ? res.reason?.message : res.value?.error;
-
-        const errors = [
+        const errs = [
           kpiRes,
           salesRes,
           profitRes,
@@ -113,9 +129,8 @@ function AnalyticsPage() {
           .map(getError)
           .filter(Boolean);
 
-        if (errors.length > 0) {
-          setError(errors[0]);
-        }
+        // Show partial errors as a warning banner but DO NOT hide the data
+        setErrors(errs);
 
         setData({
           kpi: getData(kpiRes),
@@ -138,27 +153,50 @@ function AnalyticsPage() {
           }),
         );
       } catch (err) {
-        setError(err.message || "Failed to load analytics data");
+        setErrors([err.message || "Failed to load analytics data"]);
       } finally {
         setLoading(false);
       }
     },
-    [filters],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
   );
 
+  // Load ALL branches on mount for the branch filter dropdown
+  // (fetchBranchPerformance only returns branches that have sales data,
+  //  so we use fetchAllBranches to show every branch including ones with no revenue)
+  useEffect(() => {
+    fetchAllBranches().then((res) => {
+      if (res.data?.length) setBranchList(res.data);
+    });
+  }, []);
+
+  // Initial load on mount
   useEffect(() => {
     loadAll();
-  }, [loadAll]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Debounced re-fetch whenever filters change (600 ms)
+  useEffect(() => {
+    clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      loadAll(pendingFilters.current);
+    }, 600);
+    return () => clearTimeout(debounceTimer.current);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
 
   const handleResetFilters = () =>
     setFilters({ fromDate: "", toDate: "", branchId: "" });
 
+  // Dismiss individual error entries
+  const dismissError = (idx) =>
+    setErrors((prev) => prev.filter((_, i) => i !== idx));
+
   const TABS = [
     { key: "overview", label: "Overview" },
-    { key: "sales", label: "Sales & Profit" },
-    { key: "branches", label: "Branch Performance" },
     { key: "products", label: "Products & Categories" },
-    { key: "customers", label: "Customer Insights" },
     { key: "drilldown", label: "Drill-Down" },
   ];
 
@@ -185,7 +223,13 @@ function AnalyticsPage() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              {lastRefreshed && (
+                <span className="flex items-center gap-1 text-xs text-slate-400">
+                  <Clock size={11} />
+                  Updated {lastRefreshed}
+                </span>
+              )}
               {hasActiveFilters && (
                 <button
                   onClick={handleResetFilters}
@@ -227,6 +271,7 @@ function AnalyticsPage() {
       </div>
 
       <div className="mx-auto max-w-screen-2xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+        {/* Filter bar */}
         <div className="flex items-center gap-3 flex-wrap">
           <Filter size={14} className="text-slate-400" />
           <input
@@ -246,26 +291,57 @@ function AnalyticsPage() {
             }
             className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:border-violet-500"
           />
+          {/* Branch filter dropdown */}
+          <select
+            value={filters.branchId}
+            onChange={(e) =>
+              setFilters((p) => ({ ...p, branchId: e.target.value }))
+            }
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:border-violet-500"
+          >
+            <option value="">All Branches</option>
+            {branchList.map((b) => (
+              <option key={String(b._id)} value={String(b._id)}>
+                {b.name || String(b._id)}
+              </option>
+            ))}
+          </select>
         </div>
 
-        {error && (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 flex gap-3 items-start">
-            <AlertCircle size={16} className="mt-0.5 text-rose-500 shrink-0" />
-            <div>
-              <p className="text-sm font-semibold text-rose-800">
-                There is some error fetching data
-              </p>
-              <p className="text-xs text-rose-600 mt-0.5">{error}</p>
-            </div>
+        {/* Partial-error warnings – shown as individual dismissible banners so
+            data from successful calls is still visible below */}
+        {errors.length > 0 && (
+          <div className="space-y-2">
+            {errors.map((errMsg, idx) => (
+              <div
+                key={idx}
+                className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 flex gap-3 items-start"
+              >
+                <AlertCircle size={15} className="mt-0.5 text-amber-500 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-xs font-semibold text-amber-800">
+                    Partial data fetch warning
+                  </p>
+                  <p className="text-xs text-amber-700 mt-0.5">{errMsg}</p>
+                </div>
+                <button
+                  onClick={() => dismissError(idx)}
+                  className="text-amber-400 hover:text-amber-600 text-xs font-bold"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
           </div>
         )}
 
-        {!error && activeTab === "overview" && (
+        {/* Tabs render regardless of errors so partial data is still shown */}
+        {activeTab === "overview" && (
           <>
             <AnalyticsKPICards data={data.kpi} loading={loading} />
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <SalesTrendsChart data={data.sales} loading={loading} />
-              <ProfitTrendsChart data={data.profit} loading={loading} />
+              <SalesTrendsChart params={filters} />
+              <ProfitTrendsChart params={filters} />
             </div>
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
               <div className="lg:col-span-2">
@@ -279,56 +355,15 @@ function AnalyticsPage() {
           </>
         )}
 
-        {!error && activeTab === "sales" && (
+        {activeTab === "products" && (
           <>
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <SalesTrendsChart data={data.sales} loading={loading} />
-              <ProfitTrendsChart data={data.profit} loading={loading} />
-            </div>
-            <RevenueBreakdownChart data={data.revenueBreak} loading={loading} />
-          </>
-        )}
-
-        {!error && activeTab === "branches" && (
-          <>
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <div className="lg:col-span-2">
-                <BranchPerformancePanel
-                  data={data.branchPerf}
-                  loading={loading}
-                />
-              </div>
-              <BranchRankingsTable data={data.branchRank} loading={loading} />
-            </div>
-          </>
-        )}
-
-        {!error && activeTab === "products" && (
-          <>
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <CategoryAnalysisChart data={data.categories} loading={loading} />
-              <RevenueBreakdownChart
-                data={data.revenueBreak}
-                loading={loading}
-              />
-            </div>
+            <CategoryAnalysisChart data={data.categories} loading={loading} />
             <ProductPerformanceTable data={data.products} loading={loading} />
           </>
         )}
 
-        {!error && activeTab === "customers" && (
-          <>
-            <CustomerInsightsPanel data={data.customers} loading={loading} />
-            <AutomatedInsights data={data.insights} loading={loading} />
-          </>
-        )}
-
-        {!error && activeTab === "drilldown" && (
-          <DrillDownAnalysis
-            data={data.drillDown}
-            loading={loading}
-            params={filters}
-          />
+        {activeTab === "drilldown" && (
+          <DrillDownAnalysis params={filters} />
         )}
       </div>
     </div>
