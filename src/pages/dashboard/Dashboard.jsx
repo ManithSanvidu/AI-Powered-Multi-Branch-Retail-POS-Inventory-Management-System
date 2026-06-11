@@ -92,8 +92,8 @@ const DATE_PRESETS = [
 const MODULE_NAV_ITEMS = [
   { id: 'dashboard',     label: 'Dashboard & Business Overview',    icon: '📊', page: 1, isMain: true,
     roles: ['admin','manager','cashier','user'] },
-  { id: 'auth',          label: 'Authentication & Authorization',   icon: '🔐', page: 1,
-    roles: ['admin'] },
+  // { id: 'auth',          label: 'Authentication & Authorization',   icon: '🔐', page: 1,
+  //   roles: ['admin'] },
   { id: 'user-mgmt',     label: 'User Management',                  icon: '👥', page: 1,
     roles: ['admin'] },
   { id: 'branch-mgmt',   label: 'Branch Management',                icon: '🏢', page: 1,
@@ -587,8 +587,8 @@ const Dashboard = ({ viewRole, returnState, setReturnState }) => {
           </>
         );
 
-      case 'auth':
-        return <ModuleDetail title="Authentication & Authorization" icon="🔐" page={1} description="Secure authentication system with role-based access control. Manage user sessions, permissions, and security policies. Implement JWT tokens and multi-factor authentication." features={['User Login & Registration', 'Role-Based Access Control (RBAC)', 'JWT Token Authentication', 'Session Management', 'Password Reset & Recovery', 'Multi-Factor Authentication Support', 'Permission Management', 'Security Policy Enforcement']} />;
+      // case 'auth':
+      //   return <ModuleDetail title="Authentication & Authorization" icon="🔐" page={1} description="Secure authentication system with role-based access control. Manage user sessions, permissions, and security policies. Implement JWT tokens and multi-factor authentication." features={['User Login & Registration', 'Role-Based Access Control (RBAC)', 'JWT Token Authentication', 'Session Management', 'Password Reset & Recovery', 'Multi-Factor Authentication Support', 'Permission Management', 'Security Policy Enforcement']} />;
       case 'ai-assistant':
         return <AIRetailAssistantModule />;
       case 'ai-forecast':
