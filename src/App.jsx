@@ -332,7 +332,15 @@ function App() {
                               path="/employees"
                               element={<EmployeesPage />}
                             />
-                            <Route path="/returns" element={<ReturnsPage />} />
+                            <Route
+                              path="/returns"
+                              element={
+                                <ReturnsPage
+                                  returnState={returnState}
+                                  setReturnState={setReturnState}
+                                />
+                              }
+                            />
                             <Route
                               path="/purchase-orders"
                               element={<PurchaseOrdersPage />}
